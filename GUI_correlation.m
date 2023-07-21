@@ -1,6 +1,6 @@
 function GUI_correlation
 % Mikhail Berezin 2023
-f = uifigure('Name', 'Correlation Analysis (Berezin Lab)', 'Position', [200 200 600 400], 'Icon','neurites.png');  % adjusted width
+f = uifigure('Name', 'Correlation Analysis (Berezin Lab)', 'Position', [200 200 600 400], 'Icon','Corr_icon.png');  % adjusted width
 
 % f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
@@ -76,7 +76,7 @@ function load_data_callback(~, ~, f)
     end
 
     % Ignore the first row
-    data_table(1, :) = [];
+  %  data_table(1, :) = [];
 
     % Check that the data table has at least two columns
     if size(data_table, 2) < 2
@@ -214,7 +214,7 @@ function calculate_correlations_callback(~, ~, f)
     uifigureOnTop (f, true)
 
     % Create a new figure for the heatmap
-    figure;
+    figure("Position",[400,600, 500,500]);
     imagesc(tril(correlations)); % Create a heatmap
     colorbar; % Add a colorbar
     colormap('parula'); % Set the colormap
@@ -244,8 +244,9 @@ function graph_callback(~, ~, f)
 
     % Create a new figure for the heatmap
     folder = fileparts(mfilename('fullpath'));
-    iconFilePath = fullfile(folder, 'Images', 'idcube-icon-transparent.png');
-    setIcon(figure, iconFilePath)
+    iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
+    setIcon(gcf, iconFilePath)
+    figure("Position",[700,600, 500,500]);
     h = imagesc(correlations); % Create a heatmap
     colorbar; % Add a colorbar
 
@@ -254,7 +255,7 @@ function graph_callback(~, ~, f)
     cm(1,:) = [0.5 0.5 0.5]; % Change the first color (for zero values) to grey
     colormap(cm); % Apply the modified colormap
 
-    title('Correlation Heatmap');
+    title('Sorted Correlation Heatmap');
     xticks(1:length(variable_names));
     yticks(1:length(variable_names));
     xticklabels(variable_names);
@@ -279,6 +280,8 @@ end
 
 %% Define the "Sort" callback function
 
+%% Define the "Sort" callback function
+
 function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
     uifigureOnTop (f, true)
@@ -295,6 +298,7 @@ function sort_callback(~, ~, f)
     % Use the sorted indices to sort the correlations and variable names
     sorted_correlations = correlations(sorted_indices, sorted_indices);
     sorted_variable_names = variable_names(sorted_indices);
+    sorted_sum_abs_correlations = sum_abs_correlations(sorted_indices);  % Also sort the sum of absolute correlations
     
     % Update the data in the existing uitable instead of creating a new one
     data.Data = sorted_correlations;
@@ -308,23 +312,31 @@ function sort_callback(~, ~, f)
     % Set the results in the GUI
     f.Name = ['Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
 
-  % Now, let's keep only the top 100 correlations
-   % top_100_correlations = sorted_correlations(1:100);
-    top_100_variable_names = sorted_variable_names(1:100);
-    
-    % Create a new uifigure for the sorted data
-    sorted_fig = uifigure('Name', 'Top 100 Correlated Genes', 'Position', [700 300 600 400]);
-    
-    % Create a uitable in the new uifigure
-    sorted_data = uitable(sorted_fig);
-    
-    % Display the top 100 correlations in the new uitable
-%     sorted_data.Data = [top_100_variable_names, num2cell(top_100_correlations)];
-    sorted_data.Data = top_100_variable_names;
-%     sorted_data.ColumnName = {'Gene Pair', 'Correlation'};
-    sorted_data.Position = [20 20 560 360];
+  % List of average correlations
+    total_genes = sqrt(numel(correlations));
+    top_100_variable_names = sorted_variable_names(1:total_genes);
+    top_100_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); % Keep the top 100 sum of absolute correlations
+  %  total_genes = sqrt(numel(correlations));
+    average_abs_correlation =  top_100_sum_abs_correlations/total_genes;
+  % Create a new uifigure for the sorted data
+sorted_fig = uifigure('Name', 'List of Correlated Genes', 'Position', [600 400 600 400], 'Icon', 'Corr_icon.png');
 
+% Create a uitable in the new uifigure
+sorted_data = uitable(sorted_fig);
+
+% Display the top 100 correlations in the new uitable
+sorted_data.Data = [top_100_variable_names', num2cell(average_abs_correlation)];  % Add sum of absolute correlations to the table
+sorted_data.ColumnName = {'Gene', 'Average Absolute Correlations'};  % Update column names
+sorted_data.Position = [20 20 560 360];
+
+% Enable sorting for the first column (Gene)
+sorted_data.ColumnSortable(1) = true;
+
+% Enable sorting for the second column (Average Absolute Correlations)
+sorted_data.ColumnSortable(2) = true;
+    
 end
+
 
 
 function cluster_callback(~, ~, f)
@@ -350,11 +362,12 @@ function cluster_callback(~, ~, f)
 
     % Create a dendrogram
     folder = fileparts(mfilename('fullpath'));
-    iconFilePath = fullfile(folder, 'Images', 'idcube-icon-transparent.png');
+    iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
     setIcon(figure, iconFilePath)
     [H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold); % Create a dendrogram
     set(H, 'LineWidth', 1);  % Set to desired line width
     ylabel('Distance')
+   
     %     title('Dendrogram');
     xticklabels(variable_names(outperm));
     xtickangle(45); % Rotate the x-axis labels
@@ -395,7 +408,7 @@ function cluster_callback(~, ~, f)
     
 
     % Figure to display text
-    figure_text = figure;
+    figure_text = figure ('Position', [1300, 600, 500, 500]);
     %ax = axes(figure_text);
     text_str = {};
     
@@ -406,7 +419,7 @@ function cluster_callback(~, ~, f)
     end
     
     % Create editable text box
-    uicontrol(figure_text, 'Style', 'edit', 'String', strjoin(text_str, '\n'), 'Units', 'normalized', 'Position', [0, 0, .3, .3], 'Max', 2, 'HorizontalAlignment', 'left');
+    uicontrol(figure_text, 'Style', 'edit', 'String', strjoin(text_str, '\n'), 'Units', 'normalized', 'Position', [0, 0, 1, 1], 'Max', 2, 'HorizontalAlignment', 'left');
 
 % Assign clusters and extract variable names for each cluster
     cluster_assignments = cluster(links, 'Cutoff', colorThreshold, 'Criterion', 'distance');
