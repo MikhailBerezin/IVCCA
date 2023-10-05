@@ -47,6 +47,14 @@ cluster_button.Layout.Column = 2;
 cluster_button.Tooltip = 'Cluster the correlation matrix';  % Adding tooltip
 cluster_button.Enable = 'off'; % Initially disabled
 
+
+% Create the "Elbow Curve" button
+elbow_button = uibutton(grid, 'push', 'Text', 'Elbow Curve', 'ButtonPushedFcn', {@elbow_curve_callback, f});
+elbow_button.Layout.Row = 6; % Position for "Elbow Curve" button
+elbow_button.Layout.Column = 2;
+elbow_button.Tooltip = 'Determine optimal number of clusters';  % Adding tooltip
+elbow_button.Enable = 'off'; % Initially disabled
+
 % Create the results label
 result = uilabel(grid, 'Text', '');
 result.Layout.Row = 4; % Position for label
@@ -223,6 +231,12 @@ function calculate_correlations_callback(~, ~, f)
     yticks(1:length(data_table.Properties.VariableNames));
     xticklabels(data_table.Properties.VariableNames);
     yticklabels(data_table.Properties.VariableNames);
+    figure
+    histogram (correlations)
+    title('Correlation Histogram');
+    xlabel('Pairwise Correleation Coefficient, q');
+    ylabel('Number of genes');
+    
 end
 
 
@@ -389,6 +403,7 @@ function cluster_callback(~, ~, f)
     
     % Enable the "Graph" button
     graph_button.Enable = 'on';
+    elbow_button.Enable = 'on';
 
     % Compute the number of clusters at the colorThreshold
     num_clusters_color_threshold = size(links, 1) + 1 - sum(links(:,3) < colorThreshold);
@@ -444,7 +459,23 @@ function cluster_callback(~, ~, f)
 end
 
 
-
+% Define the "Elbow Curve" callback function
+function elbow_curve_callback(~, ~, f)
+    correlations = getappdata(f, 'correlations');  % Get correlations from app data
+    maxK = 30;  % Maximum number of clusters to check
+    sum_of_squared_distances = zeros(maxK, 1);
+    
+    for k = 1:maxK
+        [idx, ~, sumD] = kmeans(correlations, k);
+        sum_of_squared_distances(k) = sum(sumD);
+    end
+    
+    figure;
+    plot(1:maxK, sum_of_squared_distances, 'bo-');
+    title('Elbow Curve for Optimal K');
+    xlabel('Number of clusters (K)');
+    ylabel('Sum of Squared Distances');
+end
 
 
 end
