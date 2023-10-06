@@ -464,18 +464,39 @@ function elbow_curve_callback(~, ~, f)
     correlations = getappdata(f, 'correlations');  % Get correlations from app data
     maxK = 30;  % Maximum number of clusters to check
     sum_of_squared_distances = zeros(maxK, 1);
+    silhouette_vals = zeros(maxK-1, 1);  % No silhouette for K = 1
     
     for k = 1:maxK
         [idx, ~, sumD] = kmeans(correlations, k);
         sum_of_squared_distances(k) = sum(sumD);
     end
     
+    
+    for k = 2:maxK  % Start from 2 clusters
+        [idx, ~] = kmeans(correlations, k);
+        
+        % Compute silhouette values for this cluster count
+        s = silhouette(correlations, idx, 'Euclidean');
+        silhouette_vals(k-1) = mean(s);
+    end
+
+
+% Create a subplot to show both elbow and silhouette plots side by side
     figure;
+    
+    subplot(1, 2, 1);
     plot(1:maxK, sum_of_squared_distances, 'bo-');
     title('Elbow Curve for Optimal K');
     xlabel('Number of clusters (K)');
     ylabel('Sum of Squared Distances');
+    
+    subplot(1, 2, 2);
+    plot(2:maxK, silhouette_vals, 'r*-');
+    title('Silhouette Analysis for Optimal K');
+    xlabel('Number of clusters (K)');
+    ylabel('Average Silhouette Value');
 end
+
 
 
 end
