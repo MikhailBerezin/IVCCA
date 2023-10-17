@@ -1,6 +1,6 @@
 function GUI_correlation
 % Mikhail Berezin 2023
-f = uifigure('Name', 'Correlation Analysis (Berezin Lab)', 'Position', [200 200 600 400], 'Icon','Corr_icon.png');  % adjusted width
+f = uifigure('Name', 'Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
 
 % f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
@@ -10,7 +10,7 @@ grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x',
 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 5]; % Spans across 5 rows
+data.Layout.Row = [1 7]; % Spans across 5 rows
 data.Layout.Column = 1; % Occupies the first column
 
 % Create the "Load Data" button
@@ -55,12 +55,20 @@ elbow_button.Layout.Column = 2;
 elbow_button.Tooltip = 'Determine optimal number of clusters';  % Adding tooltip
 elbow_button.Enable = 'off'; % Initially disabled
 
+% Create the "Dynamic Tree Cut" button
+dynamic_tree_button = uibutton(grid, 'push', 'Text', 'Dynamic Tree Cut', 'ButtonPushedFcn', {@dynamic_tree_cut_callback, f});
+dynamic_tree_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
+dynamic_tree_button.Layout.Column = 2;
+dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
+dynamic_tree_button.Enable = 'off'; % Initially disabled
+
+
+
 % Create the results label
 result = uilabel(grid, 'Text', '');
 result.Layout.Row = 4; % Position for label
 result.Layout.Column = 1; % Positioned in the first column
 
-%% This fucntion removes the rows with missing numbers
 %% This function removes the rows with missing numbers
 function load_data_callback(~, ~, f)
     % Get the file name
@@ -118,10 +126,6 @@ function load_data_callback(~, ~, f)
     setappdata(f, 'data_table', data_table);
     uifigureOnTop (f, true) 
 end
-
-
-
-
 
 %% This function replace the missing values
 % function load_data_callback(~, ~, f)
@@ -221,7 +225,7 @@ function calculate_correlations_callback(~, ~, f)
     f.WindowStyle = 'normal';
     uifigureOnTop (f, true)
 
-    % Create a new figure for the heatmap
+%     Create a new figure for the heatmap
     figure("Position",[400,600, 500,500]);
     imagesc(tril(correlations)); % Create a heatmap
     colorbar; % Add a colorbar
@@ -231,7 +235,8 @@ function calculate_correlations_callback(~, ~, f)
     yticks(1:length(data_table.Properties.VariableNames));
     xticklabels(data_table.Properties.VariableNames);
     yticklabels(data_table.Properties.VariableNames);
-    figure
+    
+    figure ('Position',[200 250 400 400])
     histogram (correlations)
     title('Correlation Histogram');
     xlabel('Pairwise Correleation Coefficient, q');
@@ -244,6 +249,49 @@ end
 
 %% Define the "Graph" callback function
 function graph_callback(~, ~, f)
+    
+    % Get correlations and sorted correlations
+%     correlations = getappdata(f, 'correlations');
+%     sorted_correlations = getappdata(f, 'sorted_correlations');
+%     variable_names = getappdata(f, 'variable_names');
+    
+%     % Code to create side-by-side heatmaps
+%     correlations = tril(correlations);
+%     sorted_correlations = tril(sorted_correlations);
+%     
+%     correlations = abs(correlations);
+%     sorted_correlations = abs(sorted_correlations);
+    
+    
+%     figure('Position',[100 100 1000 500]);
+%     
+%     subplot(1,2,1);
+%     imagesc(correlations);
+%     title('Original Correlation Heatmap');
+%      colorbar;
+%     xticks(1:length(variable_names));
+%     yticks(1:length(variable_names));
+%     xticklabels(variable_names);
+%     yticklabels(variable_names);
+%        
+%     
+%     subplot(1,2,2); 
+%     imagesc(sorted_correlations);
+%     title('Sorted Correlation Heatmap');
+%      colorbar;
+%     xticks(1:length(variable_names));
+% yticks(1:length(variable_names));
+% xticklabels(variable_names);
+% yticklabels(variable_names);
+%    
+%     
+%     colormap(parula);
+%     caxis([0 1]);
+    
+    %subplot_tight(1,2,0.1,0.1);
+
+     
+    
     f.WindowStyle = 'normal';
     uifigureOnTop (f, true)
     % Get the sorted correlations and variable names from the app data
@@ -282,7 +330,7 @@ function graph_callback(~, ~, f)
 %             text(j, i, num2str(correlations(i,j), '%0.2f'), 'HorizontalAlignment', 'center', 'Color', 'k');
 %         end
 %     end
-%     
+    
 %     % Set color of zero values to grey
 %     h.CDataMapping = 'scaled'; 
 %     caxis([-1 1]); 
@@ -294,7 +342,6 @@ end
 
 %% Define the "Sort" callback function
 
-%% Define the "Sort" callback function
 
 function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
@@ -333,7 +380,7 @@ function sort_callback(~, ~, f)
   %  total_genes = sqrt(numel(correlations));
     average_abs_correlation =  top_100_sum_abs_correlations/total_genes;
   % Create a new uifigure for the sorted data
-sorted_fig = uifigure('Name', 'List of Correlated Genes', 'Position', [600 400 600 400], 'Icon', 'Corr_icon.png');
+sorted_fig = uifigure('Name', 'List of Correlated Genes', 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
@@ -378,6 +425,7 @@ function cluster_callback(~, ~, f)
     folder = fileparts(mfilename('fullpath'));
     iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
     setIcon(figure, iconFilePath)
+    
     [H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold); % Create a dendrogram
     set(H, 'LineWidth', 1);  % Set to desired line width
     ylabel('Distance')
@@ -404,6 +452,7 @@ function cluster_callback(~, ~, f)
     % Enable the "Graph" button
     graph_button.Enable = 'on';
     elbow_button.Enable = 'on';
+    dynamic_tree_button.Enable = 'on';
 
     % Compute the number of clusters at the colorThreshold
     num_clusters_color_threshold = size(links, 1) + 1 - sum(links(:,3) < colorThreshold);
@@ -467,16 +516,16 @@ function elbow_curve_callback(~, ~, f)
     silhouette_vals = zeros(maxK-1, 1);  % No silhouette for K = 1
     
     for k = 1:maxK
-        [idx, ~, sumD] = kmeans(correlations, k);
+        [idx, ~, sumD] = kmedoids(correlations, k);
         sum_of_squared_distances(k) = sum(sumD);
     end
     
     
     for k = 2:maxK  % Start from 2 clusters
-        [idx, ~] = kmeans(correlations, k);
+        [idx, ~] = kmedoids(correlations, k);
         
         % Compute silhouette values for this cluster count
-        s = silhouette(correlations, idx, 'Euclidean');
+        s = silhouette(correlations, idx, 'sqEuclidean');
         silhouette_vals(k-1) = mean(s);
     end
 
@@ -485,18 +534,124 @@ function elbow_curve_callback(~, ~, f)
     figure;
     
     subplot(1, 2, 1);
-    plot(1:maxK, sum_of_squared_distances, 'bo-');
-    title('Elbow Curve for Optimal K');
+    plot(1:maxK, log(sum_of_squared_distances), 'bo-');
+    title('Elbow Curve');
     xlabel('Number of clusters (K)');
-    ylabel('Sum of Squared Distances');
+    ylabel('log(Sum of Squared Distances)');
     
     subplot(1, 2, 2);
     plot(2:maxK, silhouette_vals, 'r*-');
-    title('Silhouette Analysis for Optimal K');
+    title('Silhouette Analysis ');
     xlabel('Number of clusters (K)');
     ylabel('Average Silhouette Value');
 end
 
+function dynamic_tree_cut_callback(~, ~, f)
+    % Get the correlations from the app data
+    correlations = getappdata(f, 'correlations');
+    variable_names = getappdata(f, 'variable_names');
+    
+    % Ask the user to specify cutoff_cl
+    prompt = {'Enter cutoff value (default is 0.15):'};
+    dlgtitle = 'Cutoff Input';
+    dims = [1 35];
+    definput = {'0.15'};
+    answer = inputdlg(prompt,dlgtitle,dims,definput);
+    
+    % If the user presses Cancel, the answer is empty. Handle this case
+    if isempty(answer)
+        disp('User cancelled the operation.');
+        return;
+    end
+    
+    % Convert the answer to a numeric value
+    cutoff_cl = str2double(answer{1});
+    
+    % Check if input is valid
+    if isnan(cutoff_cl) || cutoff_cl < 0 || cutoff_cl > 1
+        errordlg('Invalid input. Please enter a value between 0 and 1.', 'Error');
+        return;
+    end
+     % Perform hierarchical clustering
+    Z = linkage(correlations, 'average');
+    % Use inconsistency method to initially determine the number of clusters
+    T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
+%% ---    
+% maxNumClusters = 10;  % or some other reasonable upper bound based on your expectations
+% silhouetteValues = zeros(maxNumClusters, 1);
+% 
+% for k = 1:maxNumClusters  % Silhouette is not defined for 1 cluster.
+% Change 1 to any number to eliminate first clusters
+%     T = cluster(Z, 'maxclust', k);
+%     silhouetteValues(k) = mean(silhouette(correlations, T, 'euclidean'));
+% end
+% 
+% % Find the number of clusters that maximizes the silhouette value
+% optimalNumClusters = find(silhouetteValues == max(silhouetteValues), 1);
+
+% Cluster using the optimal number of clusters
+%T = cluster(Z, 'maxclust', optimalNumClusters);
+%% --- 
+    % Display the number of members in each cluster in the Command Window
+    unique_clusters = unique(T);
+    disp('Cluster Results:');
+    for i = 1:length(unique_clusters)
+        cluster_members = variable_names(T == unique_clusters(i));
+        disp(['Cluster ' num2str(i) ' (Size: ' num2str(length(cluster_members)) '):']);
+        disp(strjoin(cluster_members, ', '));
+    end
+
+
+    % Use inconsistency method to initially determine the number of clusters
+    T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
+%% ---    
+% maxNumClusters = 10;  % or some other reasonable upper bound based on your expectations
+% silhouetteValues = zeros(maxNumClusters, 1);
+% 
+% for k = 1:maxNumClusters  % Silhouette is not defined for 1 cluster.
+% Change 1 to any number to eliminate first clusters
+%     T = cluster(Z, 'maxclust', k);
+%     silhouetteValues(k) = mean(silhouette(correlations, T, 'euclidean'));
+% end
+% 
+% % Find the number of clusters that maximizes the silhouette value
+% optimalNumClusters = find(silhouetteValues == max(silhouetteValues), 1);
+
+% Cluster using the optimal number of clusters
+%T = cluster(Z, 'maxclust', optimalNumClusters);
+%% --- 
+
+    % Save the cluster assignments to the app data for further processing
+    setappdata(f, 'dynamic_tree_clusters', T);
+    
+    % Organize the correlation matrix according to the clusters
+    [~, order] = sort(T);
+    ordered_correlations = correlations(order, order);
+    
+    % Create a heatmap using the ordered correlation matrix
+    figure;
+    imagesc(ordered_correlations);
+    colorbar;
+    num_clusters = length(unique_clusters);
+    title(['Clustered Correlation Matrix using Dynamic Tree Cutting (', num2str(num_clusters), ' Clusters)']);
+
+   
+    xticks(1:length(variable_names));
+    yticks(1:length(variable_names));
+    xticklabels(variable_names(order));
+    yticklabels(variable_names(order));
+    colormap('parula');
+    caxis([-1, 1]); % Assuming correlations range from -1 to 1
+
+    % Display the number of members in each cluster in the Command Window
+    unique_clusters = unique(T);
+    disp('Cluster Results:');
+    for i = 1:length(unique_clusters)
+        cluster_members = variable_names(T == unique_clusters(i));
+        disp(['Cluster ' num2str(i) ' (Size: ' num2str(length(cluster_members)) '):']);
+        disp(strjoin(cluster_members, ', '));
+    end
+end
 
 
 end
