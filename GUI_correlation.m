@@ -369,7 +369,7 @@ function sort_callback(~, ~, f)
     % Save the sorted correlations and variable names to the app data
     setappdata(f, 'sorted_correlations', sorted_correlations);
     setappdata(f, 'sorted_variable_names', sorted_variable_names);
-    
+
     % Set the results in the GUI
     f.Name = ['Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
 
@@ -379,9 +379,10 @@ function sort_callback(~, ~, f)
     top_100_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); % Keep the top 100 sum of absolute correlations
   %  total_genes = sqrt(numel(correlations));
     average_abs_correlation =  top_100_sum_abs_correlations/total_genes;
+    mean_average_abs_correlation = sum(average_abs_correlation)/total_genes;
   % Create a new uifigure for the sorted data
-sorted_fig = uifigure('Name', 'List of Correlated Genes', 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
-
+% sorted_fig = uifigure('Name', ['List of Correlated Genes (Mean Avg Abs Correlation: ' num2str(average_abs_correlation)')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+ sorted_fig = uifigure('Name', ['List of Correlated Genes (Pathway Correlation Srength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
 
@@ -643,13 +644,28 @@ function dynamic_tree_cut_callback(~, ~, f)
     colormap('parula');
     caxis([-1, 1]); % Assuming correlations range from -1 to 1
 
-    % Display the number of members in each cluster in the Command Window
+%     % Display the number of members in each cluster in the Command Window
+%     unique_clusters = unique(T);
+%     disp('Cluster Results:');
+%     for i = 1:length(unique_clusters)
+%         cluster_members = variable_names(T == unique_clusters(i));
+%         disp(['Cluster ' num2str(i) ' (Size: ' num2str(length(cluster_members)) '):']);
+%         disp(strjoin(cluster_members, ', '));
+%     end
+% Calculate the mean value of absolute correlations for each cluster
     unique_clusters = unique(T);
-    disp('Cluster Results:');
+    cluster_mean_abs_correlations = zeros(length(unique_clusters), 1);
+
     for i = 1:length(unique_clusters)
-        cluster_members = variable_names(T == unique_clusters(i));
-        disp(['Cluster ' num2str(i) ' (Size: ' num2str(length(cluster_members)) '):']);
-        disp(strjoin(cluster_members, ', '));
+        cluster_indices = find(T == unique_clusters(i));
+        cluster_correlations = ordered_correlations(cluster_indices, cluster_indices);
+        cluster_mean_abs_correlations(i) = mean(abs(cluster_correlations), 'all');
+    end
+
+    % Display the mean value of absolute correlations for each cluster
+    disp('Mean Absolute Correlations in Clusters:');
+    for i = 1:length(unique_clusters)
+        disp(['Cluster ' num2str(i) ': ' num2str(cluster_mean_abs_correlations(i))]);
     end
 end
 
