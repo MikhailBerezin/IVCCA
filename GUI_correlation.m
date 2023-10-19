@@ -1,6 +1,6 @@
 function GUI_correlation
 % Mikhail Berezin 2023
-f = uifigure('Name', 'Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
+f = uifigure('Name', 'Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
 
 % f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
@@ -61,6 +61,7 @@ dynamic_tree_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
 dynamic_tree_button.Layout.Column = 2;
 dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
 dynamic_tree_button.Enable = 'off'; % Initially disabled
+
 
 
 
@@ -127,47 +128,6 @@ function load_data_callback(~, ~, f)
     uifigureOnTop (f, true) 
 end
 
-%% This function replace the missing values
-% function load_data_callback(~, ~, f)
-%     % Get the file name
-%     [file, path] = uigetfile('*.xlsx', 'Select a data file');
-%     if isequal(file, 0)
-%         return
-%     end
-%     
-%     % Read the data from the file
-%     try
-%         data_table = readtable(fullfile(path, file));
-%     catch
-%         errordlg('Error reading data. Please check the format of the data file.');
-%         return
-%     end
-%     
-%     % Ignore the first row
-%     data_table(1, :) = [];
-% 
-%     % Check that the data table has at least two columns
-%     if size(data_table, 2) < 2
-%         errordlg('Data file must have at least two columns.');
-%         return
-%     end
-%     
-%     % Handle missing data by replacing NaN values with the mean of each column
-%     % varfun adds 'fun_' to column names, to avoid it we will store original column names and assign them back
-%     originalVariableNames = data_table.Properties.VariableNames;
-%     data_table = varfun(@(x) fillmissing(x, 'constant', mean(x, 'omitnan')), data_table, 'OutputFormat', 'table');
-%     data_table.Properties.VariableNames = originalVariableNames;
-%     
-%     % Set the data table in the GUI
-%     data.Data = data_table;
-%     calculate_button.Enable = 'on'; % Enable the "Calculate Correlations" button
-%     
-%     % Display the loaded data in the Command Window
-%     disp(data_table);
-%     
-%     % Save the data table to the app data
-%     setappdata(f, 'data_table', data_table);
-% end
 
 
 
@@ -250,45 +210,7 @@ end
 %% Define the "Graph" callback function
 function graph_callback(~, ~, f)
     
-    % Get correlations and sorted correlations
-%     correlations = getappdata(f, 'correlations');
-%     sorted_correlations = getappdata(f, 'sorted_correlations');
-%     variable_names = getappdata(f, 'variable_names');
-    
-%     % Code to create side-by-side heatmaps
-%     correlations = tril(correlations);
-%     sorted_correlations = tril(sorted_correlations);
-%     
-%     correlations = abs(correlations);
-%     sorted_correlations = abs(sorted_correlations);
-    
-    
-%     figure('Position',[100 100 1000 500]);
-%     
-%     subplot(1,2,1);
-%     imagesc(correlations);
-%     title('Original Correlation Heatmap');
-%      colorbar;
-%     xticks(1:length(variable_names));
-%     yticks(1:length(variable_names));
-%     xticklabels(variable_names);
-%     yticklabels(variable_names);
-%        
-%     
-%     subplot(1,2,2); 
-%     imagesc(sorted_correlations);
-%     title('Sorted Correlation Heatmap');
-%      colorbar;
-%     xticks(1:length(variable_names));
-% yticks(1:length(variable_names));
-% xticklabels(variable_names);
-% yticklabels(variable_names);
-%    
-%     
-%     colormap(parula);
-%     caxis([0 1]);
-    
-    %subplot_tight(1,2,0.1,0.1);
+
 
      
     
@@ -431,9 +353,6 @@ function cluster_callback(~, ~, f)
     set(H, 'LineWidth', 1);  % Set to desired line width
     ylabel('Distance')
    
-    %     title('Dendrogram');
-    xticklabels(variable_names(outperm));
-    xtickangle(45); % Rotate the x-axis labels
     % Reorder the correlations and variable names based on the clustering
     clustered_correlations = correlations(cluster_order, cluster_order);
     clustered_variable_names = variable_names(cluster_order);
@@ -461,52 +380,43 @@ function cluster_callback(~, ~, f)
     % Print the number of clusters at the color threshold
     disp(['Number of clusters with unique color: ', num2str(num_clusters_color_threshold)]);
     
-    % Assign clusters and extract variable names for each cluster
-    cluster_assignments = cluster(links, 'Cutoff', colorThreshold, 'Criterion', 'distance');
-    unique_clusters = unique(cluster_assignments);
-    for i = 1:length(unique_clusters)
-        cluster_num = unique_clusters(i);
-        variables_in_cluster = variable_names(cluster_assignments == cluster_num);
-        disp(['Variables in cluster ', num2str(cluster_num), ': ', strjoin(variables_in_cluster, ', ')]);
-    end
-
-    
-
-    % Figure to display text
-    figure_text = figure ('Position', [1300, 600, 500, 500]);
-    %ax = axes(figure_text);
-    text_str = {};
-    
-    for i = 1:length(unique_clusters)
-        cluster_num = unique_clusters(i);
-        variables_in_cluster = variable_names(cluster_assignments == cluster_num);
-        text_str{i} = ['Cluster ', num2str(cluster_num), ': ', strjoin(variables_in_cluster, ', ')];
-    end
-    
-    % Create editable text box
-    uicontrol(figure_text, 'Style', 'edit', 'String', strjoin(text_str, '\n'), 'Units', 'normalized', 'Position', [0, 0, 1, 1], 'Max', 2, 'HorizontalAlignment', 'left');
-
 % Assign clusters and extract variable names for each cluster
-    cluster_assignments = cluster(links, 'Cutoff', colorThreshold, 'Criterion', 'distance');
-    unique_clusters = unique(cluster_assignments);
-    for i = 1:length(unique_clusters)
-        cluster_num = unique_clusters(i);
-        variables_in_cluster = variable_names(cluster_assignments == cluster_num);
-        disp(['Variables in cluster ', num2str(cluster_num), ': ', strjoin(variables_in_cluster, ', ')]);
-    end
+cluster_assignments = cluster(links, 'Cutoff', colorThreshold, 'Criterion', 'distance');
+unique_clusters = unique(cluster_assignments);
 
-    % Append cluster numbers to variable names for the x-axis labels
-    variable_names_with_cluster_numbers = cell(size(variable_names));
-    for i = 1:length(variable_names)
-        cluster_num = cluster_assignments(i);
-        variable_names_with_cluster_numbers{i} = [variable_names{i} ' (Cluster ' num2str(cluster_num) ')'];
-    end
+% Create a cell array to store cluster information
+cluster_info = cell(length(unique_clusters), 4);
 
-    % Update the xticklabels with the new variable names
-    xticklabels(variable_names_with_cluster_numbers(outperm));
+for i = 1:length(unique_clusters)
+    cluster_num = unique_clusters(i);
+    variables_in_cluster = variable_names(cluster_assignments == cluster_num);
+    
+    % Calculate the sum of absolute correlations for the genes in the cluster
+    cluster_correlation_values = abs(correlations(cluster_assignments == cluster_num));
+    sum_abs_correlation = sum(cluster_correlation_values, 'all');
+    
+    % Store cluster information as strings
+    cluster_info{i, 1} = num2str(cluster_num);
+    cluster_info{i, 2} = num2str(length(variables_in_cluster)); % Number of genes in the cluster
+    cluster_info{i, 3} = num2str(sum(abs(correlations), 'all'));
+    cluster_info{i, 4} = strjoin(variables_in_cluster, ', ');
+    
+    
+    
+    % Display cluster information using fprintf
+    fprintf('Cluster %d: %s\n', cluster_num, strjoin(variables_in_cluster, ', '));
+end
 
+% Create a new uifigure to display cluster information
+cluster_info_fig = uifigure('Name', 'Cluster Information', 'Position', [800, 250, 400, 300]);
+cluster_info_table = uitable(cluster_info_fig);
+cluster_info_table.Data = cluster_info;
+cluster_info_table.ColumnName = {'Cluster Number', 'Number of Genes','Power','Gene Names'};
+cluster_info_table.Position = [20, 20, 360, 260];
 
 end
+
+
 
 
 % Define the "Elbow Curve" callback function
@@ -577,22 +487,7 @@ function dynamic_tree_cut_callback(~, ~, f)
     Z = linkage(correlations, 'average');
     % Use inconsistency method to initially determine the number of clusters
     T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
-%% ---    
-% maxNumClusters = 10;  % or some other reasonable upper bound based on your expectations
-% silhouetteValues = zeros(maxNumClusters, 1);
-% 
-% for k = 1:maxNumClusters  % Silhouette is not defined for 1 cluster.
-% Change 1 to any number to eliminate first clusters
-%     T = cluster(Z, 'maxclust', k);
-%     silhouetteValues(k) = mean(silhouette(correlations, T, 'euclidean'));
-% end
-% 
-% % Find the number of clusters that maximizes the silhouette value
-% optimalNumClusters = find(silhouetteValues == max(silhouetteValues), 1);
 
-% Cluster using the optimal number of clusters
-%T = cluster(Z, 'maxclust', optimalNumClusters);
-%% --- 
     % Display the number of members in each cluster in the Command Window
     unique_clusters = unique(T);
     disp('Cluster Results:');
@@ -605,22 +500,7 @@ function dynamic_tree_cut_callback(~, ~, f)
 
     % Use inconsistency method to initially determine the number of clusters
     T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
-%% ---    
-% maxNumClusters = 10;  % or some other reasonable upper bound based on your expectations
-% silhouetteValues = zeros(maxNumClusters, 1);
-% 
-% for k = 1:maxNumClusters  % Silhouette is not defined for 1 cluster.
-% Change 1 to any number to eliminate first clusters
-%     T = cluster(Z, 'maxclust', k);
-%     silhouetteValues(k) = mean(silhouette(correlations, T, 'euclidean'));
-% end
-% 
-% % Find the number of clusters that maximizes the silhouette value
-% optimalNumClusters = find(silhouetteValues == max(silhouetteValues), 1);
 
-% Cluster using the optimal number of clusters
-%T = cluster(Z, 'maxclust', optimalNumClusters);
-%% --- 
 
     % Save the cluster assignments to the app data for further processing
     setappdata(f, 'dynamic_tree_clusters', T);
