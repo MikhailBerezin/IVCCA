@@ -352,6 +352,9 @@ function cluster_callback(~, ~, f)
     [H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold); % Create a dendrogram
     set(H, 'LineWidth', 1);  % Set to desired line width
     ylabel('Distance')
+
+    xticklabels(variable_names(outperm));
+    xtickangle(45); % Rotate the x-axis labels
    
     % Reorder the correlations and variable names based on the clustering
     clustered_correlations = correlations(cluster_order, cluster_order);
