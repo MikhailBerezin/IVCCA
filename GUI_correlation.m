@@ -1,7 +1,7 @@
 function GUI_correlation
 % Mikhail Berezin 2023
 f = uifigure('Name', 'Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
-
+close all
 % f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
 
@@ -125,7 +125,7 @@ function load_data_callback(~, ~, f)
 
     % Save the data table to the app data
     setappdata(f, 'data_table', data_table);
-    uifigureOnTop (f, true) 
+%     uifigureOnTop (f, true) 
 end
 
 
@@ -183,7 +183,7 @@ function calculate_correlations_callback(~, ~, f)
     cluster_button.Enable = 'on'; 
 
     f.WindowStyle = 'normal';
-    uifigureOnTop (f, true)
+%     uifigureOnTop (f, true)
 
 %     Create a new figure for the heatmap
     figure("Position",[400,600, 500,500]);
@@ -215,7 +215,7 @@ function graph_callback(~, ~, f)
      
     
     f.WindowStyle = 'normal';
-    uifigureOnTop (f, true)
+%     uifigureOnTop (f, true)
     % Get the sorted correlations and variable names from the app data
     correlations = getappdata(f, 'sorted_correlations');
     variable_names = getappdata(f, 'sorted_variable_names');
@@ -267,13 +267,47 @@ end
 
 function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
-    uifigureOnTop (f, true)
+%     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
     correlations = getappdata(f, 'correlations');
     variable_names = getappdata(f, 'variable_names');
+
+%     %% Option 1: Select random 50 genes
+%     random_indices = randperm(length(variable_names), 50); % put any nubmer instead of 50
+%     correlations = correlations(random_indices, random_indices);
+%     variable_names = variable_names(random_indices);
+
+
+ %% Option 2: Prompt user to select a text file with genes
+[file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+if isequal(file_name, 0)
+    disp('User selected Cancel');
+    return;
+else
+    % Read gene names from the selected file
+    file_path = fullfile(path_name, file_name);
+    selected_genes = textread(file_path, '%s');
+    
+    % Convert both lists of genes to lowercase for case-insensitive matching
+    selected_genes_lower = lower(selected_genes);
+    variable_names_lower = lower(variable_names);
+    
+    % Match these genes with variable_names to get indices
+    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+    
+    % Filter out non-matching genes (indices == 0)
+    valid_indices = indices(indices > 0);
+    
+    correlations = correlations(valid_indices, valid_indices);
+    variable_names = variable_names(valid_indices);
+end
+
+
+
     
     % Calculate the sum of absolute correlations for each variable
-    sum_abs_correlations = sum(abs(correlations), 2);
+    
+    sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
     % Sort the sums in descending order and get the indices
     [~, sorted_indices] = sort(sum_abs_correlations, 'descend');
@@ -299,14 +333,31 @@ function sort_callback(~, ~, f)
     total_genes = sqrt(numel(correlations));
     top_100_variable_names = sorted_variable_names(1:total_genes);
     top_100_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); % Keep the top 100 sum of absolute correlations
-  %  total_genes = sqrt(numel(correlations));
-    average_abs_correlation =  top_100_sum_abs_correlations/total_genes;
+ 
+    % Adjusted calculation for average absolute correlation after excluding self-correlation 
+    average_abs_correlation = top_100_sum_abs_correlations / (total_genes - 1);
     mean_average_abs_correlation = sum(average_abs_correlation)/total_genes;
   % Create a new uifigure for the sorted data
+
+% Modify the title of uifigure to include the file_name
+% sorted_fig = uifigure('Name', ['List of Correlated Genes from ' file_name ' (Pathway Correlation Strength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+
+if exist('file_name', 'var') && ~isempty(file_name)
+    title_str = ['List of Correlated Genes from ' file_name];
+else
+    title_str = 'List of Correlated Genes from Random';
+end
+
+sorted_fig = uifigure('Name', [title_str ' (Pathway Correlation Strength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+
+
+  
 % sorted_fig = uifigure('Name', ['List of Correlated Genes (Mean Avg Abs Correlation: ' num2str(average_abs_correlation)')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
- sorted_fig = uifigure('Name', ['List of Correlated Genes (Pathway Correlation Srength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+% sorted_fig = uifigure('Name', ['List of Correlated Genes (Pathway Correlation Srength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
+
+
 
 % Display the top 100 correlations in the new uitable
 sorted_data.Data = [top_100_variable_names', num2cell(average_abs_correlation)];  % Add sum of absolute correlations to the table
@@ -339,7 +390,7 @@ function cluster_callback(~, ~, f)
     dims = [1 35];
     definput = {'3'}; % default value, adjust as necessary
     f.WindowStyle = 'normal';
-    uifigureOnTop (f, false)
+%     uifigureOnTop (f, false)
 
     answer = inputdlg_id(prompt, title, dims, definput);
     colorThreshold = str2double(answer{1}); % convert string to number
@@ -430,7 +481,7 @@ function elbow_curve_callback(~, ~, f)
     silhouette_vals = zeros(maxK-1, 1);  % No silhouette for K = 1
     
     for k = 1:maxK
-        [idx, ~, sumD] = kmedoids(correlations, k);
+        [idx, ~, sumD] = kmeans(correlations, k);
         sum_of_squared_distances(k) = sum(sumD);
     end
     
@@ -513,7 +564,8 @@ function dynamic_tree_cut_callback(~, ~, f)
     ordered_correlations = correlations(order, order);
     
     % Create a heatmap using the ordered correlation matrix
-    figure;
+    figure h;
+    HandleVisibility 
     imagesc(ordered_correlations);
     colorbar;
     num_clusters = length(unique_clusters);
