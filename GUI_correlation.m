@@ -17,7 +17,7 @@ data.Layout.Column = 1; % Occupies the first column
 load_button = uibutton(grid, 'push', 'Text', 'Load Data', 'ButtonPushedFcn', {@load_data_callback, f});
 load_button.Layout.Row = 1; % Position for "Load Data" button
 load_button.Layout.Column = 2; 
-load_button.Tooltip = 'load the excel or csv data';  % Adding tooltip
+load_button.Tooltip = 'load the excel or csv data'; 
 
 % Create the "Calculate Correlations" button
 calculate_button = uibutton(grid, 'push', 'Text', 'Calculate', 'ButtonPushedFcn', {@calculate_correlations_callback, f});
@@ -61,9 +61,6 @@ dynamic_tree_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
 dynamic_tree_button.Layout.Column = 2;
 dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
 dynamic_tree_button.Enable = 'off'; % Initially disabled
-
-
-
 
 % Create the results label
 result = uilabel(grid, 'Text', '');
@@ -127,8 +124,6 @@ function load_data_callback(~, ~, f)
     setappdata(f, 'data_table', data_table);
 %     uifigureOnTop (f, true) 
 end
-
-
 
 
 %% Define the "Calculate Correlations" callback function
@@ -208,11 +203,7 @@ end
 
 
 %% Define the "Graph" callback function
-function graph_callback(~, ~, f)
-    
-
-
-     
+function graph_callback(~, ~, f)    
     
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
@@ -259,11 +250,7 @@ function graph_callback(~, ~, f)
 end
 
 
-
-
-
 %% Define the "Sort" callback function
-
 
 function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
@@ -272,41 +259,37 @@ function sort_callback(~, ~, f)
     correlations = getappdata(f, 'correlations');
     variable_names = getappdata(f, 'variable_names');
 
-%     %% Option 1: Select random 50 genes
+ %% Option 1: Select random genes (uncomment when needed)
 %     random_indices = randperm(length(variable_names), 50); % put any nubmer instead of 50
 %     correlations = correlations(random_indices, random_indices);
 %     variable_names = variable_names(random_indices);
 
 
- %% Option 2: Prompt user to select a text file with genes
-[file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
-if isequal(file_name, 0)
-    disp('User selected Cancel');
-    return;
-else
-    % Read gene names from the selected file
-    file_path = fullfile(path_name, file_name);
-    selected_genes = textread(file_path, '%s');
+ %% Option 2: Prompt user to select a text file with genes (uncomment when needed)
+% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+% if isequal(file_name, 0)
+%     disp('User selected Cancel');
+%     return;
+% else
+%     % Read gene names from the selected file
+%     file_path = fullfile(path_name, file_name);
+%     selected_genes = textread(file_path, '%s');
+%     
+%     % Convert both lists of genes to lowercase for case-insensitive matching
+%     selected_genes_lower = lower(selected_genes);
+%     variable_names_lower = lower(variable_names);
+%     
+%     % Match these genes with variable_names to get indices
+%     [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+%     
+%     % Filter out non-matching genes (indices == 0)
+%     valid_indices = indices(indices > 0);
+%     
+%     correlations = correlations(valid_indices, valid_indices);
+%     variable_names = variable_names(valid_indices);
+% end
     
-    % Convert both lists of genes to lowercase for case-insensitive matching
-    selected_genes_lower = lower(selected_genes);
-    variable_names_lower = lower(variable_names);
-    
-    % Match these genes with variable_names to get indices
-    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
-    
-    % Filter out non-matching genes (indices == 0)
-    valid_indices = indices(indices > 0);
-    
-    correlations = correlations(valid_indices, valid_indices);
-    variable_names = variable_names(valid_indices);
-end
-
-
-
-    
-    % Calculate the sum of absolute correlations for each variable
-    
+    % Calculate the sum of absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
     % Sort the sums in descending order and get the indices
@@ -331,16 +314,16 @@ end
 
   % List of average correlations
     total_genes = sqrt(numel(correlations));
-    top_100_variable_names = sorted_variable_names(1:total_genes);
-    top_100_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); % Keep the top 100 sum of absolute correlations
+    top_variable_names = sorted_variable_names(1:total_genes);
+    top_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); 
  
-    % Adjusted calculation for average absolute correlation after excluding self-correlation 
-    average_abs_correlation = top_100_sum_abs_correlations / (total_genes - 1);
+  % Adjust calculation for average absolute correlation after excluding self-correlation 
+    average_abs_correlation = top_sum_abs_correlations / (total_genes - 1);
     mean_average_abs_correlation = sum(average_abs_correlation)/total_genes;
   % Create a new uifigure for the sorted data
 
 % Modify the title of uifigure to include the file_name
-% sorted_fig = uifigure('Name', ['List of Correlated Genes from ' file_name ' (Pathway Correlation Strength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+% sorted_fig = uifigure('Name', ['List of Correlated Genes from ' file_name ' (Pathway Correlation Index: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
 if exist('file_name', 'var') && ~isempty(file_name)
     title_str = ['List of Correlated Genes from ' file_name];
@@ -348,19 +331,13 @@ else
     title_str = 'List of Correlated Genes from Random';
 end
 
-sorted_fig = uifigure('Name', [title_str ' (Pathway Correlation Strength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+sorted_fig = uifigure('Name', [title_str ' (Pathway Correlation Index: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
-
-  
-% sorted_fig = uifigure('Name', ['List of Correlated Genes (Mean Avg Abs Correlation: ' num2str(average_abs_correlation)')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
-% sorted_fig = uifigure('Name', ['List of Correlated Genes (Pathway Correlation Srength: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
 
-
-
-% Display the top 100 correlations in the new uitable
-sorted_data.Data = [top_100_variable_names', num2cell(average_abs_correlation)];  % Add sum of absolute correlations to the table
+% Display gene correlations in the new uitable
+sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation)];  % Add sum of absolute correlations to the table
 sorted_data.ColumnName = {'Gene', 'Average Absolute Correlations'};  % Update column names
 sorted_data.Position = [20 20 560 360];
 
@@ -371,8 +348,6 @@ sorted_data.ColumnSortable(1) = true;
 sorted_data.ColumnSortable(2) = true;
     
 end
-
-
 
 function cluster_callback(~, ~, f)
     % Get the correlations and variable names from the app data
@@ -453,9 +428,7 @@ for i = 1:length(unique_clusters)
     cluster_info{i, 1} = num2str(cluster_num);
     cluster_info{i, 2} = num2str(length(variables_in_cluster)); % Number of genes in the cluster
     cluster_info{i, 3} = num2str(sum(abs(correlations), 'all'));
-    cluster_info{i, 4} = strjoin(variables_in_cluster, ', ');
-    
-    
+    cluster_info{i, 4} = strjoin(variables_in_cluster, ', ');     
     
     % Display cluster information using fprintf
     fprintf('Cluster %d: %s\n', cluster_num, strjoin(variables_in_cluster, ', '));
@@ -470,9 +443,6 @@ cluster_info_table.Position = [20, 20, 360, 260];
 
 end
 
-
-
-
 % Define the "Elbow Curve" callback function
 function elbow_curve_callback(~, ~, f)
     correlations = getappdata(f, 'correlations');  % Get correlations from app data
@@ -483,9 +453,8 @@ function elbow_curve_callback(~, ~, f)
     for k = 1:maxK
         [idx, ~, sumD] = kmeans(correlations, k);
         sum_of_squared_distances(k) = sum(sumD);
-    end
-    
-    
+    end    
+   
     for k = 2:maxK  % Start from 2 clusters
         [idx, ~] = kmedoids(correlations, k);
         
@@ -551,10 +520,8 @@ function dynamic_tree_cut_callback(~, ~, f)
         disp(strjoin(cluster_members, ', '));
     end
 
-
     % Use inconsistency method to initially determine the number of clusters
     T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
-
 
     % Save the cluster assignments to the app data for further processing
     setappdata(f, 'dynamic_tree_clusters', T);
@@ -564,8 +531,7 @@ function dynamic_tree_cut_callback(~, ~, f)
     ordered_correlations = correlations(order, order);
     
     % Create a heatmap using the ordered correlation matrix
-    figure h;
-    HandleVisibility 
+    figure;
     imagesc(ordered_correlations);
     colorbar;
     num_clusters = length(unique_clusters);
