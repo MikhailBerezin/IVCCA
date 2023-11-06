@@ -10,7 +10,7 @@ grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x',
 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 7]; % Spans across 5 rows
+data.Layout.Row = [1 9]; % Spans across 10 rows
 data.Layout.Column = 1; % Occupies the first column
 
 % Create the "Load Data" button
@@ -20,7 +20,7 @@ load_button.Layout.Column = 2;
 load_button.Tooltip = 'load the excel or csv data'; 
 
 % Create the "Calculate Correlations" button
-calculate_button = uibutton(grid, 'push', 'Text', 'Calculate', 'ButtonPushedFcn', {@calculate_correlations_callback, f});
+calculate_button = uibutton(grid, 'push', 'Text', 'Correlation', 'ButtonPushedFcn', {@calculate_correlations_callback, f});
 calculate_button.Layout.Row = 2; % Position for "Calculate Correlations" button
 calculate_button.Layout.Column = 2;
 calculate_button.Tooltip = 'Calculate the correlation matrix';  % Adding tooltip
@@ -61,6 +61,22 @@ dynamic_tree_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
 dynamic_tree_button.Layout.Column = 2;
 dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
 dynamic_tree_button.Enable = 'off'; % Initially disabled
+
+% Create the "Single to Group Correlation" button
+single_to_group_button = uibutton(grid, 'push', 'Text', 'Gene to Group', ...
+                                  'ButtonPushedFcn', {@single_to_group_correlation_callback, f});
+single_to_group_button.Layout.Row = 8; % Choose an appropriate row
+single_to_group_button.Layout.Column = 2;
+single_to_group_button.Tooltip = 'Calculate the correlation of a single gene to a group of genes';
+single_to_group_button.Enable = 'off'; % Initially disabled
+
+% Create the "Single to Pathway Correlation" button
+single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
+                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
+single_to_path_button.Layout.Row = 9; % Choose an appropriate row
+single_to_path_button.Layout.Column = 2;
+single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
+single_to_path_button.Enable = 'off'; % Initially disabled
 
 % Create the results label
 result = uilabel(grid, 'Text', '');
@@ -140,7 +156,7 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-    correlations = corrcoef(table2array(data_table));
+    correlations = corrcoef(table2array(data_table)).^1;
 
         % Check for Cancel button press
     if getappdata(wb, 'canceling')
@@ -170,18 +186,25 @@ function calculate_correlations_callback(~, ~, f)
     setappdata(f, 'correlations', correlations);
     setappdata(f, 'variable_names', data_table.Properties.VariableNames);
     
-    % Enable the "Graph" button
-    graph_button.Enable = 'on';
-    
-    % Enable the "Sort" and "Cluster' button
+    % Enable buttons
+    graph_button.Enable = 'on';      
     sort_button.Enable = 'on';
     cluster_button.Enable = 'on'; 
+    single_to_group_button.Enable = 'on'; % Initially disabled
+    single_to_path_button.Enable = 'off';
 
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
+%     Create a figure for the heatmap
+    figure ('Position',[100 300 400 400])
+    histogram (correlations)
+    title('Correlation Histogram');
+    xlabel('Pairwise Correleation Coefficient, q');
+    ylabel('Number of genes');
 
-%     Create a new figure for the heatmap
-    figure("Position",[400,600, 500,500]);
+%   Create a figure for the heatmap
+    
+    figure("Position",[100,100, 400,400]);
     imagesc(tril(correlations)); % Create a heatmap
     colorbar; % Add a colorbar
     colormap('parula'); % Set the colormap
@@ -191,11 +214,7 @@ function calculate_correlations_callback(~, ~, f)
     xticklabels(data_table.Properties.VariableNames);
     yticklabels(data_table.Properties.VariableNames);
     
-    figure ('Position',[200 250 400 400])
-    histogram (correlations)
-    title('Correlation Histogram');
-    xlabel('Pairwise Correleation Coefficient, q');
-    ylabel('Number of genes');
+
     
 end
 
@@ -221,7 +240,7 @@ function graph_callback(~, ~, f)
     folder = fileparts(mfilename('fullpath'));
     iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
     setIcon(gcf, iconFilePath)
-    figure("Position",[700,600, 500,500]);
+    figure("Position",[800,100, 400,400]);
     h = imagesc(correlations); % Create a heatmap
     colorbar; % Add a colorbar
 
@@ -266,29 +285,30 @@ function sort_callback(~, ~, f)
 
 
  %% Option 2: Prompt user to select a text file with genes (uncomment when needed)
-% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
-% if isequal(file_name, 0)
-%     disp('User selected Cancel');
-%     return;
-% else
-%     % Read gene names from the selected file
-%     file_path = fullfile(path_name, file_name);
-%     selected_genes = textread(file_path, '%s');
-%     
-%     % Convert both lists of genes to lowercase for case-insensitive matching
-%     selected_genes_lower = lower(selected_genes);
-%     variable_names_lower = lower(variable_names);
-%     
-%     % Match these genes with variable_names to get indices
-%     [~, indices] = ismember(selected_genes_lower, variable_names_lower);
-%     
-%     % Filter out non-matching genes (indices == 0)
-%     valid_indices = indices(indices > 0);
-%     
-%     correlations = correlations(valid_indices, valid_indices);
-%     variable_names = variable_names(valid_indices);
-% end
+[file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+if isequal(file_name, 0)
+    disp('User selected Cancel');
+    return;
+else
+    % Read gene names from the selected file
+    file_path = fullfile(path_name, file_name);
+    selected_genes = textread(file_path, '%s');
     
+    % Convert both lists of genes to lowercase for case-insensitive matching
+    selected_genes_lower = lower(selected_genes);
+    variable_names_lower = lower(variable_names);
+    
+    % Match these genes with variable_names to get indices
+    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+    
+    % Filter out non-matching genes (indices == 0)
+    valid_indices = indices(indices > 0);
+    
+    correlations = correlations(valid_indices, valid_indices);
+    variable_names = variable_names(valid_indices);
+end
+%% -----------------------
+%     
     % Calculate the sum of absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
@@ -348,7 +368,7 @@ sorted_data.ColumnSortable(1) = true;
 sorted_data.ColumnSortable(2) = true;
     
 end
-
+%% Perform clustering
 function cluster_callback(~, ~, f)
     % Get the correlations and variable names from the app data
     correlations = getappdata(f, 'correlations');
@@ -443,7 +463,7 @@ cluster_info_table.Position = [20, 20, 360, 260];
 
 end
 
-% Define the "Elbow Curve" callback function
+%% Define the "Elbow Curve" and Silhouette callback functions
 function elbow_curve_callback(~, ~, f)
     correlations = getappdata(f, 'correlations');  % Get correlations from app data
     maxK = 30;  % Maximum number of clusters to check
@@ -480,6 +500,7 @@ function elbow_curve_callback(~, ~, f)
     ylabel('Average Silhouette Value');
 end
 
+%% Dynamic_tree_cut function
 function dynamic_tree_cut_callback(~, ~, f)
     % Get the correlations from the app data
     correlations = getappdata(f, 'correlations');
@@ -568,6 +589,156 @@ function dynamic_tree_cut_callback(~, ~, f)
     for i = 1:length(unique_clusters)
         disp(['Cluster ' num2str(i) ': ' num2str(cluster_mean_abs_correlations(i))]);
     end
+end
+
+%% Define a callback function for calculating single gene-to-group correlations
+function single_to_group_correlation_callback(~, ~, f)
+    % Get the data table from the app data
+    data_table = getappdata(f, 'data_table');
+
+   % Ask the user for the name of the single gene
+single_gene_name = inputdlg('Enter the name of the single gene:');
+if isempty(single_gene_name)
+    errordlg('No gene name was provided.');
+    return;
+end
+single_gene_name = single_gene_name{1};
+
+% Convert both input and variable names in the data table to lowercase for case-insensitive comparison
+single_gene_name_lower = single_gene_name;
+data_table_variable_names_lower = data_table.Properties.VariableNames;
+
+% Validate if the single gene name exists in the data, ignoring case
+single_gene_index = find(strcmpi(data_table_variable_names_lower, single_gene_name_lower));
+if isempty(single_gene_index)
+    errordlg('The specified gene was not found in the data.');
+    return;
+end
+
+    % Ask the user for the names of the group of genes (could be via a list box or another method)
+    [group_gene_indices, group_gene_names] = listdlg('ListString',data_table.Properties.VariableNames, ...
+                                                     'SelectionMode','multiple', ...
+                                                     'PromptString',{'Select the group of genes:'});
+
+
+% Debugging line to check the names
+disp(group_gene_names);  % This should print the selected gene names in the Command Window
+
+    if isempty(group_gene_indices)
+        errordlg('No genes were selected.');
+        return;
+    end
+
+    % Extract the data for the single gene and the group of genes
+    single_gene_data = table2array(data_table(:, single_gene_index));
+    group_genes_data = table2array(data_table(:, group_gene_indices));
+
+    % Calculate the correlation between the single gene and the group of genes
+    single_to_group_correlations = arrayfun(@(idx) corr(single_gene_data, group_genes_data(:, idx)), 1:size(group_genes_data, 2));
+    
+    % Calculate the average of the absolute values of the correlation coefficients
+    avg_abs_correlation = mean(abs(single_to_group_correlations));
+    
+    % Display or plot the results
+    figure;
+
+hold on; % Hold on to the current figure
+for i = 1:length(single_to_group_correlations)
+    if single_to_group_correlations(i) < 0
+        bar(i, single_to_group_correlations(i), 'FaceColor', 'r'); % Negative correlations in red
+    else
+        bar(i, single_to_group_correlations(i), 'FaceColor', 'b'); % Positive correlations in default color
+    end
+end
+
+    % Include the average of the absolute correlations in the title
+    title_str = sprintf('Correlation of %s to selected group of genes (Avg. Abs. Corr. = %.2f)', single_gene_name, avg_abs_correlation);
+    title(title_str);
+    
+    ylabel('Correlation Coefficient');
+    xticks(1:length(group_gene_names));
+    xticklabels(group_gene_names);
+    xtickangle(45); % Angle the labels for readability
+    set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
+   
+end   
+    
+%% Define a callback function for calculating single gene-to-pathway correlations
+function single_to_pathway_correlation_callback(~, ~, f)
+    % Get the data table from the app data
+    data_table = getappdata(f, 'data_table');
+
+    % Ask the user for the name of the single gene
+    single_gene_name = inputdlg('Enter the name of the single gene:');
+    if isempty(single_gene_name)
+        errordlg('No gene name was provided.');
+        return;
+    end
+    single_gene_name = single_gene_name{1};
+
+
+% Convert both the input and the data table gene names to lower case for comparison
+single_gene_name_lower = single_gene_name;
+data_table_gene_names_lower = data_table.Properties.VariableNames;
+
+% Validate if the single gene name exists in the data, ignoring case
+single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
+if isempty(single_gene_index)
+    errordlg('The specified gene was not found in the data.');
+    return;
+end
+ 
+    % Ask the user for the txt file containing the list of genes
+    [file, path] = uigetfile('*.txt', 'Select the txt file with the list of genes');
+    if isequal(file, 0)
+        return
+    end
+    
+    % Read the list of genes from the file
+    fileID = fopen(fullfile(path, file), 'r');
+    genes_list = textscan(fileID, '%s');
+    fclose(fileID);
+    genes_list = genes_list{1}; % Convert from cell array to simple string array
+
+    % Find the indices of the genes in the list that are present in the data
+    [~, pathway_gene_indices] = ismember(genes_list, data_table.Properties.VariableNames);
+    pathway_gene_indices(pathway_gene_indices == 0) = []; % Remove genes not found in the data
+
+    % Extract the data for the single gene and the pathway genes
+    single_gene_data = table2array(data_table(:, single_gene_index));
+    pathway_genes_data = table2array(data_table(:, pathway_gene_indices));
+
+    % Calculate the correlation between the single gene and each gene in the pathway
+    single_to_pathway_correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
+
+    % Calculate the average of the absolute values of the correlation coefficients
+    avg_abs_correlation = mean(abs(single_to_pathway_correlations));
+
+    % Display or plot the results
+    figure;
+
+% Display or plot the results with color coding
+
+hold on; % Hold on to the current figure
+for i = 1:length(single_to_pathway_correlations)
+    if single_to_pathway_correlations(i) < 0
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r'); % Negative correlations in red
+    else
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b'); % Positive correlations in default color
+    end
+end
+hold off; % Release the figure
+
+% Include the file name and the average of the absolute correlations in the title
+title_str = sprintf('Correlation of %s to pathway genes in %s (Avg. Abs. Corr. = %.2f)', single_gene_name, file, avg_abs_correlation);
+title(title_str);
+
+ylabel('Correlation Coefficient');
+xticks(1:length(genes_list));
+xticklabels(genes_list);
+xtickangle(45); % Angle the labels for readability
+set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
+
 end
 
 
