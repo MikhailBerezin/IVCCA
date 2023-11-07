@@ -191,7 +191,7 @@ function calculate_correlations_callback(~, ~, f)
     sort_button.Enable = 'on';
     cluster_button.Enable = 'on'; 
     single_to_group_button.Enable = 'on'; % Initially disabled
-    single_to_path_button.Enable = 'off';
+    single_to_path_button.Enable = 'on';
 
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
