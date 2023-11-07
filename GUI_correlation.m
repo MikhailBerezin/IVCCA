@@ -285,28 +285,28 @@ function sort_callback(~, ~, f)
 
 
  %% Option 2: Prompt user to select a text file with genes (uncomment when needed)
-[file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
-if isequal(file_name, 0)
-    disp('User selected Cancel');
-    return;
-else
-    % Read gene names from the selected file
-    file_path = fullfile(path_name, file_name);
-    selected_genes = textread(file_path, '%s');
-    
-    % Convert both lists of genes to lowercase for case-insensitive matching
-    selected_genes_lower = lower(selected_genes);
-    variable_names_lower = lower(variable_names);
-    
-    % Match these genes with variable_names to get indices
-    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
-    
-    % Filter out non-matching genes (indices == 0)
-    valid_indices = indices(indices > 0);
-    
-    correlations = correlations(valid_indices, valid_indices);
-    variable_names = variable_names(valid_indices);
-end
+% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+% if isequal(file_name, 0)
+%     disp('User selected Cancel');
+%     return;
+% else
+%     % Read gene names from the selected file
+%     file_path = fullfile(path_name, file_name);
+%     selected_genes = textread(file_path, '%s');
+%     
+%     % Convert both lists of genes to lowercase for case-insensitive matching
+%     selected_genes_lower = lower(selected_genes);
+%     variable_names_lower = lower(variable_names);
+%     
+%     % Match these genes with variable_names to get indices
+%     [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+%     
+%     % Filter out non-matching genes (indices == 0)
+%     valid_indices = indices(indices > 0);
+%     
+%     correlations = correlations(valid_indices, valid_indices);
+%     variable_names = variable_names(valid_indices);
+% end
 %% -----------------------
 %     
     % Calculate the sum of absolute correlations for each variable (gene)   
@@ -361,6 +361,13 @@ sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation)];  % 
 sorted_data.ColumnName = {'Gene', 'Average Absolute Correlations'};  % Update column names
 sorted_data.Position = [20 20 560 360];
 
+%% Experiment
+% indices = find(top_variable_names' == 'Chtf8');
+% Find indices of elements that match the value
+
+%%
+setappdata(0,'cor_variable',top_variable_names')
+setappdata(0,'cor_value',average_abs_correlation)
 % Enable sorting for the first column (Gene)
 sorted_data.ColumnSortable(1) = true;
 
@@ -447,11 +454,21 @@ for i = 1:length(unique_clusters)
     % Store cluster information as strings
     cluster_info{i, 1} = num2str(cluster_num);
     cluster_info{i, 2} = num2str(length(variables_in_cluster)); % Number of genes in the cluster
-    cluster_info{i, 3} = num2str(sum(abs(correlations), 'all'));
+    
     cluster_info{i, 4} = strjoin(variables_in_cluster, ', ');     
     
     % Display cluster information using fprintf
     fprintf('Cluster %d: %s\n', cluster_num, strjoin(variables_in_cluster, ', '));
+    sum_cor=0;
+    for j =1:length(variables_in_cluster)
+        
+%%
+        var= getappdata(0,'cor_variable');
+        matching_indices = find(cellfun(@(x) isequal(x, variables_in_cluster{j}), var));
+        cor= getappdata(0,'cor_value');
+        sum_cor=sum_cor+abs(cor(matching_indices));
+    end
+    cluster_info{i, 3} = num2str((sum_cor/length(variables_in_cluster)));
 end
 
 % Create a new uifigure to display cluster information
