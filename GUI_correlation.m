@@ -37,7 +37,7 @@ sort_button.Enable = 'off'; % Initially disabled
 graph_button = uibutton(grid, 'push', 'Text', 'Graph', 'ButtonPushedFcn', {@graph_callback, f});
 graph_button.Layout.Row = 4; % Position for "Graph" button
 graph_button.Layout.Column = 2;
-graph_button.Tooltip = 'Graph the correlation matrix or sorted correlation matrix';  % Adding tooltip
+graph_button.Tooltip = 'Graph the sorted correlation matrix';  % Adding tooltip
 graph_button.Enable = 'off'; % Initially disabled
 
 % Create the "Cluster" button
@@ -284,29 +284,29 @@ function sort_callback(~, ~, f)
 %     variable_names = variable_names(random_indices);
 
 
- %% Option 2: Prompt user to select a text file with genes (uncomment when needed)
-% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
-% if isequal(file_name, 0)
-%     disp('User selected Cancel');
-%     return;
-% else
-%     % Read gene names from the selected file
-%     file_path = fullfile(path_name, file_name);
-%     selected_genes = textread(file_path, '%s');
-%     
-%     % Convert both lists of genes to lowercase for case-insensitive matching
-%     selected_genes_lower = lower(selected_genes);
-%     variable_names_lower = lower(variable_names);
-%     
-%     % Match these genes with variable_names to get indices
-%     [~, indices] = ismember(selected_genes_lower, variable_names_lower);
-%     
-%     % Filter out non-matching genes (indices == 0)
-%     valid_indices = indices(indices > 0);
-%     
-%     correlations = correlations(valid_indices, valid_indices);
-%     variable_names = variable_names(valid_indices);
-% end
+ % Option 2: Prompt user to select a text file with genes (uncomment when needed)
+[file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+if isequal(file_name, 0)
+    disp('User selected Cancel');
+    return;
+else
+    % Read gene names from the selected file
+    file_path = fullfile(path_name, file_name);
+    selected_genes = textread(file_path, '%s');
+    
+    % Convert both lists of genes to lowercase for case-insensitive matching
+    selected_genes_lower = lower(selected_genes);
+    variable_names_lower = lower(variable_names);
+    
+    % Match these genes with variable_names to get indices
+    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+    
+    % Filter out non-matching genes (indices == 0)
+    valid_indices = indices(indices > 0);
+    
+    correlations = correlations(valid_indices, valid_indices);
+    variable_names = variable_names(valid_indices);
+end
 %% -----------------------
 %     
     % Calculate the sum of absolute correlations for each variable (gene)   
@@ -475,9 +475,20 @@ end
 cluster_info_fig = uifigure('Name', 'Cluster Information', 'Position', [800, 250, 400, 300]);
 cluster_info_table = uitable(cluster_info_fig);
 cluster_info_table.Data = cluster_info;
-cluster_info_table.ColumnName = {'Cluster Number', 'Number of Genes','Power','Gene Names'};
+cluster_info_table.ColumnName = {'Cluster Number', 'Number of Genes','PCI','Gene Names'};
 cluster_info_table.Position = [20, 20, 360, 260];
+% setappdata(0,'cor_variable',top_variable_names')
+% setappdata(0,'cor_value',average_abs_correlation)
 
+% Enable sorting for the first column (custer number)
+cluster_info_table.ColumnSortable(1) = true;
+
+% Enable sorting for the second column (number of genes)
+cluster_info_table.ColumnSortable(2) = true;
+
+
+% Enable sorting for the second column (Index)
+cluster_info_table.ColumnSortable(3) = true;
 end
 
 %% Define the "Elbow Curve" and Silhouette callback functions
@@ -662,9 +673,9 @@ disp(group_gene_names);  % This should print the selected gene names in the Comm
 hold on; % Hold on to the current figure
 for i = 1:length(single_to_group_correlations)
     if single_to_group_correlations(i) < 0
-        bar(i, single_to_group_correlations(i), 'FaceColor', 'r'); % Negative correlations in red
+        bar(i, single_to_group_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
     else
-        bar(i, single_to_group_correlations(i), 'FaceColor', 'b'); % Positive correlations in default color
+        bar(i, single_to_group_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in default color
     end
 end
 
@@ -739,9 +750,9 @@ end
 hold on; % Hold on to the current figure
 for i = 1:length(single_to_pathway_correlations)
     if single_to_pathway_correlations(i) < 0
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r'); % Negative correlations in red
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
     else
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b'); % Positive correlations in default color
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in default color
     end
 end
 hold off; % Release the figure
