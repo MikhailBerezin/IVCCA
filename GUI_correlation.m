@@ -275,8 +275,8 @@ function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
-    correlations = getappdata(f, 'correlations');
-    variable_names = getappdata(f, 'variable_names');
+    correlations2 = getappdata(f, 'correlations');
+    variable_names2 = getappdata(f, 'variable_names');
 
  %% Option 1: Select random genes (uncomment when needed)
 %     random_indices = randperm(length(variable_names), 50); % put any nubmer instead of 50
@@ -296,7 +296,7 @@ else
     
     % Convert both lists of genes to lowercase for case-insensitive matching
     selected_genes_lower = lower(selected_genes);
-    variable_names_lower = lower(variable_names);
+    variable_names_lower = lower(variable_names2);
     
     % Match these genes with variable_names to get indices
     [~, indices] = ismember(selected_genes_lower, variable_names_lower);
@@ -304,8 +304,8 @@ else
     % Filter out non-matching genes (indices == 0)
     valid_indices = indices(indices > 0);
     
-    correlations = correlations(valid_indices, valid_indices);
-    variable_names = variable_names(valid_indices);
+    correlations = correlations2(valid_indices, valid_indices);
+    variable_names = variable_names2(valid_indices);
 end
 % -----------------------
 %     
@@ -319,6 +319,27 @@ end
     sorted_correlations = correlations(sorted_indices, sorted_indices);
     sorted_variable_names = variable_names(sorted_indices);
     sorted_sum_abs_correlations = sum_abs_correlations(sorted_indices);  % Also sort the sum of absolute correlations
+    %% Global
+     % Calculate the sum of global absolute correlations for each variable (gene)   
+    sum_abs_correlations2 = sum(abs(correlations2), 2) - 1; % Subtract 1 for self-correlation
+    
+    % Sort the sums in descending order and get the indices
+    [~, sorted_indices2] = sort(sum_abs_correlations2, 'descend');
+    
+    % Use the sorted indices to sort the correlations and variable names
+    sorted_correlations2 = correlations2(sorted_indices2, sorted_indices2);
+    sorted_variable_names2 = variable_names2(sorted_indices2);
+    sorted_sum_abs_correlations2 = sum_abs_correlations2(sorted_indices2); 
+    
+     % List of average correlations
+    total_genes2 = sqrt(numel(correlations2));
+    top_variable_names2 = sorted_variable_names2(1:total_genes2);
+    top_sum_abs_correlations2 = sorted_sum_abs_correlations2(1:total_genes2); 
+ 
+  % Adjust calculation for average absolute correlation after excluding self-correlation 
+    average_abs_correlation2 = top_sum_abs_correlations2 / (total_genes2 - 1);
+    mean_average_abs_correlation2 = sum(average_abs_correlation2)/total_genes2;
+    
     
     % Update the data in the existing uitable instead of creating a new one
     data.Data = sorted_correlations;
@@ -356,18 +377,30 @@ sorted_fig = uifigure('Name', [title_str ' (Pathway Correlation Index: ' num2str
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
 
-% Display gene correlations in the new uitable
-sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation)];  % Add sum of absolute correlations to the table
-sorted_data.ColumnName = {'Gene', 'Average Absolute Correlations'};  % Update column names
-sorted_data.Position = [20 20 560 360];
+
+%% Global
+array=[];
+ for j =1:length(sorted_correlations)
+        
+%%
+        var= top_variable_names2';
+        matching_indices = find(cellfun(@(x) isequal(x, sorted_variable_names{j}), var));
+        cor= average_abs_correlation2;
+        array{j}= cor(matching_indices);
+        
+ end
+ % Display gene correlations in the new uitable
+sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation),array'];  % Add sum of absolute correlations to the table
+sorted_data.ColumnName = {'Gene', 'Average Absolute Correlations','Avg Global Correlations'};  % Update column names
+sorted_data.Position = [20 20 560 360];  
 
 %% Experiment
 % indices = find(top_variable_names' == 'Chtf8');
 % Find indices of elements that match the value
 
 %%
-setappdata(0,'cor_variable',top_variable_names')
-setappdata(0,'cor_value',average_abs_correlation)
+setappdata(0,'cor_variable',top_variable_names2')
+setappdata(0,'cor_value',average_abs_correlation2)
 % Enable sorting for the first column (Gene)
 sorted_data.ColumnSortable(1) = true;
 
