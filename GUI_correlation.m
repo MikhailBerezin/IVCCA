@@ -284,7 +284,7 @@ function sort_callback(~, ~, f)
 %     variable_names = variable_names(random_indices);
 
 
- % Option 2: Prompt user to select a text file with genes (uncomment when needed)
+% Option 2: Prompt user to select a text file with genes (uncomment when needed)
 [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
 if isequal(file_name, 0)
     disp('User selected Cancel');
@@ -307,7 +307,7 @@ else
     correlations = correlations(valid_indices, valid_indices);
     variable_names = variable_names(valid_indices);
 end
-%% -----------------------
+% -----------------------
 %     
     % Calculate the sum of absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
@@ -452,8 +452,8 @@ for i = 1:length(unique_clusters)
     sum_abs_correlation = sum(cluster_correlation_values, 'all');
     
     % Store cluster information as strings
-    cluster_info{i, 1} = num2str(cluster_num);
-    cluster_info{i, 2} = num2str(length(variables_in_cluster)); % Number of genes in the cluster
+    cluster_info{i, 1} = uint8(cluster_num);
+    cluster_info{i, 2} = length(variables_in_cluster); % Number of genes in the cluster
     
     cluster_info{i, 4} = strjoin(variables_in_cluster, ', ');     
     
@@ -468,7 +468,7 @@ for i = 1:length(unique_clusters)
         cor= getappdata(0,'cor_value');
         sum_cor=sum_cor+abs(cor(matching_indices));
     end
-    cluster_info{i, 3} = num2str((sum_cor/length(variables_in_cluster)));
+    cluster_info{i, 3} = sum_cor/length(variables_in_cluster);
 end
 
 % Create a new uifigure to display cluster information
@@ -480,7 +480,7 @@ cluster_info_table.Position = [20, 20, 360, 260];
 % setappdata(0,'cor_variable',top_variable_names')
 % setappdata(0,'cor_value',average_abs_correlation)
 
-% Enable sorting for the first column (custer number)
+% Enable sorting for the first column (cluster number)
 cluster_info_table.ColumnSortable(1) = true;
 
 % Enable sorting for the second column (number of genes)
