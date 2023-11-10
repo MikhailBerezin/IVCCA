@@ -515,7 +515,7 @@ else
     title_str = 'List of Correlated Genes from Random';
 end
 
-modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  ')'];
+modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  num2str(mean_average_abs_correlation2)];
 % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 % Create a uitable in the new uifigure
@@ -831,8 +831,11 @@ end
     [group_gene_indices, group_gene_names] = listdlg('ListString',data_table.Properties.VariableNames, ...
                                                      'SelectionMode','multiple', ...
                                                      'PromptString',{'Select the group of genes:'});
-
-
+group_gene_names={};
+for i=1:length(group_gene_indices)
+    k=group_gene_indices(i);
+    group_gene_names{i}=data_table.Properties.VariableNames{k};
+end
 % Debugging line to check the names
 disp(group_gene_names);  % This should print the selected gene names in the Command Window
 
