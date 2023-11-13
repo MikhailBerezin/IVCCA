@@ -10,7 +10,7 @@ grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x',
 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 9]; % Spans across 10 rows
+data.Layout.Row = [1 12]; % Spans across 10 rows
 data.Layout.Column = 1; % Occupies the first column
 
 % Create the "Load Data" button
@@ -80,10 +80,25 @@ single_to_group_button.Enable = 'off'; % Initially disabled
 % Create the "Single to Pathway Correlation" button
 single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
                                   'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
-single_to_path_button.Layout.Row = 10; % Choose an appropriate row
+single_to_path_button.Layout.Row = 10; 
 single_to_path_button.Layout.Column = 2;
 single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
-single_to_path_button.Enable = 'off'; % Initially disabled
+single_to_path_button.Enable = 'off'; 
+
+% Create the "tsne correlations" button
+tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
+tsne_button.Layout.Row = 11; % Position for "Calculate tsne" button
+tsne_button.Layout.Column = 2;
+tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
+tsne_button.Enable = 'off';
+
+% Create the "Compare pathways" button
+compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare pathways', 'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
+compare_paths_button.Layout.Row = 12; % Position for "Compare pathways" button
+compare_paths_button.Layout.Column = 2;
+compare_paths_button.Tooltip = 'Compare two pathways';  % Adding tooltip
+compare_paths_button.Enable = 'off';
+
 
 % Create the results label
 result = uilabel(grid, 'Text', '');
@@ -200,6 +215,9 @@ function calculate_correlations_callback(~, ~, f)
     cluster_button.Enable = 'on'; 
     single_to_group_button.Enable = 'on'; % Initially disabled
     single_to_path_button.Enable = 'on';
+    compare_paths_button.Enable = 'on';
+    tsne_button.Enable = 'on';
+
 
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
