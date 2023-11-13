@@ -515,11 +515,7 @@ else
     title_str = 'List of Correlated Genes from Random';
 end
 
-modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  num2str(mean_average_abs_correlation2)];
-% sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
-sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
-% Create a uitable in the new uifigure
-sorted_data = uitable(sorted_fig);
+
 
 
 %% Global
@@ -533,6 +529,12 @@ array=[];
         array{j}= cor(matching_indices);
         
  end
+ 
+modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  num2str(mean([array{:}]))];
+% sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+% Create a uitable in the new uifigure
+sorted_data = uitable(sorted_fig);
  % Display gene correlations in the new uitable
 sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation),array'];  % Add sum of absolute correlations to the table
 sorted_data.ColumnName = {'Gene', 'A: Correlation within the Pathway','B: Correlation Extracted from Global'};  % Update column names
