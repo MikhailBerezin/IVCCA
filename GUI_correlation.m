@@ -86,7 +86,7 @@ single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a
 single_to_path_button.Enable = 'off'; 
 
 % Create the "tsne correlations" button
-tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
+tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne2);
 tsne_button.Layout.Row = 11; % Position for "Calculate tsne" button
 tsne_button.Layout.Column = 2;
 tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
@@ -205,8 +205,8 @@ function calculate_correlations_callback(~, ~, f)
     
 
     % Save the correlations to the app data
-    setappdata(f, 'correlations', correlations);
-    setappdata(f, 'variable_names', data_table.Properties.VariableNames);
+    setappdata(0, 'correlations', correlations);
+    setappdata(0, 'variable_names', data_table.Properties.VariableNames);
     
     % Enable buttons
     graph_button.Enable = 'on';      
