@@ -93,7 +93,7 @@ tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
 tsne_button.Enable = 'off';
 
 % Create the "Compare pathways" button
-compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare pathways', 'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
+compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
 compare_paths_button.Layout.Row = 12; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
 compare_paths_button.Tooltip = 'Compare two pathways';  % Adding tooltip
@@ -302,8 +302,8 @@ function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
-    correlations = getappdata(f, 'correlations');
-    variable_names = getappdata(f, 'variable_names');
+    correlations = getappdata(0, 'correlations');
+    variable_names = getappdata(0, 'variable_names');
 
  %% Option 1: Select random genes (uncomment when needed)
 %     random_indices = randperm(length(variable_names), 50); % put any nubmer instead of 50
@@ -582,8 +582,8 @@ end
 %% Perform clustering
 function cluster_callback(~, ~, f)
     % Get the correlations and variable names from the app data
-    correlations = getappdata(f, 'correlations');
-    variable_names = getappdata(f, 'variable_names');
+    correlations = getappdata(0, 'correlations');
+    variable_names = getappdata(0, 'variable_names');
 
     % Perform hierarchical clustering
     dists = pdist(correlations, 'euclidean');
