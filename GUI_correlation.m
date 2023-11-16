@@ -442,8 +442,8 @@ function sort_path_callback(~, ~, f)
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
-    correlations2 = getappdata(f, 'correlations');
-    variable_names2 = getappdata(f, 'variable_names');
+    correlations2 = getappdata(0, 'correlations');
+    variable_names2 = getappdata(0, 'variable_names');
 
 % Option 2: Prompt user to select a text file with genes (uncomment when needed)
 [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
@@ -697,7 +697,7 @@ end
 
 %% Define the "Elbow Curve" and Silhouette callback functions
 function elbow_curve_callback(~, ~, f)
-    correlations = getappdata(f, 'correlations');  % Get correlations from app data
+    correlations = getappdata(0, 'correlations');  % Get correlations from app data
     maxK = 30;  % Maximum number of clusters to check
     sum_of_squared_distances = zeros(maxK, 1);
     silhouette_vals = zeros(maxK-1, 1);  % No silhouette for K = 1
@@ -735,8 +735,8 @@ end
 %% Dynamic_tree_cut function
 function dynamic_tree_cut_callback(~, ~, f)
     % Get the correlations from the app data
-    correlations = getappdata(f, 'correlations');
-    variable_names = getappdata(f, 'variable_names');
+    correlations = getappdata(0, 'correlations');
+    variable_names = getappdata(0, 'variable_names');
     
     % Ask the user to specify cutoff_cl
     prompt = {'Enter cutoff value (default is 0.15):'};
