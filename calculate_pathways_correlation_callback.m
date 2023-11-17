@@ -45,16 +45,61 @@ end
     data=  getappdata(0, 'correlations');
     geneNames= getappdata(0,'variable_names');
     %%
-    % Calculate pairwise correlations and take absolute values
-    for i = 1:length(pathway1_genes)
+   
+% %     matchingNames = geneNames(strcmp(geneNames, pathway1_genes));
+%     matchingIndices1 = contains(geneNames, pathway1_genes);
+% 
+% % Use logical indexing to get matching names
+%     pathway1_genes = geneNames(matchingIndices1);
+%     
+%     % Calculate pairwise correlations and take absolute values
+%       matchingIndices2 = contains(geneNames, pathway2_genes);
+% 
+% % Use logical indexing to get matching names
+%       pathway2_genes = geneNames(matchingIndices2);
+      
+      k=1;
+      l=1;
+      
+       for i = 1:length(pathway1_genes)
+           rowNameToFind = pathway1_genes{i};  % Replace with the actual row name
+            rowIndex = find(strcmp(geneNames, rowNameToFind));
+               if ~isempty(rowIndex)
+                % Get the value at the specified row and column
+                
+                pathway_genes_1{k}=rowNameToFind;
+                k=k+1;
+               end
+       end   
+        
         for j = 1:length(pathway2_genes)
 %             correlation_coeff = corr(pathway1_genes{i}, pathway2_genes{j});
 %             abs_correlation_coeffs = [abs_correlation_coeffs; abs(correlation_coeff)];
-            rowNameToFind = pathway1_genes{i};  % Replace with the actual row name
+       
+            % Find the column index based on the column name
+            columnNameToFind = pathway2_genes{j};  % Replace with the actual column name
+            columnIndex = find(strcmp(geneNames, columnNameToFind));
+
+            
+            if ~isempty(columnIndex)
+                 
+                pathway_genes_2{l}=columnNameToFind;
+                l=l+1;
+            end
+                
+           
+         end
+    
+    for i = 1:length(pathway_genes_1)
+        
+        for j = 1:length(pathway_genes_2)
+%             correlation_coeff = corr(pathway1_genes{i}, pathway2_genes{j});
+%             abs_correlation_coeffs = [abs_correlation_coeffs; abs(correlation_coeff)];
+            rowNameToFind = pathway_genes_1{i};  % Replace with the actual row name
             rowIndex = find(strcmp(geneNames, rowNameToFind));
 
             % Find the column index based on the column name
-            columnNameToFind = pathway2_genes{j};  % Replace with the actual column name
+            columnNameToFind = pathway_genes_2{j};  % Replace with the actual column name
             columnIndex = find(strcmp(geneNames, columnNameToFind));
 
             % Check if the row and column indices are found
@@ -64,8 +109,13 @@ end
 
                 % Display the result
                 new_data{i,j}=cellValue;
+               
+                
             else
+               
                 disp('Row or column not found.');
+                
+                break
             end
          end
     end
@@ -76,8 +126,8 @@ sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Ic
 sorted_data = uitable(sorted_fig);
  % Display gene correlations in the new uitable
 sorted_data.Data = new_data;  % Add sum of absolute correlations to the table
-sorted_data.ColumnName = pathway2_genes;
-sorted_data.RowName = pathway1_genes;  % Update column names
+sorted_data.ColumnName = pathway_genes_2;
+sorted_data.RowName = pathway_genes_1;  % Update column names
 sorted_data.Position = [20 20 560 360];  
     % Calculate the average absolute correlation
 %     average_abs_correlation = mean(abs_correlation_coeffs);
