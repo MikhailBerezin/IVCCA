@@ -37,7 +37,7 @@ sort_button.Enable = 'off'; % Initially disabled
 sort_path_button = uibutton(grid, 'push', 'Text', 'Pathway', 'ButtonPushedFcn', {@sort_path_callback, f});
 sort_path_button.Layout.Row = 4; % Position for "Pathway" button
 sort_path_button.Layout.Column = 2;
-sort_path_button.Tooltip = 'Sort the correlation matrix for a seected pathway';  % Adding tooltip
+sort_path_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
 sort_path_button.Enable = 'off'; % Initially disabled
 
 % Create the "Graph" button
@@ -107,10 +107,23 @@ result.Layout.Column = 1; % Positioned in the first column
 
 %% This function removes the rows with missing numbers
 function load_data_callback(~, ~, f)
-    % Get the file name
-    [file, path] = uigetfile('*.xlsx', 'Select a data file');
+% Define a persistent variable to store the last used path
+    persistent lastUsedPath
+
+    % Check if the lastUsedPath is valid and not empty
+    if isempty(lastUsedPath) || ~isfolder(lastUsedPath)
+        lastUsedPath = pwd; % Default to the current working directory
+    end
+
+    % Modify the uigetfile call to start in the last used directory
+    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx'), 'Select a data file');
+
+    % Check if the user canceled the file selection
     if isequal(file, 0)
         return
+    else
+        % Update the lastUsedPath
+        lastUsedPath = path;
     end
 
     % Initialize the waitbar
@@ -300,6 +313,9 @@ end
 
 function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
+        % Initialize the waitbar
+    hWaitBar = waitbar(0, 'Initializing...');
+
 %     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
     correlations = getappdata(0, 'correlations');
@@ -350,8 +366,13 @@ function sort_callback(~, ~, f)
      % Calculate the sum of global absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
+    % Update the waitbar 
+    waitbar(0.2, hWaitBar, 'Calculates the sum of global absolute correlation...');
     % Sort the sums in descending order and get the indices
     [~, sorted_indices] = sort(sum_abs_correlations, 'descend');
+
+       % Update the waitbar a
+    waitbar(0.4, hWaitBar, 'Sort the sums in descending order...');
     
     % Use the sorted indices to sort the correlations and variable names
     sorted_correlations = correlations(sorted_indices, sorted_indices);
@@ -362,7 +383,8 @@ function sort_callback(~, ~, f)
     total_genes = sqrt(numel(correlations));
     top_variable_names = sorted_variable_names(1:total_genes);
     top_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); 
- 
+     % Update the waitbar a
+    waitbar(0.8, hWaitBar, ' Excluding self-correlation...');
   % Adjust calculation for average absolute correlation after excluding self-correlation 
     average_abs_correlation = top_sum_abs_correlations / (total_genes - 1);
     mean_average_abs_correlation = sum(average_abs_correlation)/total_genes;
@@ -372,11 +394,12 @@ function sort_callback(~, ~, f)
     data.Data = sorted_correlations;
     data.ColumnName = sorted_variable_names;
     data.RowName = sorted_variable_names;
-
+    waitbar(0.9, hWaitBar, ' Update the data in the table...');
     % Save the sorted correlations and variable names to the app data
     setappdata(f, 'sorted_correlations', sorted_correlations);
     setappdata(f, 'sorted_variable_names', sorted_variable_names);
-
+    waitbar(1, hWaitBar, ' Completed...');
+    close(hWaitBar);
     % Set the results in the GUI
     f.Name = ['Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
 
@@ -446,11 +469,26 @@ function sort_path_callback(~, ~, f)
     variable_names2 = getappdata(0, 'variable_names');
 
 % Option 2: Prompt user to select a text file with genes (uncomment when needed)
-[file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
+
+% Define a persistent variable to store the last used path
+    persistent lastUsedPath_p
+
+    % Check if the lastUsedPath is valid and not empty
+    if isempty(lastUsedPath_p) || ~isfolder(lastUsedPath_p)
+        lastUsedPath_p = pwd; % Default to the current working directory
+    end
+
+    % Modify the uigetfile call to start in the last used directory
+    [file_name, path_name] = uigetfile(fullfile(lastUsedPath_p, '*.txt'), 'Select a text file containing gene names');
+
 if isequal(file_name, 0)
     disp('User selected Cancel');
     return;
 else
+    % Update the lastUsedPath_p with the correct variable
+    lastUsedPath_p = path_name;  % Use path_name instead of path
+
     % Read gene names from the selected file
     file_path = fullfile(path_name, file_name);
     selected_genes = textread(file_path, '%s');
@@ -697,8 +735,16 @@ end
 
 %% Define the "Elbow Curve" and Silhouette callback functions
 function elbow_curve_callback(~, ~, f)
+    % Initialize the waitbar
+    hWaitBar = waitbar(0, 'Initializing...');
+
     correlations = getappdata(0, 'correlations');  % Get correlations from app data
+
+    % Initialize the waitbar
+    waitbar(0.2, hWaitBar, 'Performing Elbow computation...');
+
     maxK = 30;  % Maximum number of clusters to check
+
     sum_of_squared_distances = zeros(maxK, 1);
     silhouette_vals = zeros(maxK-1, 1);  % No silhouette for K = 1
     
@@ -706,7 +752,7 @@ function elbow_curve_callback(~, ~, f)
         [idx, ~, sumD] = kmeans(correlations, k);
         sum_of_squared_distances(k) = sum(sumD);
     end    
-   
+   waitbar(0.4, hWaitBar, 'Performing Silhouette computation...');
     for k = 2:maxK  % Start from 2 clusters
         [idx, ~] = kmedoids(correlations, k);
         
@@ -715,7 +761,7 @@ function elbow_curve_callback(~, ~, f)
         silhouette_vals(k-1) = mean(s);
     end
 
-
+waitbar(0.8, hWaitBar, 'Plotting...');
 % Create a subplot to show both elbow and silhouette plots side by side
     figure;
     
@@ -730,6 +776,8 @@ function elbow_curve_callback(~, ~, f)
     title('Silhouette Analysis ');
     xlabel('Number of clusters (K)');
     ylabel('Average Silhouette Value');
+    waitbar(1, hWaitBar, 'Complete...');
+    close(hWaitBar);
 end
 
 %% Dynamic_tree_cut function
