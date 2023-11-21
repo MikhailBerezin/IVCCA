@@ -40,16 +40,23 @@ sort_path_button.Layout.Column = 2;
 sort_path_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
 sort_path_button.Enable = 'off'; % Initially disabled
 
+% Create the "Multiple Pathway" button
+sort_mpath_button = uibutton(grid, 'push', 'Text', 'MultiPathway', 'ButtonPushedFcn', {@sort_mpath_callback, f});
+sort_mpath_button.Layout.Row = 5; % Position for "Pathway" button
+sort_mpath_button.Layout.Column = 2;
+sort_mpath_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
+sort_mpath_button.Enable = 'off'; % Initially disabled
+
 % Create the "Graph" button
 graph_button = uibutton(grid, 'push', 'Text', 'Graph', 'ButtonPushedFcn', {@graph_callback, f});
-graph_button.Layout.Row = 5; % Position for "Graph" button
+graph_button.Layout.Row = 6; % Position for "Graph" button
 graph_button.Layout.Column = 2;
 graph_button.Tooltip = 'Graph the sorted correlation matrix';  % Adding tooltip
 graph_button.Enable = 'off'; % Initially disabled
 
 % Create the "Cluster" button
 cluster_button = uibutton(grid, 'push', 'Text', 'Cluster', 'ButtonPushedFcn', {@cluster_callback, f});
-cluster_button.Layout.Row = 6; % Position for "Cluster" button
+cluster_button.Layout.Row = 7; % Position for "Cluster" button
 cluster_button.Layout.Column = 2;
 cluster_button.Tooltip = 'Cluster the correlation matrix';  % Adding tooltip
 cluster_button.Enable = 'off'; % Initially disabled
@@ -57,14 +64,14 @@ cluster_button.Enable = 'off'; % Initially disabled
 
 % Create the "Elbow Curve" button
 elbow_button = uibutton(grid, 'push', 'Text', 'Elbow Curve', 'ButtonPushedFcn', {@elbow_curve_callback, f});
-elbow_button.Layout.Row = 7; % Position for "Elbow Curve" button
+elbow_button.Layout.Row = 8; % Position for "Elbow Curve" button
 elbow_button.Layout.Column = 2;
 elbow_button.Tooltip = 'Determine optimal number of clusters';  % Adding tooltip
 elbow_button.Enable = 'off'; % Initially disabled
 
 % Create the "Dynamic Tree Cut" button
 dynamic_tree_button = uibutton(grid, 'push', 'Text', 'Dynamic Tree Cut', 'ButtonPushedFcn', {@dynamic_tree_cut_callback, f});
-dynamic_tree_button.Layout.Row = 8; % Position for "Dynamic Tree Cut" button
+dynamic_tree_button.Layout.Row = 9; % Position for "Dynamic Tree Cut" button
 dynamic_tree_button.Layout.Column = 2;
 dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
 dynamic_tree_button.Enable = 'off'; % Initially disabled
@@ -72,7 +79,7 @@ dynamic_tree_button.Enable = 'off'; % Initially disabled
 % Create the "Single to Group Correlation" button
 single_to_group_button = uibutton(grid, 'push', 'Text', 'Gene to Group', ...
                                   'ButtonPushedFcn', {@single_to_group_correlation_callback, f});
-single_to_group_button.Layout.Row = 9; % Choose an appropriate row
+single_to_group_button.Layout.Row = 10; % Choose an appropriate row
 single_to_group_button.Layout.Column = 2;
 single_to_group_button.Tooltip = 'Calculate the correlation of a single gene to a group of genes';
 single_to_group_button.Enable = 'off'; % Initially disabled
@@ -80,21 +87,21 @@ single_to_group_button.Enable = 'off'; % Initially disabled
 % Create the "Single to Pathway Correlation" button
 single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
                                   'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
-single_to_path_button.Layout.Row = 10; 
+single_to_path_button.Layout.Row = 11; 
 single_to_path_button.Layout.Column = 2;
 single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
 single_to_path_button.Enable = 'off'; 
 
 % Create the "tsne correlations" button
 tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne2);
-tsne_button.Layout.Row = 11; % Position for "Calculate tsne" button
+tsne_button.Layout.Row = 12; % Position for "Calculate tsne" button
 tsne_button.Layout.Column = 2;
 tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
 tsne_button.Enable = 'off';
 
 % Create the "Compare pathways" button
 compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
-compare_paths_button.Layout.Row = 12; % Position for "Compare pathways" button
+compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
 compare_paths_button.Tooltip = 'Compare two pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';
@@ -225,6 +232,7 @@ function calculate_correlations_callback(~, ~, f)
     graph_button.Enable = 'on';      
     sort_button.Enable = 'on';
     sort_path_button.Enable = 'on';
+    sort_mpath_button.Enable = 'on';
     cluster_button.Enable = 'on'; 
     single_to_group_button.Enable = 'on'; % Initially disabled
     single_to_path_button.Enable = 'on';
@@ -461,7 +469,7 @@ sorted_data.ColumnSortable(2) = true;
     
 end
 
-function sort_path_callback(~, ~, f)
+    function sort_path_callback(~, ~, f)
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
@@ -1023,6 +1031,90 @@ xtickangle(45); % Angle the labels for readability
 set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
 
 end
+
+function sort_mpath_callback(~, ~, f)
+
+    f.WindowStyle = 'normal';
+    % Get the correlations and variable names from the app data
+    correlations2 = getappdata(0, 'correlations');
+    variable_names2 = getappdata(0, 'variable_names');
+
+    % Define a persistent variable to store the last used path
+    persistent lastUsedPath_p
+    if isempty(lastUsedPath_p) || ~isfolder(lastUsedPath_p)
+        lastUsedPath_p = pwd; % Default to the current working directory
+    end
+
+    % Modify the uigetfile call to allow multiple file selection
+    [file_names, path_name] = uigetfile(fullfile(lastUsedPath_p, '*.txt'), 'Select one or more text files containing gene names', 'MultiSelect', 'on');
+
+    if isequal(file_names, 0)
+        disp('User selected Cancel');
+        return;
+    else
+        lastUsedPath_p = path_name;  % Update the lastUsedPath_p
+
+        if ischar(file_names)  % If only one file is selected, convert it to cell array
+            file_names = {file_names};
+        end
+
+        % Initialize the table data
+        tableData = cell(length(file_names), 3); % For file name, PCI(A), and PCI(B)
+
+        for i = 1:length(file_names)
+            file_path = fullfile(path_name, file_names{i});
+            selected_genes = textread(file_path, '%s');
+            
+            % Process each file and calculate PCI(A) and PCI(B)
+            selected_genes_lower = lower(selected_genes);
+            variable_names_lower = lower(variable_names2);
+            
+            [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+            valid_indices = indices(indices > 0);
+            
+            if isempty(valid_indices)
+                continue; % Skip this file if no valid genes are found
+            end
+            
+            correlations = correlations2(valid_indices, valid_indices);
+            
+           % Calculation of pciA (similar to mean_average_abs_correlation in sort_path_callback)
+        sum_abs_correlations = sum(abs(correlations), 2) - 1;
+        average_abs_correlation = sum_abs_correlations / (length(valid_indices) - 1);
+        pciA = mean(average_abs_correlation);
+
+        % Calculate pciB
+        selected_genes_lower = lower(selected_genes);
+        variable_names_lower = lower(variable_names2);
+        
+        % Match these genes with variable_names2 to get indices
+        [~, matching_indices] = ismember(selected_genes_lower, variable_names_lower);
+        
+        % Filter out non-matching genes (indices == 0)
+        valid_matching_indices = matching_indices(matching_indices > 0);
+        
+        % Calculate pciB using matching indices
+        if isempty(valid_matching_indices)
+            pciB = NaN; % Handle case where there are no valid matching indices
+        else
+            matched_correlations = correlations2(valid_matching_indices, valid_matching_indices);
+            sum_abs_correlations_matched = sum(abs(matched_correlations), 2) - 1;
+            average_abs_correlation_matched = sum_abs_correlations_matched / (length(valid_matching_indices) - 1);
+            pciB = mean(average_abs_correlation_matched);
+        end
+
+        % Store the results in the table data
+        tableData{i, 1} = file_names{i};
+        tableData{i, 2} = pciA;
+        tableData{i, 3} = pciB;
+        end
+
+        % Create and display the table
+        resultTable = cell2table(tableData, 'VariableNames', {'File_Name', 'PCI_A', 'PCI_B'});
+        disp(resultTable);
+    end
+end
+
 
 
 end
