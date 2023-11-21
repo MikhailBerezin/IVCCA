@@ -35,11 +35,12 @@ for i = 1:length(my_genes)
     response = webwrite(request_url, query_str, options);
     
     % Save the network to a file
-    file_name = [my_genes{i}, '_network.png'];
+    file_name = [my_genes{i}, '_network.jpeg'];
     disp(['Saving interaction network to ', file_name]);
-    fid = fopen(file_name, 'wb');
-    fwrite(fid, response);
-    fclose(fid);
+%     fid = fopen(file_name, 'wb');
+    imwrite(response, file_name)
+%     fwrite(fid, response);
+%     fclose(fid);
     
     % Pause for 1 second
     pause(1);
