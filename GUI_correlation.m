@@ -1038,6 +1038,9 @@ function sort_mpath_callback(~, ~, f)
     % Get the correlations and variable names from the app data
     correlations2 = getappdata(0, 'correlations');
     variable_names2 = getappdata(0, 'variable_names');
+   
+    s_variable_names = getappdata(0,'cor_variable');
+    s_correlations = getappdata(0,'cor_value');
 
     % Define a persistent variable to store the last used path
     persistent lastUsedPath_p
@@ -1084,24 +1087,35 @@ function sort_mpath_callback(~, ~, f)
         pciA = mean(average_abs_correlation);
 
         % Calculate pciB
-        selected_genes_lower = lower(selected_genes);
-        variable_names_lower = lower(variable_names2);
-        
-        % Match these genes with variable_names2 to get indices
-        [~, matching_indices] = ismember(selected_genes_lower, variable_names_lower);
-        
-        % Filter out non-matching genes (indices == 0)
-        valid_matching_indices = matching_indices(matching_indices > 0);
-        
-        % Calculate pciB using matching indices
-        if isempty(valid_matching_indices)
-            pciB = NaN; % Handle case where there are no valid matching indices
-        else
-            matched_correlations = correlations2(valid_matching_indices, valid_matching_indices);
-            sum_abs_correlations_matched = sum(abs(matched_correlations), 2) - 1;
-            average_abs_correlation_matched = sum_abs_correlations_matched / (length(valid_matching_indices) - 1);
-            pciB = mean(average_abs_correlation_matched);
+        selected_genes_lower = selected_genes;
+        variable_names_lower = variable_names2;
+        selected_genes_lower=selected_genes_lower';
+        array=[];
+        for j =1:length(selected_genes_lower)
+            
+            %%
+%             var= variable_names_lower';
+            matching_indices = find(cellfun(@(x) isequal(x, selected_genes_lower{j}), s_variable_names));
+            cor= s_correlations;
+            array{j}= cor(matching_indices);
+            
         end
+        pciB = mean([array{:}]);
+%         % Match these genes with variable_names2 to get indices
+%         [~, matching_indices] = ismember(selected_genes_lower, variable_names_lower);
+%         
+%         % Filter out non-matching genes (indices == 0)
+%         valid_matching_indices = matching_indices(matching_indices > 0);
+%         
+%         % Calculate pciB using matching indices
+%         if isempty(valid_matching_indices)
+%             pciB = NaN; % Handle case where there are no valid matching indices
+%         else
+%             matched_correlations = correlations2(valid_matching_indices, valid_matching_indices);
+%             sum_abs_correlations_matched = sum(abs(matched_correlations), 2) - 1;
+%             average_abs_correlation_matched = sum_abs_correlations_matched / (length(valid_matching_indices) - 1);
+%             pciB = mean(average_abs_correlation_matched);
+%         end
 
         % Store the results in the table data
         tableData{i, 1} = file_names{i};
@@ -1111,7 +1125,16 @@ function sort_mpath_callback(~, ~, f)
 
         % Create and display the table
         resultTable = cell2table(tableData, 'VariableNames', {'File_Name', 'PCI_A', 'PCI_B'});
-        disp(resultTable);
+        % Create a figure
+        fig = figure('Position', [100, 100, 400, 200], 'Name', 'Result Table');
+        var={'File_Name', 'PCI_A', 'PCI_B'};
+        % Create a uitable in the figure
+        uitable('Parent', fig, 'Data', table2cell(resultTable), 'ColumnName', {'File_Name', 'PCI_A', 'PCI_B'}, 'Position', [20, 20, 360, 150]);
+%         
+%         % Adjust column widths (optional)
+%         uitableHandle = findall(fig, 'Type', 'uitable');
+%         uitableColumnWidths = num2cell(repmat({80}, 1, numel(var)));  % Adjust the widths as needed
+%         set(uitableHandle, 'ColumnWidth', uitableColumnWidths);
     end
 end
 
