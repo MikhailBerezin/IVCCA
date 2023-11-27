@@ -1,6 +1,6 @@
 function GUI_correlation
 % Mikhail Berezin 2023
-f = uifigure('Name', 'Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
+f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
 close all
 % f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
@@ -10,7 +10,7 @@ grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x',
 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 12]; % Spans across 10 rows
+data.Layout.Row = [1 13]; % Spans across all rows
 data.Layout.Column = 1; % Occupies the first column
 
 % Create the "Load Data" button
@@ -33,79 +33,79 @@ sort_button.Layout.Column = 2;
 sort_button.Tooltip = 'Sort the correlation matrix with the highest first';  % Adding tooltip
 sort_button.Enable = 'off'; % Initially disabled
 
-% Create the "Pathway" button
-sort_path_button = uibutton(grid, 'push', 'Text', 'Pathway', 'ButtonPushedFcn', {@sort_path_callback, f});
-sort_path_button.Layout.Row = 4; % Position for "Pathway" button
-sort_path_button.Layout.Column = 2;
-sort_path_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
-sort_path_button.Enable = 'off'; % Initially disabled
-
-% Create the "Multiple Pathway" button
-sort_mpath_button = uibutton(grid, 'push', 'Text', 'MultiPathway', 'ButtonPushedFcn', {@sort_mpath_callback, f});
-sort_mpath_button.Layout.Row = 5; % Position for "Pathway" button
-sort_mpath_button.Layout.Column = 2;
-sort_mpath_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
-sort_mpath_button.Enable = 'off'; % Initially disabled
-
-% Create the "Graph" button
-graph_button = uibutton(grid, 'push', 'Text', 'Graph', 'ButtonPushedFcn', {@graph_callback, f});
-graph_button.Layout.Row = 6; % Position for "Graph" button
+% Create the "SortedGraph" button
+graph_button = uibutton(grid, 'push', 'Text', 'Sorted Graph', 'ButtonPushedFcn', {@graph_callback, f});
+graph_button.Layout.Row = 4; % Position for "SortedGraph" button
 graph_button.Layout.Column = 2;
 graph_button.Tooltip = 'Graph the sorted correlation matrix';  % Adding tooltip
 graph_button.Enable = 'off'; % Initially disabled
 
-% Create the "Cluster" button
-cluster_button = uibutton(grid, 'push', 'Text', 'Cluster', 'ButtonPushedFcn', {@cluster_callback, f});
-cluster_button.Layout.Row = 7; % Position for "Cluster" button
-cluster_button.Layout.Column = 2;
-cluster_button.Tooltip = 'Cluster the correlation matrix';  % Adding tooltip
-cluster_button.Enable = 'off'; % Initially disabled
-
-
-% Create the "Elbow Curve" button
-elbow_button = uibutton(grid, 'push', 'Text', 'Elbow Curve', 'ButtonPushedFcn', {@elbow_curve_callback, f});
-elbow_button.Layout.Row = 8; % Position for "Elbow Curve" button
+% Create the "Elbow / Silhouette Curves" button
+elbow_button = uibutton(grid, 'push', 'Text', 'Elbow/Silhouette', 'ButtonPushedFcn', {@elbow_curve_callback, f});
+elbow_button.Layout.Row = 5; % Position for "Elbow Curve" button
 elbow_button.Layout.Column = 2;
 elbow_button.Tooltip = 'Determine optimal number of clusters';  % Adding tooltip
 elbow_button.Enable = 'off'; % Initially disabled
 
+% Create the "Dendrogram" button
+cluster_button = uibutton(grid, 'push', 'Text', 'Dendrogram', 'ButtonPushedFcn', {@cluster_callback, f});
+cluster_button.Layout.Row = 6; % Position for "Cluster" button
+cluster_button.Layout.Column = 2;
+cluster_button.Tooltip = 'Cluster the correlation matrix with a dendrogram';  % Adding tooltip
+cluster_button.Enable = 'off'; % Initially disabled
+
+
 % Create the "Dynamic Tree Cut" button
 dynamic_tree_button = uibutton(grid, 'push', 'Text', 'Dynamic Tree Cut', 'ButtonPushedFcn', {@dynamic_tree_cut_callback, f});
-dynamic_tree_button.Layout.Row = 9; % Position for "Dynamic Tree Cut" button
+dynamic_tree_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
 dynamic_tree_button.Layout.Column = 2;
 dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
 dynamic_tree_button.Enable = 'off'; % Initially disabled
 
+% Create the "tsne correlations" button
+tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne2);
+tsne_button.Layout.Row = 8; % Position for "Calculate tsne" button
+tsne_button.Layout.Column = 2;
+tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
+tsne_button.Enable = 'off';
+
+
+% Create the "Single Pathway" button
+sort_path_button = uibutton(grid, 'push', 'Text', 'Single Pathway', 'ButtonPushedFcn', {@sort_path_callback, f});
+sort_path_button.Layout.Row = 9; % Position for "SinglePathway" button
+sort_path_button.Layout.Column = 2;
+sort_path_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
+sort_path_button.Enable = 'off'; % Initially disabled
+
+% Create the "Multiple Pathways" button
+sort_mpath_button = uibutton(grid, 'push', 'Text', 'Multi Pathways', 'ButtonPushedFcn', {@sort_mpath_callback, f});
+sort_mpath_button.Layout.Row = 10; % Position for "Mutliple Pathways" button
+sort_mpath_button.Layout.Column = 2;
+sort_mpath_button.Tooltip = 'Sort multiple pathways';  % Adding tooltip
+sort_mpath_button.Enable = 'off'; % Initially disabled
+
 % Create the "Single to Group Correlation" button
-single_to_group_button = uibutton(grid, 'push', 'Text', 'Gene to Group', ...
+single_to_group_button = uibutton(grid, 'push', 'Text', 'Gene to Genes', ...
                                   'ButtonPushedFcn', {@single_to_group_correlation_callback, f});
-single_to_group_button.Layout.Row = 10; % Choose an appropriate row
+single_to_group_button.Layout.Row = 11; % Choose an appropriate row
 single_to_group_button.Layout.Column = 2;
-single_to_group_button.Tooltip = 'Calculate the correlation of a single gene to a group of genes';
+single_to_group_button.Tooltip = 'Calculate correlation of a single gene to a group of genes';
 single_to_group_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Pathway Correlation" button
 single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
                                   'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
-single_to_path_button.Layout.Row = 11; 
+single_to_path_button.Layout.Row = 12; 
 single_to_path_button.Layout.Column = 2;
 single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
 single_to_path_button.Enable = 'off'; 
 
-% Create the "tsne correlations" button
-tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne2);
-tsne_button.Layout.Row = 12; % Position for "Calculate tsne" button
-tsne_button.Layout.Column = 2;
-tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
-tsne_button.Enable = 'off';
-
 % Create the "Compare pathways" button
-compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
+compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare Pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
 compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
-compare_paths_button.Tooltip = 'Compare two pathways';  % Adding tooltip
+compare_paths_button.Tooltip = 'Compare how two pathways are correlated';  % Adding tooltip
 compare_paths_button.Enable = 'off';
-
 
 % Create the results label
 result = uilabel(grid, 'Text', '');
@@ -180,7 +180,7 @@ function load_data_callback(~, ~, f)
 
     % Save the data table to the app data
     setappdata(f, 'data_table', data_table);
-%     uifigureOnTop (f, true) 
+    uifigureOnTop (f, true) 
 end
 
 
@@ -211,7 +211,7 @@ function calculate_correlations_callback(~, ~, f)
     delete(wb) % Close waitbar dialog box
 
     % Set the results in the GUI
-    f.Name = ['Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
+    f.Name = ['IVCCA: Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
     
     % Update the data in the existing uitable instead of creating a new one
     data.Data = correlations;
@@ -229,12 +229,14 @@ function calculate_correlations_callback(~, ~, f)
     setappdata(0, 'variable_names', data_table.Properties.VariableNames);
     
     % Enable buttons
-    graph_button.Enable = 'on';      
+     
     sort_button.Enable = 'on';
     sort_path_button.Enable = 'on';
+    elbow_button.Enable = 'on';
     sort_mpath_button.Enable = 'on';
     cluster_button.Enable = 'on'; 
-    single_to_group_button.Enable = 'on'; % Initially disabled
+    dynamic_tree_button.Enable = 'on';
+    single_to_group_button.Enable = 'on';
     single_to_path_button.Enable = 'on';
     compare_paths_button.Enable = 'on';
     tsne_button.Enable = 'on';
@@ -243,7 +245,7 @@ function calculate_correlations_callback(~, ~, f)
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
 %     Create a figure for the heatmap
-    figure ('Position',[100 300 400 400])
+    figure ('Name', 'IVCCA: Correlation Histogram', 'NumberTitle', 'off','Position',[100 300 400 400])
     histogram (correlations)
     title('Correlation Histogram');
     xlabel('Pairwise Correleation Coefficient, q');
@@ -251,7 +253,7 @@ function calculate_correlations_callback(~, ~, f)
 
 %   Create a figure for the heatmap
     
-    figure("Position",[100,100, 400,400]);
+    figure('Name', 'IVCCA: Correlation Heatmap', 'NumberTitle', 'off', 'Position', [100, 100, 400, 400]);
     imagesc(tril(correlations)); % Create a heatmap
     colorbar; % Add a colorbar
     colormap('parula'); % Set the colormap
@@ -261,11 +263,7 @@ function calculate_correlations_callback(~, ~, f)
     xticklabels(data_table.Properties.VariableNames);
     yticklabels(data_table.Properties.VariableNames);
     
-
-    
 end
-
-
 
 
 %% Define the "Graph" callback function
@@ -287,7 +285,7 @@ function graph_callback(~, ~, f)
     folder = fileparts(mfilename('fullpath'));
     iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
     setIcon(gcf, iconFilePath)
-    figure("Position",[800,100, 400,400]);
+    figure('Name', 'IVCCA: Sorted Correlation Heatmap', 'NumberTitle', 'off', "Position",[800,100, 400,400]);
     h = imagesc(correlations); % Create a heatmap
     colorbar; % Add a colorbar
 
@@ -317,8 +315,6 @@ end
 
 
 %% Define the "Sort" callback function
-
-
 function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
         % Initialize the waitbar
@@ -334,32 +330,6 @@ function sort_callback(~, ~, f)
 %     correlations = correlations(random_indices, random_indices);
 %     variable_names = variable_names(random_indices);
 
-
-% % Option 2: Prompt user to select a text file with genes (uncomment when needed)
-% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
-% if isequal(file_name, 0)
-%     disp('User selected Cancel');
-%     return;
-% else
-%     % Read gene names from the selected file
-%     file_path = fullfile(path_name, file_name);
-%     selected_genes = textread(file_path, '%s');
-%     
-%     % Convert both lists of genes to lowercase for case-insensitive matching
-%     selected_genes_lower = lower(selected_genes);
-%     variable_names_lower = lower(variable_names2);
-%     
-%     % Match these genes with variable_names to get indices
-%     [~, indices] = ismember(selected_genes_lower, variable_names_lower);
-%     
-%     % Filter out non-matching genes (indices == 0)
-%     valid_indices = indices(indices > 0);
-%     
-%     correlations = correlations2(valid_indices, valid_indices);
-%     variable_names = variable_names2(valid_indices);
-% end
-% -----------------------
-%     
     % Calculate the sum of absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
@@ -370,8 +340,8 @@ function sort_callback(~, ~, f)
     sorted_correlations = correlations(sorted_indices, sorted_indices);
     sorted_variable_names = variable_names(sorted_indices);
     sorted_sum_abs_correlations = sum_abs_correlations(sorted_indices);  % Also sort the sum of absolute correlations
-    %% Global
-     % Calculate the sum of global absolute correlations for each variable (gene)   
+   
+    % Calculate the sum of global absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
     % Update the waitbar 
@@ -379,7 +349,7 @@ function sort_callback(~, ~, f)
     % Sort the sums in descending order and get the indices
     [~, sorted_indices] = sort(sum_abs_correlations, 'descend');
 
-       % Update the waitbar a
+    % Update the waitbar 
     waitbar(0.4, hWaitBar, 'Sort the sums in descending order...');
     
     % Use the sorted indices to sort the correlations and variable names
@@ -387,16 +357,16 @@ function sort_callback(~, ~, f)
     sorted_variable_names = variable_names(sorted_indices);
     sorted_sum_abs_correlations = sum_abs_correlations(sorted_indices); 
     
-     % List of average correlations
+    % List of average correlations
     total_genes = sqrt(numel(correlations));
     top_variable_names = sorted_variable_names(1:total_genes);
     top_sum_abs_correlations = sorted_sum_abs_correlations(1:total_genes); 
      % Update the waitbar a
     waitbar(0.8, hWaitBar, ' Excluding self-correlation...');
-  % Adjust calculation for average absolute correlation after excluding self-correlation 
+  
+    % Adjust calculation for average absolute correlation after excluding self-correlation 
     average_abs_correlation = top_sum_abs_correlations / (total_genes - 1);
     mean_average_abs_correlation = sum(average_abs_correlation)/total_genes;
-    
     
     % Update the data in the existing uitable instead of creating a new one
     data.Data = sorted_correlations;
@@ -409,7 +379,7 @@ function sort_callback(~, ~, f)
     waitbar(1, hWaitBar, ' Completed...');
     close(hWaitBar);
     % Set the results in the GUI
-    f.Name = ['Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
+    f.Name = ['IVCCA: Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
 
   % List of average correlations
     total_genes = sqrt(numel(correlations));
@@ -419,15 +389,15 @@ function sort_callback(~, ~, f)
   % Adjust calculation for average absolute correlation after excluding self-correlation 
     average_abs_correlation = top_sum_abs_correlations / (total_genes - 1);
     mean_average_abs_correlation = sum(average_abs_correlation)/total_genes;
-  % Create a new uifigure for the sorted data
+  
+    % Create a new uifigure for the sorted data
 
 % Modify the title of uifigure to include the file_name
-% sorted_fig = uifigure('Name', ['List of Correlated Genes from ' file_name ' (Pathway Correlation Index: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
 if exist('file_name', 'var') && ~isempty(file_name)
-    title_str = ['List of Correlated Genes from ' file_name];
+    title_str = ['IVCCA: List of Correlated Genes from ' file_name];
 else
-    title_str = 'List of Correlated Genes';
+    title_str = 'IVCCA: List of Correlated Genes';
 end
 
 sorted_fig = uifigure('Name', [title_str ' (PCI-Global: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
@@ -436,7 +406,6 @@ sorted_fig = uifigure('Name', [title_str ' (PCI-Global: ' num2str(mean_average_a
 sorted_data = uitable(sorted_fig);
 
 
-%% Global
 array=[];
  for j =1:length(sorted_correlations)
         
@@ -447,25 +416,23 @@ array=[];
         array{j}= cor(matching_indices);
         
  end
+ 
  % Display gene correlations in the new uitable
 
 sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation)]; % Removed the third column
 sorted_data.ColumnName = {'Gene', 'Average Global Correlation'}; % Retained two column names
-
 sorted_data.Position = [20 20 560 360];  
 
-%% Experiment
-% indices = find(top_variable_names' == 'Chtf8');
-% Find indices of elements that match the value
-
-%%
 setappdata(0,'cor_variable',top_variable_names')
 setappdata(0,'cor_value',average_abs_correlation)
+
 % Enable sorting for the first column (Gene)
 sorted_data.ColumnSortable(1) = true;
 
 % Enable sorting for the second column (Average Absolute Correlations)
 sorted_data.ColumnSortable(2) = true;
+
+graph_button.Enable = 'on'; 
     
 end
 
@@ -475,9 +442,6 @@ end
     % Get the correlations and variable names from the app data
     correlations2 = getappdata(0, 'correlations');
     variable_names2 = getappdata(0, 'variable_names');
-
-% Option 2: Prompt user to select a text file with genes (uncomment when needed)
-% [file_name, path_name] = uigetfile('*.txt', 'Select a text file containing gene names');
 
 % Define a persistent variable to store the last used path
     persistent lastUsedPath_p
@@ -514,8 +478,7 @@ else
     correlations = correlations2(valid_indices, valid_indices);
     variable_names = variable_names2(valid_indices);
 end
-% -----------------------
-%     
+     
     % Calculate the sum of absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
     
@@ -526,8 +489,8 @@ end
     sorted_correlations = correlations(sorted_indices, sorted_indices);
     sorted_variable_names = variable_names(sorted_indices);
     sorted_sum_abs_correlations = sum_abs_correlations(sorted_indices);  % Also sort the sum of absolute correlations
-    %% Global
-     % Calculate the sum of global absolute correlations for each variable (gene)   
+      
+    % Calculate the sum of global absolute correlations for each variable (gene)   
     sum_abs_correlations2 = sum(abs(correlations2), 2) - 1; % Subtract 1 for self-correlation
     
     % Sort the sums in descending order and get the indices
@@ -558,7 +521,7 @@ end
     setappdata(f, 'sorted_variable_names', sorted_variable_names);
 
     % Set the results in the GUI
-    f.Name = ['Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
+    f.Name = ['IVCCA: Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
 
   % List of average correlations
     total_genes = sqrt(numel(correlations));
@@ -571,7 +534,6 @@ end
   % Create a new uifigure for the sorted data
 
 % Modify the title of uifigure to include the file_name
-% sorted_fig = uifigure('Name', ['List of Correlated Genes from ' file_name ' (Pathway Correlation Index: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
 if exist('file_name', 'var') && ~isempty(file_name)
     title_str = ['List of Correlated Genes from ' file_name];
@@ -579,50 +541,36 @@ else
     title_str = 'List of Correlated Genes from Random';
 end
 
-
-
-
-%% Global
 array=[];
  for j =1:length(sorted_correlations)
         
-%%
         var= top_variable_names2';
         matching_indices = find(cellfun(@(x) isequal(x, sorted_variable_names{j}), var));
         cor= average_abs_correlation2;
         array{j}= cor(matching_indices);
         
  end
- 
-modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  num2str(mean([array{:}]))];
-% sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
-sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
-% Create a uitable in the new uifigure
-sorted_data = uitable(sorted_fig);
- % Display gene correlations in the new uitable
-sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation),array'];  % Add sum of absolute correlations to the table
-sorted_data.ColumnName = {'Gene', 'A: Correlation within the Pathway','B: Correlation Extracted from Global'};  % Update column names
-sorted_data.Position = [20 20 560 360];  
-
-%% Experiment
-% indices = find(top_variable_names' == 'Chtf8');
-% Find indices of elements that match the value
-
-%%
-setappdata(0,'cor_variable',top_variable_names2')
-setappdata(0,'cor_value',average_abs_correlation2)
-% Enable sorting for the first column (Gene)
-sorted_data.ColumnSortable(1) = true;
-
-% Enable sorting for the second and third columns
-sorted_data.ColumnSortable(2) = true;
-sorted_data.ColumnSortable(3) = true;
-
+        modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  num2str(mean([array{:}]))];
+        % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+        sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+        % Create a uitable in the new uifigure
+        sorted_data = uitable(sorted_fig);
+         % Display gene correlations in the new uitable
+        sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation),array'];  % Add sum of absolute correlations to the table
+        sorted_data.ColumnName = {'Gene', 'A: Correlation within the Pathway','B: Correlation Extracted from Global'};  % Update column names
+        sorted_data.Position = [20 20 560 360];  
+        
+        setappdata(0,'cor_variable',top_variable_names2')
+        setappdata(0,'cor_value',average_abs_correlation2)
+        % Enable sorting for the first column (Gene)
+        sorted_data.ColumnSortable(1) = true;
+        
+        % Enable sorting for the second and third columns
+        sorted_data.ColumnSortable(2) = true;
+        sorted_data.ColumnSortable(3) = true;
+        
     
 end
-
-
-
 
 
 %% Perform clustering
@@ -642,19 +590,23 @@ function cluster_callback(~, ~, f)
     dims = [1 35];
     definput = {'3'}; % default value, adjust as necessary
     f.WindowStyle = 'normal';
-%     uifigureOnTop (f, false)
 
     answer = inputdlg_id(prompt, title, dims, definput);
-    colorThreshold = str2double(answer{1}); % convert string to number
+    colorThreshold = str2double(answer{1}); 
 
     % Create a dendrogram
     folder = fileparts(mfilename('fullpath'));
     iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
     setIcon(figure, iconFilePath)
     
-    [H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold); % Create a dendrogram
+   [H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold); % Create a dendrogram
     set(H, 'LineWidth', 1);  % Set to desired line width
     ylabel('Distance')
+  
+
+% Find the current figure and turn off the number title
+fig = gcf; % Get the current figure handle
+set(fig, 'NumberTitle', 'off', 'Name', 'Dendrogram');
 
     xticklabels(variable_names(outperm));
     xtickangle(45); % Rotate the x-axis labels
@@ -673,11 +625,11 @@ function cluster_callback(~, ~, f)
     setappdata(f, 'clustered_variable_names', clustered_variable_names);
     
     % Set the results in the GUI
-    f.Name = ['Clustered Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
+    f.Name = ['IVCCA: Clustered Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
     
     % Enable the "Graph" button
     graph_button.Enable = 'on';
-    elbow_button.Enable = 'on';
+    
     dynamic_tree_button.Enable = 'on';
 
     % Compute the number of clusters at the colorThreshold
@@ -712,7 +664,6 @@ for i = 1:length(unique_clusters)
     sum_cor=0;
     for j =1:length(variables_in_cluster)
         
-%%
         var= getappdata(0,'cor_variable');
         matching_indices = find(cellfun(@(x) isequal(x, variables_in_cluster{j}), var));
         cor= getappdata(0,'cor_value');
@@ -727,15 +678,12 @@ cluster_info_table = uitable(cluster_info_fig);
 cluster_info_table.Data = cluster_info;
 cluster_info_table.ColumnName = {'Cluster Number', 'Number of Genes','PCI','Gene Names'};
 cluster_info_table.Position = [20, 20, 360, 260];
-% setappdata(0,'cor_variable',top_variable_names')
-% setappdata(0,'cor_value',average_abs_correlation)
 
 % Enable sorting for the first column (cluster number)
 cluster_info_table.ColumnSortable(1) = true;
 
 % Enable sorting for the second column (number of genes)
 cluster_info_table.ColumnSortable(2) = true;
-
 
 % Enable sorting for the second column (Index)
 cluster_info_table.ColumnSortable(3) = true;
@@ -771,7 +719,7 @@ function elbow_curve_callback(~, ~, f)
 
 waitbar(0.8, hWaitBar, 'Plotting...');
 % Create a subplot to show both elbow and silhouette plots side by side
-    figure;
+    figure ('Name', 'IVCCA: Number of clusters', 'NumberTitle', 'off');
     
     subplot(1, 2, 1);
     plot(1:maxK, log(sum_of_squared_distances), 'bo-');
@@ -801,7 +749,7 @@ function dynamic_tree_cut_callback(~, ~, f)
     definput = {'0.15'};
     answer = inputdlg(prompt,dlgtitle,dims,definput);
     
-    % If the user presses Cancel, the answer is empty. Handle this case
+    % If the user presses Cancel, the answer is empty. 
     if isempty(answer)
         disp('User cancelled the operation.');
         return;
@@ -840,7 +788,7 @@ function dynamic_tree_cut_callback(~, ~, f)
     ordered_correlations = correlations(order, order);
     
     % Create a heatmap using the ordered correlation matrix
-    figure;
+    figure ('Name', 'IVCCA: Dynamic Tree Cutting', 'NumberTitle', 'off');
     imagesc(ordered_correlations);
     colorbar;
     num_clusters = length(unique_clusters);
@@ -854,14 +802,6 @@ function dynamic_tree_cut_callback(~, ~, f)
     colormap('parula');
     caxis([-1, 1]); % Assuming correlations range from -1 to 1
 
-%     % Display the number of members in each cluster in the Command Window
-%     unique_clusters = unique(T);
-%     disp('Cluster Results:');
-%     for i = 1:length(unique_clusters)
-%         cluster_members = variable_names(T == unique_clusters(i));
-%         disp(['Cluster ' num2str(i) ' (Size: ' num2str(length(cluster_members)) '):']);
-%         disp(strjoin(cluster_members, ', '));
-%     end
 % Calculate the mean value of absolute correlations for each cluster
     unique_clusters = unique(T);
     cluster_mean_abs_correlations = zeros(length(unique_clusters), 1);
@@ -931,14 +871,14 @@ disp(group_gene_names);  % This should print the selected gene names in the Comm
     avg_abs_correlation = mean(abs(single_to_group_correlations));
     
     % Display or plot the results
-    figure;
+    figure ('Name', 'IVCCA: Single gene to other genes', 'NumberTitle', 'off');
 
 hold on; % Hold on to the current figure
 for i = 1:length(single_to_group_correlations)
     if single_to_group_correlations(i) < 0
         bar(i, single_to_group_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
     else
-        bar(i, single_to_group_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in default color
+        bar(i, single_to_group_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
     end
 end
 
@@ -1005,20 +945,20 @@ end
     % Calculate the average of the absolute values of the correlation coefficients
     avg_abs_correlation = mean(abs(single_to_pathway_correlations));
 
-    % Display or plot the results
-    figure;
+    % Display the results
+     figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
 
-% Display or plot the results with color coding
+% Display the results with color coding
 
-hold on; % Hold on to the current figure
+hold on; 
 for i = 1:length(single_to_pathway_correlations)
     if single_to_pathway_correlations(i) < 0
         bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
     else
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in default color
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
     end
 end
-hold off; % Release the figure
+hold off; 
 
 % Include the file name and the average of the absolute correlations in the title
 title_str = sprintf('Correlation of %s to pathway genes in %s (Avg. Abs. Corr. = %.2f)', single_gene_name, file, avg_abs_correlation);
@@ -1033,7 +973,6 @@ set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
 end
 
 function sort_mpath_callback(~, ~, f)
-
     f.WindowStyle = 'normal';
     % Get the correlations and variable names from the app data
     correlations2 = getappdata(0, 'correlations');
@@ -1069,8 +1008,8 @@ function sort_mpath_callback(~, ~, f)
             selected_genes = textread(file_path, '%s');
             
             % Process each file and calculate PCI(A) and PCI(B)
-            selected_genes_lower = lower(selected_genes);
-            variable_names_lower = lower(variable_names2);
+            selected_genes_lower = lower(selected_genes); % Convert to lower case
+            variable_names_lower = lower(variable_names2); % Convert to lower case
             
             [~, indices] = ismember(selected_genes_lower, variable_names_lower);
             valid_indices = indices(indices > 0);
@@ -1081,64 +1020,49 @@ function sort_mpath_callback(~, ~, f)
             
             correlations = correlations2(valid_indices, valid_indices);
             
-           % Calculation of pciA (similar to mean_average_abs_correlation in sort_path_callback)
-        sum_abs_correlations = sum(abs(correlations), 2) - 1;
-        average_abs_correlation = sum_abs_correlations / (length(valid_indices) - 1);
-        pciA = mean(average_abs_correlation);
+            % Calculation of pciA
+            sum_abs_correlations = sum(abs(correlations), 2) - 1;
+            average_abs_correlation = sum_abs_correlations / (length(valid_indices) - 1);
+            pciA = mean(average_abs_correlation);
 
-        % Calculate pciB
-        selected_genes_lower = selected_genes;
-        variable_names_lower = variable_names2;
-        selected_genes_lower=selected_genes_lower';
-        array=[];
-        for j =1:length(selected_genes_lower)
-            
-            %%
-%             var= variable_names_lower';
-            matching_indices = find(cellfun(@(x) isequal(x, selected_genes_lower{j}), s_variable_names));
-            cor= s_correlations;
-            array{j}= cor(matching_indices);
-            
-        end
-        pciB = mean([array{:}]);
-%         % Match these genes with variable_names2 to get indices
-%         [~, matching_indices] = ismember(selected_genes_lower, variable_names_lower);
-%         
-%         % Filter out non-matching genes (indices == 0)
-%         valid_matching_indices = matching_indices(matching_indices > 0);
-%         
-%         % Calculate pciB using matching indices
-%         if isempty(valid_matching_indices)
-%             pciB = NaN; % Handle case where there are no valid matching indices
-%         else
-%             matched_correlations = correlations2(valid_matching_indices, valid_matching_indices);
-%             sum_abs_correlations_matched = sum(abs(matched_correlations), 2) - 1;
-%             average_abs_correlation_matched = sum_abs_correlations_matched / (length(valid_matching_indices) - 1);
-%             pciB = mean(average_abs_correlation_matched);
-%         end
-
-        % Store the results in the table data
-        tableData{i, 1} = file_names{i};
-        tableData{i, 2} = pciA;
-        tableData{i, 3} = pciB;
+            % Calculate pciB
+            % Assuming s_correlations is a numeric array, not a cell array
+            matching_indices = ismember(s_variable_names, selected_genes);
+            if any(matching_indices)
+                pciB = mean(s_correlations(matching_indices));
+            else
+                pciB = NaN; % Handle cases where there are no matches
+            end
+    
+            % Store the results in the table data
+            tableData{i, 1} = file_names{i};
+            tableData{i, 2} = pciA;
+            tableData{i, 3} = pciB;
         end
 
-        % Create and display the table
-        resultTable = cell2table(tableData, 'VariableNames', {'File_Name', 'PCI_A', 'PCI_B'});
-        % Create a figure
-        fig = figure('Position', [100, 100, 400, 200], 'Name', 'Result Table');
-        var={'File_Name', 'PCI_A', 'PCI_B'};
-        % Create a uitable in the figure
-        uitable('Parent', fig, 'Data', table2cell(resultTable), 'ColumnName', {'File_Name', 'PCI_A', 'PCI_B'}, 'Position', [20, 20, 360, 150]);
-%         
-%         % Adjust column widths (optional)
-%         uitableHandle = findall(fig, 'Type', 'uitable');
-%         uitableColumnWidths = num2cell(repmat({80}, 1, numel(var)));  % Adjust the widths as needed
-%         set(uitableHandle, 'ColumnWidth', uitableColumnWidths);
+% Filter out empty rows
+notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
+filteredTableData = tableData(notEmptyRows, :);
+
+% Create and display the table
+resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'PCI_A', 'PCI_B'});
+
+% Create a uifigure
+fig = uifigure('Position', [100, 100, 800, 400], 'Name', 'Result Table');
+
+% Create a uitable in the uifigure
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'File_Name', 'PCI_A', 'PCI_B'}, 'Position', [20, 20, 760, 360]);
+
+% Set column width to auto
+uit.ColumnWidth = {'auto', 'auto', 'auto'};
+
+% Adding sorting functionality
+uit.ColumnSortable(1) = true;
+uit.ColumnSortable(2) = true;
+uit.ColumnSortable(3) = true;
+
     end
 end
-
-
 
 end
 

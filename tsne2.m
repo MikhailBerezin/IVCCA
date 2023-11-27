@@ -1,29 +1,14 @@
-% Specify the path to  file
-
 function tsne2(varargin)
 tic
-% filename = 'TSNE_heart 868 FDR 0.05 FC 2.xlsx';
 
 % Initialize the waitbar
 hWaitBar = waitbar(0, 'Initializing...');
-
-
-
-
 
 global geneNames Y highlighted scatterPlot geneIndices isHighlightedMode ;
 global clusterIdx;
 data=  getappdata(0, 'correlations');
 geneNames= getappdata(0,'variable_names');
-% Load gene names from the entire first row
-% geneNames = readcell(filename, 'Range', '1:1');
-%
-% % Remove empty cells from geneNames
-% geneNames = geneNames(~cellfun('isempty', geneNames));
-%
-% % Load data, excluding the first row and first column
-% data = readmatrix(filename, 'Range', 'B2');
-% data = data.^1;
+
 
 % Run t-SNE
 
@@ -34,35 +19,38 @@ geneNames= getappdata(0,'variable_names');
 % Update the waitbar after loading and preparing data
 waitbar(0.2, hWaitBar, 'Performing t-SNE computation...');
 
-sz = 18;
 %Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25, sz);
 
-Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200,sz);
+Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
 
 % Update the waitbar after completing t-SNE
 waitbar(0.6, hWaitBar, 'Plotting results...');
+
 % Plotting the t-SNE results
-f =figure;
+% Get the size of the screen
+screenSize = get(0, 'ScreenSize');
+screenWidth = screenSize(3);
+screenHeight = screenSize(4);
 
+% Define the size of the figure
+figWidth = 800;  % adjust width
+figHeight = 560; % adjust height
 
+% Calculate the position to center the figure
+posX = (screenWidth - figWidth) / 2;
+posY = (screenHeight - figHeight) / 2;
+f =figure ( 'Name', 'IVCCA: t-SNE visualization', 'NumberTitle', 'off', 'Position', [posX posY figWidth figHeight]);
 
-% Assuming 'f' is your figure handle
-set(f, 'Position', [100, 100, 800, 600]); % Resize the figure window
 % Set the figure's resize function
 set(f, 'ResizeFcn', @resizeFigure);
 
 % Set the position of the scatter plot
-set(gca, 'Position', [0.1, 0.1, 0.50, 0.8]);
-
-% % Set the position of the uitable
-% set(uitableHandle, 'Position', [560, 100, 200, 300]); % Adjust as needed
-
-scatterPlot = scatter(Y(:,1), Y(:,2));
+set(gca, 'Position', [0.1, 0.1, 0.50, 0.85]);
+sz = 25;
+scatterPlot = scatter(Y(:,1), Y(:,2), sz);
 title('t-SNE visualization');
 xlabel('Dimension 1');
 ylabel('Dimension 2');
-
-
 
 % Create a push button for K-means clustering
 btn = uicontrol('Style', 'pushbutton', 'String', 'Cluster',...
@@ -77,23 +65,24 @@ clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',..
 % Create a push button for selecting a gene list file
 selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Gene List File',...
     'Position', [500, 380, 100, 35],... % Adjust position and size as needed
-    'Callback', @selectFileCallback); % Define the callback function
+    'Callback', @selectFileCallback); 
 
 % Create a push button for clearing highlighted genes
 clearBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Highlights',...
     'Position', [500, 330, 100, 35],... % Adjust position and size as needed
-    'Callback', @clearHighlightsCallback); % Define the callback function
+    'Callback', @clearHighlightsCallback); 
+
+% Create an input field for gene name
+searchField = uicontrol('Style', 'edit', ...
+    'Position', [500, 280, 100, 35], ... % Adjust position and size as needed
+    'String', 'Enter Gene Name');
+
+% Create a search button
+searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Search Gene',...
+    'Position', [500, 230, 100, 35],... % Adjust position and size as needed
+    'Callback', @searchGeneCallback); % Define the callback function
 
 
-% Before plotting highlighted genes
-% global highlighted;
-% global geneNames;
-% global Y;
-% global highlighted;
-
-% Plotting highlighted genes...
-
-% Create a static text label for the table
 
 % Update and close the waitbar after completing all tasks
 waitbar(1, hWaitBar, 'Completed.');
@@ -108,9 +97,6 @@ uitableTitle = uicontrol('Style', 'text', 'String', 'Brushed Genes', ...
 uitableHandle = uitable('Data', cell(1, 1), ... % Initially empty, with 1 row
     'ColumnName', {'Brushed Genes'}, ...
     'Position', [622,63,150,474]); % Adjust the position and size as needed
-
-
-
 
 % Add data tips
 dcm_obj = datacursormode(gcf);
@@ -173,7 +159,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
         % Highlight these genes on the t-SNE plot
         hold on;
-        sz = 20; 
+        sz = 25; 
         highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r', sz);
         hold off;
 
@@ -187,10 +173,9 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         % end
     end
 
-% Define the custom data tip update function
+% Custom data tip update function
 
     function txt = myupdatefcn(~, event_obj, geneNames, Y)
-
 
         pos = event_obj.Position;
         % Find the closest point in Y
@@ -236,21 +221,17 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             % Update the waitbar
             waitbar(1, hWaitBar, 'Updating plot...');
             close (hWaitBar);
+         
             % Update the scatter plot
             cla; % Clear the current axes
-            gscatter(Y(:,1), Y(:,2), clusterIdx); % Use gscatter for coloring based on clusters
+            gscatter(Y(:,1), Y(:,2), sz, clusterIdx); % Use gscatter for coloring based on clusters
             title('t-SNE visualization with K-means Clustering');
             xlabel('Dimension 1');
             ylabel('Dimension 2');
 
-
-
             % Create a new figure for the clustering results table
             clusterResultsFig = uifigure;
             set(clusterResultsFig, 'Position', [900, 100, 320, 500], 'Name', 'IVCCA (Berezin Lab)', 'Icon','Corr_icon.png'); % Adjust as needed
-
-
-
 
             % Create data for the table
             tableData = [geneNames(:), num2cell(clusterIdx)]; % Pair gene names with cluster index
@@ -258,13 +239,13 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             % Create a static text label for the kmeans_table title
             kmeansTableTitle = uilabel('Parent', clusterResultsFig, ...
                 'Text', ['Clusters Selected: ' num2str(numClusters)], ...
-                'Position', [10, 470, 300, 30], ... % Adjust size and position as needed
+                'Position', [10, 470, 300, 30], ... 
                 'HorizontalAlignment', 'center');
 
             % Create the table
             kmeans_table =uitable('Parent', clusterResultsFig, 'Data', tableData, ...
                 'ColumnName', {'Gene Name', 'Cluster'}, ...
-                'Position', [10, 10, 300, 460]); % Adjust size and position as needed
+                'Position', [10, 10, 300, 460]); 
             kmeans_table.ColumnSortable(2) = true;
             kmeans_table.ColumnSortable(1) = true;
 
@@ -273,37 +254,46 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
 %% Callback function to clear clusters from the t-SNE plot
     function clearClustersCallback(src, event)
-        %     global Y; % Assuming Y (t-SNE results) is available globally
-        %     global scatterPlot; % Handle for the original scatter plot
-        %     global highlighted; % Handle for highlighted points
+    
 
-        % Check if the original scatter plot handle is valid
-        if ~isempty(scatterPlot) && isvalid(scatterPlot)
-            delete(scatterPlot); % Delete the existing scatter plot
-        end
+% Check if the original scatter plot handle is valid
+    if ~isempty(scatterPlot) && isvalid(scatterPlot)
+        % Preserve the brush data
+        brushData = scatterPlot.BrushData;
 
-        % Redraw the original scatter plot
-        scatterPlot = scatter(Y(:,1), Y(:,2));
-        title('t-SNE visualization');
-        xlabel('Dimension 1');
-        ylabel('Dimension 2');
-
-        % Redraw highlighted points if they exist
-        if ~isempty(highlighted) && isvalid(highlighted)
-            % Assuming geneIndices is globally available and valid
-            %         global geneIndices;
-            hold on;
-            highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
-            hold off;
-        end
+        % Delete the existing scatter plot
+        delete(scatterPlot);
+    else
+        % Initialize brushData as empty if scatterPlot is not valid
+        brushData = [];
     end
+
+    % Clear the global clusterIdx variable
+    clusterIdx = [];
+
+    % Redraw the original scatter plot
+    scatterPlot = scatter(Y(:,1), Y(:,2));
+    title('t-SNE visualization');
+    xlabel('Dimension 1');
+    ylabel('Dimension 2');
+
+    % Restore the brush data
+    scatterPlot.BrushData = brushData;
+
+    % Update the brush callback to reference the new scatterPlot
+    hBrush = brush(gcf);
+    set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle});
+
+    % Redraw highlighted points if they exist
+    if ~isempty(highlighted) && isvalid(highlighted)
+        hold on;
+        highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+        hold off;
+    end
+end
 
 %% Callback function for selecting a gene list file
     function selectFileCallback(src, event)
-        %     global geneNames Y highlighted scatterPlot;
-
-        %     % When exiting highlighted mode
-        % isHighlightedMode = true;
 
         % Open file selection dialog
         [file, path] = uigetfile('*.txt', 'Select a gene list file');
@@ -347,7 +337,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             delete(highlighted);  % Clear previous highlights
         end
         hold on;
-        highlighted = scatter(Y(validIndices, 1), Y(validIndices, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+        highlighted = scatter(Y(validIndices, 1), Y(validIndices, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
         % Check if the original scatter plot is available and valid
         if ~isempty(scatterPlot) && isvalid(scatterPlot)
@@ -357,22 +347,20 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         end
 
         hold off;
-        % % When exiting highlighted mode
-        % isHighlightedMode = false;
+    
     end
 
 
 %% Callback function to clear highlighted points
     function clearHighlightsCallback(src, event)
-        % Assuming 'highlighted' is the handle to your highlighted scatter points
-        %     global highlighted;
+       
         if ~isempty(highlighted) && isvalid(highlighted)
             delete(highlighted); % Delete the highlighted points
             highlighted = []; % Clear the handle
         end
     end
 
-% Define the resize function
+% Resize function
     function resizeFigure(src, ~)
         figPos = get(src, 'Position');
 
@@ -381,6 +369,10 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         set(clearClusterBtn, 'Position', [figPos(3)-300, figPos(4)-160, 100, 35]);
         set(selectFileBtn, 'Position', [figPos(3)-300, figPos(4)-200, 100, 35]);
         set(clearBtn, 'Position', [figPos(3)-300, figPos(4)-240, 100, 35]);
+        set(searchField, 'Position', [figPos(3)-300, figPos(4)-280, 100, 35]);
+        set(searchBtn, 'Position', [figPos(3)-300, figPos(4)-320, 100, 35]);
+
+
 
         % Adjust uitable position
         set(uitableHandle, 'Position', [figPos(3)-178, 63, 150, figPos(4)-140]);
@@ -392,5 +384,36 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         set(gca, 'Position', [0.1, 0.1, 0.50, 0.8]);
     end
 toc
+function searchGeneCallback(src, event)
+%     global Y geneNames highlighted;
+
+  % Get the gene name from the input field
+    geneToFind = get(searchField, 'String');
+
+    % Find the index of the gene
+    geneIndex = find(strcmpi(geneNames, geneToFind));
+
+    if isempty(geneIndex)
+        disp(['Gene ' geneToFind ' not found.']);
+        return;
+    end
+
+    % Highlight the found gene on the scatter plot
+    if ~isempty(highlighted) && isvalid(highlighted)
+        delete(highlighted); % Clear any previous highlights
+    end
+    hold on;
+    highlighted = scatter(Y(geneIndex, 1), Y(geneIndex, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+    
+    % Update the legend to show the name of the gene
+    if ~isempty(scatterPlot) && isvalid(scatterPlot)
+        legend([scatterPlot, highlighted], {'All Genes', geneToFind}, 'Location', 'best');
+    else
+        legend(highlighted, geneToFind, 'Location', 'best');
+    end
+    
+    hold off;
+end
+
 end
 
