@@ -34,9 +34,10 @@ geneNames= getappdata(0,'variable_names');
 % Update the waitbar after loading and preparing data
 waitbar(0.2, hWaitBar, 'Performing t-SNE computation...');
 
-%Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
+sz = 18;
+%Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25, sz);
 
-Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 5, 'LearnRate', 200);
+Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200,sz);
 
 % Update the waitbar after completing t-SNE
 waitbar(0.6, hWaitBar, 'Plotting results...');
