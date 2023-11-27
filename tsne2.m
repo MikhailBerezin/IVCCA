@@ -1,5 +1,7 @@
 % Specify the path to  file
+
 function tsne2(varargin)
+tic
 % filename = 'TSNE_heart 868 FDR 0.05 FC 2.xlsx';
 
 % Initialize the waitbar
@@ -170,8 +172,8 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
         % Highlight these genes on the t-SNE plot
         hold on;
-
-        highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r');
+        sz = 20; 
+        highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r', sz);
         hold off;
 
         % % Add a legend to the plot
@@ -388,5 +390,6 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         % Adjust the scatter plot position
         set(gca, 'Position', [0.1, 0.1, 0.50, 0.8]);
     end
+toc
 end
 
