@@ -957,7 +957,10 @@ for i = 1:length(single_to_pathway_correlations)
     else
         bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
     end
+    name{i}=data_table.Properties.VariableNames{pathway_gene_indices(i)};
 end
+
+
 hold off; 
 
 % Include the file name and the average of the absolute correlations in the title
@@ -965,8 +968,8 @@ title_str = sprintf('Correlation of %s to pathway genes in %s (Avg. Abs. Corr. =
 title(title_str);
 
 ylabel('Correlation Coefficient');
-xticks(1:length(genes_list));
-xticklabels(genes_list);
+xticks(1:length(pathway_genes_data));
+xticklabels(name);
 xtickangle(45); % Angle the labels for readability
 set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
 
