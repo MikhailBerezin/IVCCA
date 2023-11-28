@@ -192,6 +192,9 @@ function calculate_correlations_callback(~, ~, f)
     % Get the data table from the app data
     data_table = getappdata(f, 'data_table');
 
+    % Ignore the first column
+     data_table(:, 1) = [];
+
     % Initialize the waitbar
     wb = waitbar(0, 'Calculating correlations...', 'Name', 'Processing', 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
     setappdata(wb, 'canceling', 0)

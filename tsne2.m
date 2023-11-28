@@ -224,7 +224,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
          
             % Update the scatter plot
             cla; % Clear the current axes
-            gscatter(Y(:,1), Y(:,2), sz, clusterIdx); % Use gscatter for coloring based on clusters
+            gscatter(Y(:,1), Y(:,2), clusterIdx); % Use gscatter for coloring based on clusters
             title('t-SNE visualization with K-means Clustering');
             xlabel('Dimension 1');
             ylabel('Dimension 2');
