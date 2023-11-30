@@ -106,6 +106,7 @@ compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
 compare_paths_button.Tooltip = 'Calculate the correlation of betweeen two pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';
+%%
 
 % Create the results label
 result = uilabel(grid, 'Text', '');
@@ -700,7 +701,8 @@ end
 
 % Create a new uifigure to display cluster information
 cluster_info_fig = uifigure('Name', 'Cluster Information', 'Position', [800, 250, 400, 300]);
-cluster_info_table = uitable(cluster_info_fig);
+cluster_info_table = uitable(cluster_info_fig,'CellSelectionCallback', @cellSelectedCallback);
+button = uibutton(cluster_info_fig, 'Text', 'API String', 'Position', [350, 60, 80, 30], 'ButtonPushedFcn', @(btn, event) api_to_string_2());
 cluster_info_table.Data = cluster_info;
 cluster_info_table.ColumnName = {'Cluster Number', 'Number of Genes','PCI','Gene Names'};
 cluster_info_table.Position = [20, 20, 360, 260];
@@ -717,7 +719,24 @@ cluster_info_table.ColumnSortable(3) = true;
 
 
 end
+%%
 
+function cellSelectedCallback(src, event)
+    selectedRow = event.Indices(1);
+    selectedColumn = event.Indices(2);
+
+    if ~isempty(selectedRow) && ~isempty(selectedColumn)
+        % Get the data from the selected cell
+        selectedData = src.Data{selectedRow, selectedColumn};
+
+        % Display information about the selected cell
+%         disp(['Selected Row: ' num2str(selectedRow)]);
+%         disp(['Selected Column: ' num2str(selectedColumn)]);
+%         disp(['Selected Data: ' num2str(selectedData)]);
+       setappdata(0,'genes', num2str(selectedData))
+    end
+    
+end
 %% Define the "Elbow Curve" and Silhouette callback functions
 function elbow_curve_callback(~, ~, f)
     % Initialize the waitbar

@@ -1,13 +1,18 @@
 % Specify the URL and method
+
+function api_to_string_2(varargin)
 string_api_url = 'https://version-11-5.string-db.org/api';
 output_format = 'image';
 method = 'network';
 
 % List of genes
-my_genes = {'YMR055C', 'YFR028C', 'YNL161W', 'YOR373W', 'YFL009W', 'YBR202W'};
-
+% my_genes = {'Adrb1', 'YFR028C', 'YNL161W', 'YOR373W', 'YFL009W', 'YBR202W'};
+my_genes=getappdata(0,'genes');
+my_genes = strsplit(my_genes, ',');
 % Loop through each gene
+
 for i = 1:length(my_genes)
+    try
     % Set parameters
     params = struct('identifiers', my_genes{i}, ...
                     'species', 4932, ...
@@ -44,4 +49,11 @@ for i = 1:length(my_genes)
     
     % Pause for 1 second
     pause(1);
+    catch
+    disp(['SNot found ', my_genes{i}]);
+    end
+    
+
+end
+
 end
