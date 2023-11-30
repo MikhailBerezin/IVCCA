@@ -19,9 +19,12 @@ geneNames= getappdata(0,'variable_names');
 % Update the waitbar after loading and preparing data
 waitbar(0.2, hWaitBar, 'Performing t-SNE computation...');
 
-%Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25, sz);
+% Fill NaN values in data with 0 (or any other suitable number)
+dataFilled = fillmissing(data, 'constant', 0);
 
-Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
+%Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25, sz);
+% 3D tsne
+Y = tsne(dataFilled, 'NumDimensions', 3, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
 
 % Update the waitbar after completing t-SNE
 waitbar(0.6, hWaitBar, 'Plotting results...');
@@ -44,13 +47,21 @@ f =figure ( 'Name', 'IVCCA: t-SNE visualization', 'NumberTitle', 'off', 'Positio
 % Set the figure's resize function
 set(f, 'ResizeFcn', @resizeFigure);
 
-% Set the position of the scatter plot
-set(gca, 'Position', [0.1, 0.1, 0.50, 0.85]);
-sz = 25;
-scatterPlot = scatter(Y(:,1), Y(:,2), sz);
-title('t-SNE visualization');
+% % Set the position of the 2D scatter plot
+% set(gca, 'Position', [0.1, 0.1, 0.50, 0.85]);
+% sz = 25;
+% scatterPlot = scatter(Y(:,1), Y(:,2), sz);
+% title('t-SNE visualization');
+% xlabel('Dimension 1');
+% ylabel('Dimension 2');
+
+
+% Use scatter3 for 3D scatter plot
+scatterPlot = scatter3(Y(:,1), Y(:,2), Y(:,3), 25);
+title('3D t-SNE visualization');
 xlabel('Dimension 1');
 ylabel('Dimension 2');
+zlabel('Dimension 3'); % New label for the third dimension
 
 % Create a push button for K-means clustering
 btn = uicontrol('Style', 'pushbutton', 'String', 'Cluster',...
@@ -198,6 +209,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 %% Callback function for the button Cluster
 
     function clusterCallback(src, event, data, Y, geneNames)
+        tic
         %     global uitableTitle; % Make sure uitableTitle is declared as global
         %      global clusterIdx; % Use the global declaration
         numClusters = str2double(inputdlg('Enter number of clusters:'));
@@ -213,21 +225,30 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             % Update the waitbar
             waitbar(0.5, hWaitBar, 'Updating plot...');
             % Perform K-means clustering
-            [clusterIdx, ~] = kmeans(data, numClusters);
+%             [clusterIdx, ~] = kmeans(dataFilled, numClusters,"cityblock");
 
             % Update the global clusterIdx variable after performing k-means clustering
-            clusterIdx = kmeans(data, numClusters);
+            clusterIdx = kmeans(dataFilled, numClusters, "Distance","cityblock");
 
             % Update the waitbar
             waitbar(1, hWaitBar, 'Updating plot...');
             close (hWaitBar);
          
-            % Update the scatter plot
-            cla; % Clear the current axes
-            gscatter(Y(:,1), Y(:,2), clusterIdx); % Use gscatter for coloring based on clusters
-            title('t-SNE visualization with K-means Clustering');
-            xlabel('Dimension 1');
-            ylabel('Dimension 2');
+%             % Update the scatter plot
+%             cla; % Clear the current axes
+%             gscatter(Y(:,1), Y(:,2), clusterIdx); % Use gscatter for coloring based on clusters
+%             title('t-SNE visualization with K-means Clustering');
+%             xlabel('Dimension 1');
+%             ylabel('Dimension 2');
+
+        % Update the scatter plot for 3D
+        cla; % Clear the current axes
+        scatter3(Y(:,1), Y(:,2), Y(:,3), 10, clusterIdx, 'filled'); % Use scatter3 for 3D plot
+        title('3D t-SNE visualization with K-means Clustering');
+        xlabel('Dimension 1');
+        ylabel('Dimension 2');
+        zlabel('Dimension 3'); % Label for the third dimension
+
 
             % Create a new figure for the clustering results table
             clusterResultsFig = uifigure;
@@ -250,6 +271,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             kmeans_table.ColumnSortable(1) = true;
 
         end
+        toc
     end
 
 %% Callback function to clear clusters from the t-SNE plot
@@ -271,11 +293,21 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
     % Clear the global clusterIdx variable
     clusterIdx = [];
 
-    % Redraw the original scatter plot
-    scatterPlot = scatter(Y(:,1), Y(:,2));
-    title('t-SNE visualization');
-    xlabel('Dimension 1');
-    ylabel('Dimension 2');
+%     % Redraw the original 2D scatter plot
+%     scatterPlot = scatter(Y(:,1), Y(:,2), sz);
+%     title('t-SNE visualization');
+%     xlabel('Dimension 1');
+%     ylabel('Dimension 2');
+
+
+    % Redraw the scatter plot for 3D
+       
+        scatterPlot = scatter3(Y(:,1), Y(:,2), Y(:,3), 25); % Use scatter3 for 3D plot
+        title('3D t-SNE visualization ');
+        xlabel('Dimension 1');
+        ylabel('Dimension 2');
+        zlabel('Dimension 3'); % Label for the third dimension
+    
 
     % Restore the brush data
     scatterPlot.BrushData = brushData;
@@ -287,7 +319,10 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
     % Redraw highlighted points if they exist
     if ~isempty(highlighted) && isvalid(highlighted)
         hold on;
-        highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+        %for 2D
+%         highlighted = scatter(Y(geneIndices, 1), Y(geneIndices, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+        %for3D
+        highlighted = scatter3(Y(geneIndices, 1), Y(geneIndices, 2), Y(geneIndices, 3), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
         hold off;
     end
 end
@@ -337,7 +372,10 @@ end
             delete(highlighted);  % Clear previous highlights
         end
         hold on;
-        highlighted = scatter(Y(validIndices, 1), Y(validIndices, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+       % for 2D
+%         highlighted = scatter(Y(validIndices, 1), Y(validIndices, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+        % for 3D
+        highlighted = scatter3(Y(validIndices, 1), Y(validIndices, 2), Y(validIndices, 3),50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
 
         % Check if the original scatter plot is available and valid
         if ~isempty(scatterPlot) && isvalid(scatterPlot)
@@ -372,8 +410,6 @@ end
         set(searchField, 'Position', [figPos(3)-300, figPos(4)-280, 100, 35]);
         set(searchBtn, 'Position', [figPos(3)-300, figPos(4)-320, 100, 35]);
 
-
-
         % Adjust uitable position
         set(uitableHandle, 'Position', [figPos(3)-178, 63, 150, figPos(4)-140]);
 
@@ -403,8 +439,12 @@ function searchGeneCallback(src, event)
         delete(highlighted); % Clear any previous highlights
     end
     hold on;
-    highlighted = scatter(Y(geneIndex, 1), Y(geneIndex, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
-    
+  %  for 2D
+%     highlighted = scatter(Y(geneIndex, 1), Y(geneIndex, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+ %  for 3D
+    highlighted = scatter3(Y(geneIndex, 1), Y(geneIndex, 2), Y(geneIndex, 3), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+     
+
     % Update the legend to show the name of the gene
     if ~isempty(scatterPlot) && isvalid(scatterPlot)
         legend([scatterPlot, highlighted], {'All Genes', geneToFind}, 'Location', 'best');

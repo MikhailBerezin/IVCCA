@@ -81,7 +81,7 @@ sort_path_button.Enable = 'off'; % Initially disabled
 sort_mpath_button = uibutton(grid, 'push', 'Text', 'Multi Pathways', 'ButtonPushedFcn', {@sort_mpath_callback, f});
 sort_mpath_button.Layout.Row = 10; % Position for "Mutliple Pathways" button
 sort_mpath_button.Layout.Column = 2;
-sort_mpath_button.Tooltip = 'Sort multiple pathways';  % Adding tooltip
+sort_mpath_button.Tooltip = 'Sort multiple pathways based on the correlation values of their members';  % Adding tooltip
 sort_mpath_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Group Correlation" button
@@ -104,7 +104,7 @@ single_to_path_button.Enable = 'off';
 compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare Pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
 compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
-compare_paths_button.Tooltip = 'Compare how two pathways are correlated';  % Adding tooltip
+compare_paths_button.Tooltip = 'Calculate the correlation of betweeen two pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';
 
 % Create the results label
@@ -158,8 +158,12 @@ function load_data_callback(~, ~, f)
     end
 
     waitbar(0.5, wb, 'Removing missing data...');
-    % Remove rows with missing data
-    data_table = rmmissing(data_table);
+%     % Remove rows with missing data
+%     data_table = rmmissing(data_table);
+
+%     % Remove columns with missing data
+%     data_table(:, any(ismissing(data_table), 1)) = [];
+
 
     % Check for Cancel button press
     if getappdata(wb, 'canceling')
@@ -201,7 +205,9 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-    correlations = corrcoef(table2array(data_table)).^1;
+   correlations = corrcoef(table2array(data_table)).^1;
+
+
 
         % Check for Cancel button press
     if getappdata(wb, 'canceling')
@@ -212,6 +218,18 @@ function calculate_correlations_callback(~, ~, f)
     waitbar(1, wb, 'Done calculating correlations');
     pause(1) % For user to notice the message
     delete(wb) % Close waitbar dialog box
+
+    
+
+     % Find and print NaN values
+    [nan_rows, nan_cols] = find(isnan(correlations));
+    if ~isempty(nan_rows)
+        disp('NaN correlations found at:');
+        for i = 1:length(nan_rows)
+            fprintf('Row: %d, Column: %d\n', nan_rows(i), nan_cols(i));
+        end
+    end
+
 
     % Set the results in the GUI
     f.Name = ['IVCCA: Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
@@ -251,7 +269,7 @@ function calculate_correlations_callback(~, ~, f)
     figure ('Name', 'IVCCA: Correlation Histogram', 'NumberTitle', 'off','Position',[100 300 400 400])
     histogram (correlations)
     title('Correlation Histogram');
-    xlabel('Pairwise Correleation Coefficient, q');
+    xlabel('Pairwise Correlation Coefficient, q');
     ylabel('Number of genes');
 
 %   Create a figure for the heatmap
@@ -332,6 +350,11 @@ function sort_callback(~, ~, f)
 %     random_indices = randperm(length(variable_names), 50); % put any nubmer instead of 50
 %     correlations = correlations(random_indices, random_indices);
 %     variable_names = variable_names(random_indices);
+
+
+% Fill NaN values in data with 0 (or any other suitable number)
+correlations = fillmissing(correlations, 'constant', 0);
+
 
     % Calculate the sum of absolute correlations for each variable (gene)   
     sum_abs_correlations = sum(abs(correlations), 2) - 1; % Subtract 1 for self-correlation
@@ -690,6 +713,9 @@ cluster_info_table.ColumnSortable(2) = true;
 
 % Enable sorting for the second column (Index)
 cluster_info_table.ColumnSortable(3) = true;
+
+
+
 end
 
 %% Define the "Elbow Curve" and Silhouette callback functions
