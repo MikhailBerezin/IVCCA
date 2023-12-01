@@ -7,6 +7,7 @@ hWaitBar = waitbar(0, 'Initializing...');
 global geneNames Y highlighted scatterPlot geneIndices isHighlightedMode ;
 global clusterIdx;
 data=  getappdata(0, 'correlations');
+data = abs(data);
 geneNames= getappdata(0,'variable_names');
 
 

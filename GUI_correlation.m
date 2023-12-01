@@ -604,6 +604,7 @@ end
 function cluster_callback(~, ~, f)
     % Get the correlations and variable names from the app data
     correlations = getappdata(0, 'correlations');
+    correlations = abs(correlations);
     variable_names = getappdata(0, 'variable_names');
 
     % Perform hierarchical clustering
@@ -785,7 +786,7 @@ function elbow_curve_callback(~, ~, f)
     hWaitBar = waitbar(0, 'Initializing...');
 
     correlations = getappdata(0, 'correlations');  % Get correlations from app data
-
+    correlations = abs(correlations);
     % Initialize the waitbar
     waitbar(0.2, hWaitBar, 'Performing Elbow computation...');
 
@@ -830,6 +831,7 @@ end
 function dynamic_tree_cut_callback(~, ~, f)
     % Get the correlations from the app data
     correlations = getappdata(0, 'correlations');
+    correlations = abs(correlations);
     variable_names = getappdata(0, 'variable_names');
     
     % Ask the user to specify cutoff_cl
