@@ -631,6 +631,48 @@ function cluster_callback(~, ~, f)
     ylabel('Distance')
   
 
+% Create a dendrogram
+[H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold);
+set(H, 'LineWidth', 1);  % Set to desired line width
+ylabel('Distance')
+
+% Get the current figure and add a button for searching genes
+fig = gcf; % Get the current figure handle
+btn = uicontrol('Style', 'pushbutton', 'String', 'Find Gene',...
+        'Position', [20 20 100 30], 'Callback', @findGeneCallback);
+
+% Callback function for the button Find the Gene
+function findGeneCallback(~, ~)
+    gene_prompt = {'Enter the gene name to find:'};
+    gene_title = 'Find Gene';
+    gene_answer = inputdlg(gene_prompt, gene_title, dims);
+
+    % Process the gene name if provided
+    if ~isempty(gene_answer) && ~isempty(gene_answer{1})
+        gene_name = lower(gene_answer{1}); % Convert input gene name to lower case
+        lower_variable_names = lower(variable_names); % Convert all variable names to lower case
+
+        gene_idx = find(strcmp(lower_variable_names, gene_name));
+
+        if ~isempty(gene_idx)
+            % Find the position of the gene on the x-axis
+            x_axis_pos = find(outperm == gene_idx);
+
+            % Highlight the gene name on the x-axis
+            xticklabels = get(gca, 'XTickLabel');
+            xticklabels{x_axis_pos} = ['\bf\color{red}' xticklabels{x_axis_pos}];
+            set(gca, 'XTickLabel', xticklabels);
+
+            disp(['Highlighted gene ' gene_name ' on the x-axis.']);
+        else
+            disp(['Gene ' gene_name ' not found among the variable names.']);
+        end
+    end
+end
+
+
+
+
 % Find the current figure and turn off the number title
 fig = gcf; % Get the current figure handle
 set(fig, 'NumberTitle', 'off', 'Name', 'Dendrogram');

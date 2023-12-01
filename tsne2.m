@@ -74,7 +74,7 @@ clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',..
     'Callback', @clearClustersCallback); % Define the callback function
 
 % Create a push button for selecting a gene list file
-selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Gene List File',...
+selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Pathway',...
     'Position', [500, 380, 100, 35],... % Adjust position and size as needed
     'Callback', @selectFileCallback); 
 
@@ -328,65 +328,77 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 end
 
 %% Callback function for selecting a gene list file
-    function selectFileCallback(src, event)
+function selectFileCallback(src, event)
+    % Use a persistent variable to remember the last directory
+    persistent lastDir
 
-        % Open file selection dialog
-        [file, path] = uigetfile('*.txt', 'Select a gene list file');
-        if file == 0
-            return; % User canceled file selection
-        end
-
-        % Full path to the selected file
-        fullFilePath = fullfile(path, file);
-
-        % Read the list of genes from the selected file
-        genesOfInterest = readcell(fullFilePath);
-
-        % Convert to proper format if necessary (ensure cell array of strings)
-        if ischar(genesOfInterest)
-            genesOfInterest = cellstr(genesOfInterest);
-        end
-
-        % Convert genesOfInterest and geneNames to lowercase for case-insensitive matching
-        genesOfInterestLower = lower(genesOfInterest);
-        geneNamesLower = lower(geneNames);
-
-        % Find the indices of these genes in geneNames
-        [isInList, geneIndices] = ismember(genesOfInterestLower, geneNamesLower);
-
-        % Debugging: Display which genes were found and their indices
-        foundGenes = genesOfInterest(isInList);
-        disp('Genes found in the list:');
-        disp(foundGenes);
-
-        % Filter out indices that are not found (i.e., zero)
-        validIndices = geneIndices(isInList);
-
-        % Debugging: Check for any unexpected zero indices
-        if any(validIndices == 0)
-            disp('Warning: Some genes not found in geneNames.');
-        end
-
-        % Highlight these genes on the t-SNE plot
-        if ~isempty(highlighted) && ishandle(highlighted)
-            delete(highlighted);  % Clear previous highlights
-        end
-        hold on;
-       % for 2D
-%         highlighted = scatter(Y(validIndices, 1), Y(validIndices, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
-        % for 3D
-        highlighted = scatter3(Y(validIndices, 1), Y(validIndices, 2), Y(validIndices, 3),50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
-
-        % Check if the original scatter plot is available and valid
-        if ~isempty(scatterPlot) && isvalid(scatterPlot)
-            legend([scatterPlot, highlighted], {'All Genes', 'Highlighted Genes'}, 'Location', 'best');
-        else
-            legend(highlighted, 'Highlighted Genes', 'Location', 'best');
-        end
-
-        hold off;
-    
+    % Check if lastDir is empty or not a valid path, and set default if necessary
+    if isempty(lastDir) || ~isfolder(lastDir)
+        lastDir = pwd; % Set to current working directory as default
     end
+
+    % Open file selection dialog, starting from the last accessed directory
+    [file, path] = uigetfile({'*.txt', 'Select a gene list file'}, 'Select a gene list file', lastDir);
+    if file == 0
+        return; % User canceled file selection
+    end
+
+    % Update lastDir with the new path
+    lastDir = path;
+
+    % Full path to the selected file
+    fullFilePath = fullfile(path, file);
+
+    % Extract just the name of the file, without the extension
+    [filePath, fileName, fileExt] = fileparts(fullFilePath);
+
+    % Read the list of genes from the selected file
+    genesOfInterest = readcell(fullFilePath);
+
+    % Convert to proper format if necessary (ensure cell array of strings)
+    if ischar(genesOfInterest)
+        genesOfInterest = cellstr(genesOfInterest);
+    end
+
+    % Convert genesOfInterest and geneNames to lowercase for case-insensitive matching
+    genesOfInterestLower = lower(genesOfInterest);
+    geneNamesLower = lower(geneNames);
+
+    % Find the indices of these genes in geneNames
+    [isInList, geneIndices] = ismember(genesOfInterestLower, geneNamesLower);
+
+    % Debugging: Display which genes were found and their indices
+    foundGenes = genesOfInterest(isInList);
+    disp('Genes found in the list:');
+    disp(foundGenes);
+
+    % Filter out indices that are not found (i.e., zero)
+    validIndices = geneIndices(isInList);
+
+    % Debugging: Check for any unexpected zero indices
+    if any(validIndices == 0)
+        disp('Warning: Some genes not found in geneNames.');
+    end
+
+    % Highlight these genes on the t-SNE plot
+    if ~isempty(highlighted) && ishandle(highlighted)
+        delete(highlighted);  % Clear previous highlights
+    end
+    hold on;
+    % for 3D
+    highlighted = scatter3(Y(validIndices, 1), Y(validIndices, 2), Y(validIndices, 3), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+
+    % Check if the original scatter plot is available and valid
+    if ~isempty(scatterPlot) && isvalid(scatterPlot)
+        legend([scatterPlot, highlighted], {'All Genes', fileName}, 'Location', 'best');
+    else
+        legend(highlighted, fileName, 'Location', 'best');
+    end
+
+    hold off;
+end
+
+
 
 
 %% Callback function to clear highlighted points
