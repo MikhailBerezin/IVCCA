@@ -8,14 +8,18 @@ method = 'network';
 % List of genes
 % my_genes = {'Adrb1', 'YFR028C', 'YNL161W', 'YOR373W', 'YFL009W', 'YBR202W'};
 my_genes=getappdata(0,'genes');
-my_genes = strsplit(my_genes, ',');
+if isa(my_genes,'char')
+    
+   my_genes = strsplit(my_genes, ',');
+end
+    
 % Loop through each gene
 
 for i = 1:length(my_genes)
     try
     % Set parameters
     params = struct('identifiers', my_genes{i}, ...
-                    'species', 4932, ...
+                    'species', 10090, ...
                     'add_white_nodes', 15, ...
                     'network_flavor', 'confidence', ...
                     'caller_identity', 'www.awesome_app.org');

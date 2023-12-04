@@ -93,7 +93,9 @@ searchField = uicontrol('Style', 'edit', ...
 searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Search Gene',...
     'Position', [500, 230, 100, 35],... % Adjust position and size as needed
     'Callback', @searchGeneCallback); % Define the callback function
-
+searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Convert the genest to API',...
+    'Position', [500, 230, 100, 35],... % Adjust position and size as needed
+    'Callback', @api_to_string_2); % Define the callback function
 
 
 % Update and close the waitbar after completing all tasks
@@ -144,11 +146,12 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
                 brushedGeneNamesCellArray = reshape(brushedGeneNames, [], 1);
                 % Update the uitable with brushed gene names
                 uitableHandle.Data = brushedGeneNamesCellArray;
+                
             else
                 % Clear the uitable if no points are brushed or there's an error
                 uitableHandle.Data = cell(10, 1);  % Adjust the size as necessary
             end
-
+           setappdata(0,'genes',brushedGeneNames)
         catch ME
             % Display error message and clear the uitable
             disp('An error occurred in the brushedCallback function:');
