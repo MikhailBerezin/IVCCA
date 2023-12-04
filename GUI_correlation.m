@@ -63,7 +63,7 @@ dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation m
 dynamic_tree_button.Enable = 'off'; % Initially disabled
 
 % Create the "tsne correlations" button
-tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne2);
+tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne3);
 tsne_button.Layout.Row = 8; % Position for "Calculate tsne" button
 tsne_button.Layout.Column = 2;
 tsne_button.Tooltip = 'Calculate t-SNE scatter plot';  % Adding tooltip
