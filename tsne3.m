@@ -104,8 +104,8 @@ searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Search Gene',...
 
 % Create and API to String button
 
-searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
-    'Position', [500, 230, 100, 35],... % Adjust position and size as needed
+stringBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
+    'Position', [500, 180, 100, 35],... % Adjust position and size as needed
     'Callback', @api_to_string_2); % Define the callback function
 
 % Update and close the waitbar after completing all tasks
@@ -408,23 +408,24 @@ function distributionSummary = calculateAndDisplayNearestNeighbor(Y, highlighted
         densityB = densityB + interp1(xi, density, Y(highlightedIndices, dim), 'linear', 'extrap');
     end
 
-    % Calculate summary statistics
-    meanDistance = mean(distances);
-    medianDistance = median(distances);
-    stdDistance = std(distances);
-    meanDensity = mean(densityB);
-    medianDensity = median(densityB);
+ % Calculate summary statistics
+meanDistance = mean(distances);
+medianDistance = median(distances);
+stdDistance = std(distances);
+meanDensity = mean(densityB);
+medianDensity = median(densityB);
 
-    % Create a structure to hold the summary
-    distributionSummary = struct('MeanDistance', meanDistance, ...
-                                 'MedianDistance', medianDistance, ...
-                                 'StandardDeviation', stdDistance, ...
-                                 'MeanDensity', meanDensity, ...
-                                 'MedianDensity', medianDensity);
+% Create a table with two columns and five rows
+metricNames = {'Mean Distance', 'Median Distance', 'Standard Deviation', 'Mean Density', 'Median Density'};
+metricValues = [meanDistance, medianDistance, stdDistance, meanDensity, medianDensity]';
+distributionSummary = table(metricNames', metricValues, 'VariableNames', {'Metric', 'Value'});
 
-    % Display the calculated summary
-    disp('Summary of distribution for highlighted genes:');
-    disp(distributionSummary);
+% Create a uifigure
+f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 200]);
+
+% Display the calculated summary in a uitable within the uifigure
+disp('Summary of distribution for highlighted genes:');
+t = uitable(f, 'Data', distributionSummary, 'Position', [20 20 260 160]);
 end
 
 
@@ -487,6 +488,7 @@ end
         set(clearBtn, 'Position', [figPos(3)-300, figPos(4)-240, 100, 35]);
         set(searchField, 'Position', [figPos(3)-300, figPos(4)-280, 100, 35]);
         set(searchBtn, 'Position', [figPos(3)-300, figPos(4)-320, 100, 35]);
+        set(stringBtn, 'Position', [figPos(3)-300, figPos(4)-370, 100, 35]);
 
         % Adjust uitable position
         set(uitableHandle, 'Position', [figPos(3)-178, 63, 150, figPos(4)-140]);
@@ -513,21 +515,21 @@ function searchGeneCallback(src, event)
     end
 
     % Highlight the found gene on the scatter plot
-    if ~isempty(highlighted) && isvalid(highlighted)
-        delete(highlighted); % Clear any previous highlights
+    if ~isempty(highlightedGenes) && isvalid(highlightedGenes)
+        delete(highlightedGenes); % Clear any previous highlights
     end
     hold on;
   %  for 2D
 %     highlighted = scatter(Y(geneIndex, 1), Y(geneIndex, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
  %  for 3D
-    highlighted = scatter3(Y(geneIndex, 1), Y(geneIndex, 2), Y(geneIndex, 3), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+    highlightedGenes = scatter3(Y(geneIndex, 1), Y(geneIndex, 2), Y(geneIndex, 3), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
      
 
     % Update the legend to show the name of the gene
     if ~isempty(scatterPlot) && isvalid(scatterPlot)
-        legend([scatterPlot, highlighted], {'All Genes', geneToFind}, 'Location', 'best');
+        legend([scatterPlot, highlightedGenes], {'All Genes', geneToFind}, 'Location', 'best');
     else
-        legend(highlighted, geneToFind, 'Location', 'best');
+        legend(highlightedGenes, geneToFind, 'Location', 'best');
     end
     
     hold off;
