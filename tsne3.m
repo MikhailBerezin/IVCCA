@@ -510,7 +510,7 @@ function searchGeneCallback(src, event)
     geneIndex = find(strcmpi(geneNames, geneToFind));
 
     if isempty(geneIndex)
-        disp(['Gene ' geneToFind ' not found.']);
+        msgbox(['Gene ' geneToFind ' not found.']);
         return;
     end
 

@@ -1067,8 +1067,31 @@ set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
 
 end
 
-function sort_mpath_callback(~, ~, f)
+    function sort_mpath_callback(~, ~, f)
     f.WindowStyle = 'normal';
+
+    % Define the path to the Excel file containing GO numbers and descriptions
+    % Replace 'path_to_excel_file.xlsx' with the actual path to your Excel file
+    excelFilePath = 'GO terms 13200.xlsx'; 
+
+   % Define the Excel file options
+    excelFileOptions = {'GO terms 13200.xlsx', 'Kegg terms 340.xlsx', 'ExcelFile3.xlsx', 'ExcelFile4.xlsx', 'ExcelFile5.xlsx'};
+    [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
+                         'SelectionMode', 'single', ...
+                         'ListString', excelFileOptions);
+
+    % If the user made a selection, read the selected Excel file
+    if tf
+        excelFilePath = excelFileOptions{indx};
+        goDescriptions = readtable(excelFilePath, 'ReadVariableNames', true);
+    else
+        disp('No Excel file selected. Exiting function.');
+        return;
+    end
+
+    % Read the Excel file
+    goDescriptions = readtable(excelFilePath, 'ReadVariableNames', true); 
+
     % Get the correlations and variable names from the app data
     correlations2 = getappdata(0, 'correlations');
     variable_names2 = getappdata(0, 'variable_names');
@@ -1091,23 +1114,36 @@ function sort_mpath_callback(~, ~, f)
     else
         lastUsedPath_p = path_name;  % Update the lastUsedPath_p
 
-        if ischar(file_names)  % If only one file is selected, convert it to cell array
+        if ischar(file_names)  % If only one file is selected, convert it to a cell array
             file_names = {file_names};
         end
 
-        % Initialize the table data
-        tableData = cell(length(file_names), 3); % For file name, PCI(A), and PCI(B)
+        % Initialize the table data with an additional column for GO descriptions
+        tableData = cell(length(file_names), 6);
 
-        for i = 1:length(file_names)
-            file_path = fullfile(path_name, file_names{i});
-            selected_genes = textread(file_path, '%s');
-            
-            % Process each file and calculate PCI(A) and PCI(B)
-            selected_genes_lower = lower(selected_genes); % Convert to lower case
-            variable_names_lower = lower(variable_names2); % Convert to lower case
-            
-            [~, indices] = ismember(selected_genes_lower, variable_names_lower);
-            valid_indices = indices(indices > 0);
+for i = 1:length(file_names)
+    file_path = fullfile(path_name, file_names{i});
+        selected_genes = textread(file_path, '%s');
+
+        % Extract the identifier from the file name, handling both 'GO_' and 'path_mmu' formats
+        identifier = regexp(file_names{i}, '(GO_\d+|path_mmu\d+)', 'match', 'once');
+%         identifier = strrep(identifier, '_', ''); % Remove underscore for matching
+
+        % Find the corresponding description in the Excel file
+        goIndex = find(strcmp(goDescriptions{:,1}, identifier));
+        if ~isempty(goIndex)
+            goDescription = goDescriptions{goIndex, 2};
+        else
+            goDescription = 'Description not found';
+        end
+    
+    % Convert all gene names to lower case for case-insensitive comparison
+    selected_genes_lower = lower(selected_genes); 
+    variable_names_lower = lower(variable_names2);
+    s_variable_names_lower = lower(s_variable_names); % Convert to lower case for comparison
+    
+    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+    valid_indices = indices(indices > 0);
             
             if isempty(valid_indices)
                 continue; % Skip this file if no valid genes are found
@@ -1115,49 +1151,58 @@ function sort_mpath_callback(~, ~, f)
             
             correlations = correlations2(valid_indices, valid_indices);
             
-            % Calculation of pciA
+            % Calculation of pciA (internally correlated)
             sum_abs_correlations = sum(abs(correlations), 2) - 1;
             average_abs_correlation = sum_abs_correlations / (length(valid_indices) - 1);
             pciA = mean(average_abs_correlation);
 
-            % Calculate pciB
-            % Assuming s_correlations is a numeric array, not a cell array
-            matching_indices = ismember(s_variable_names, selected_genes);
-            if any(matching_indices)
-                pciB = mean(s_correlations(matching_indices));
-            else
-                pciB = NaN; % Handle cases where there are no matches
-            end
-    
+            % Calculate pciB with case-insensitive comparison
+    matching_indices = ismember(s_variable_names_lower, selected_genes_lower);
+    if any(matching_indices)
+        pciB = mean(s_correlations(matching_indices));
+    else
+        pciB = NaN; % Handle cases where there are no matches
+    end
+
+            % Calculate the total number of genes in each pathway (from the text file)
+            totalGenesInPathway = num2str(length(selected_genes)); % Total genes in the pathway from the file
+
+            % Calculate the number of genes found in the set
+            genesFoundInSet = num2str(length(valid_indices)); % Genes found in the set
+
             % Store the results in the table data
             tableData{i, 1} = file_names{i};
-            tableData{i, 2} = pciA;
-            tableData{i, 3} = pciB;
+            tableData{i, 2} = goDescription;  % Add GO description
+            tableData{i, 3} = totalGenesInPathway; % Add total genes in the pathway
+            tableData{i, 4} = genesFoundInSet; % Add number of genes found in the set
+            tableData{i, 5} = pciB; % Extracted from the table
+            tableData{i, 6} = pciA; % internal correlation to each other
+            
+
         end
 
-% Filter out empty rows
-notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
-filteredTableData = tableData(notEmptyRows, :);
+       % Filter out empty rows
+        notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
+        filteredTableData = tableData(notEmptyRows, :);
 
-% Create and display the table
-resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'PCI_A', 'PCI_B'});
+        % Create and display the table
+        resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Total_Genes', 'Genes_Found', 'PCI_B', 'PCI_A' });
 
-% Create a uifigure
-fig = uifigure('Position', [100, 100, 800, 400], 'Name', 'Result Table');
+        % Create a uifigure
+        fig = uifigure('Position', [100, 100, 1150, 400], 'Name', 'Multiple Pathway Analysis');
 
-% Create a uitable in the uifigure
-uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'File_Name', 'PCI_A', 'PCI_B'}, 'Position', [20, 20, 760, 360]);
+        % Create a uitable in the uifigure with the sorted data
+        uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'File_Name', 'GO Description','Total Genes in Pathway', 'Genes Found in Set', 'PCI Extracted from Global', 'PCI within the Pathway' }, 'Position', [20, 20, 1100, 360]);
 
-% Set column width to auto
-uit.ColumnWidth = {'auto', 'auto', 'auto'};
+        % Set column width to auto
+        uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
 
-% Adding sorting functionality
-uit.ColumnSortable(1) = true;
-uit.ColumnSortable(2) = true;
-uit.ColumnSortable(3) = true;
+        % Adding sorting functionality
+        uit.ColumnSortable = [true, true, true, true, true, true];
 
-    end
 end
+end
+
 
 end
 
