@@ -387,7 +387,7 @@ end
 
 function distributionSummary = calculateAndDisplayNearestNeighbor(Y, highlightedIndices)
     if isempty(highlightedIndices)
-        disp('No highlighted genes to calculate distances and density for.');
+        msgbox('No genes in the set.');
         return;
     end
 
@@ -409,25 +409,27 @@ function distributionSummary = calculateAndDisplayNearestNeighbor(Y, highlighted
     end
 
  % Calculate summary statistics
+numPoints = length(highlightedIndices); % Number of identified points
 meanDistance = mean(distances);
 medianDistance = median(distances);
 stdDistance = std(distances);
 meanDensity = mean(densityB);
 medianDensity = median(densityB);
 
-% Create a table with two columns and five rows
-metricNames = {'Mean Distance', 'Median Distance', 'Standard Deviation', 'Mean Density', 'Median Density'};
-metricValues = [meanDistance, medianDistance, stdDistance, meanDensity, medianDensity]';
-distributionSummary = table(metricNames', metricValues, 'VariableNames', {'Metric', 'Value'});
+
+% Create a table with two columns and six rows
+    metricNames = {'Number of Points','Mean Distance', 'Median Distance', 'Standard Deviation', 'Mean Density', 'Median Density'};
+    metricValues = [numPoints,meanDistance, medianDistance, stdDistance, meanDensity, medianDensity]; % Keep numPoints as numeric
+    metricValues = num2cell(metricValues); % Convert numeric array to cell array
+    distributionSummary = table(metricNames', metricValues', 'VariableNames', {'Metric', 'Value'}); % Note the transposition of metricValues
 
 % Create a uifigure
-f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 200]);
+f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 250]); % Adjust height for additional row
 
 % Display the calculated summary in a uitable within the uifigure
 disp('Summary of distribution for highlighted genes:');
-t = uitable(f, 'Data', distributionSummary, 'Position', [20 20 260 160]);
+t = uitable(f, 'Data', distributionSummary, 'Position', [20 20 260 210]); % Adjust height for additional row
 end
-
 
 
 
