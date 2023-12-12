@@ -1,6 +1,6 @@
 function GUI_correlation
 % Mikhail Berezin 2023
-f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 400], 'Icon','Corr_icon.png');  % adjusted width
+f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 450], 'Icon','Corr_icon.png');  % adjusted width
 close all
 % f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
@@ -10,7 +10,7 @@ grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x',
 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 13]; % Spans across all rows
+data.Layout.Row = [1 14]; % Spans across all rows
 data.Layout.Column = 1; % Occupies the first column
 
 % Create the "Load Data" button
@@ -106,6 +106,13 @@ compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
 compare_paths_button.Tooltip = 'Calculate the correlation of betweeen two pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';
+
+% Create the "Network analysis" button
+network_button = uibutton(grid, 'push', 'Text', 'Network analysis', 'ButtonPushedFcn', {@calculate_network_callback, f});
+network_button.Layout.Row = 14; % Position for "Network" button
+network_button.Layout.Column = 2;
+network_button.Tooltip = 'Generate the network';  % Adding tooltip
+network_button.Enable = 'off';
 %%
 
 % Create the results label
@@ -115,7 +122,7 @@ result.Layout.Column = 1; % Positioned in the first column
 
 %% This function removes the rows with missing numbers
 function load_data_callback(~, ~, f)
-% Define a persistent variable to store the last used path
+    % Define a persistent variable to store the last used path
     persistent lastUsedPath
 
     % Check if the lastUsedPath is valid and not empty
@@ -141,30 +148,27 @@ function load_data_callback(~, ~, f)
     % Read the data from the file
     try
         waitbar(0.2, wb, 'Reading data...');
-        data_table = readtable(fullfile(path, file));
+               data_table = readtable(fullfile(path, file));
     catch
         errordlg('Error reading data. Please check the format of the data file.');
         delete(wb) % Close the waitbar if an error occurs
         return
     end
 
-    % Ignore the first row
-  %  data_table(1, :) = [];
+    % Load gene list from a text file
+    [geneFile, genePath] = uigetfile('*.txt', 'Select the gene list file');
+    if ~isequal(geneFile, 0)
+        geneList = readlines(fullfile(genePath, geneFile));
+        geneList = lower(geneList); % Convert gene list to lower case
 
-    % Check that the data table has at least two columns
-    if size(data_table, 2) < 2
-        errordlg('Data file must have at least two columns.');
-        delete(wb) % Close the waitbar if an error occurs
-        return
+        % Filter the data table to include only columns that match the gene list
+        waitbar(0.6, wb, 'Filtering data...');
+        variableNamesLower = lower(data_table.Properties.VariableNames); % Convert column names to lower case
+        filteredColumns = data_table(:, ismember(variableNamesLower, geneList));
+
+        % Keep the first column and concatenate with filtered columns
+        data_table = [data_table(:, 1), filteredColumns];
     end
-
-    waitbar(0.5, wb, 'Removing missing data...');
-%     % Remove rows with missing data
-%     data_table = rmmissing(data_table);
-
-%     % Remove columns with missing data
-%     data_table(:, any(ismissing(data_table), 1)) = [];
-
 
     % Check for Cancel button press
     if getappdata(wb, 'canceling')
@@ -180,13 +184,16 @@ function load_data_callback(~, ~, f)
     data.Data = data_table;
     calculate_button.Enable = 'on'; % Enable the "Calculate Correlations" button
 
-    % Display the loaded data in the Command Window
+    % Display the filtered or unfiltered data in the Command Window
     disp(data_table);
 
     % Save the data table to the app data
     setappdata(f, 'data_table', data_table);
-    uifigureOnTop (f, true) 
+    uifigureOnTop(f, true) 
 end
+
+
+
 
 
 %% Define the "Calculate Correlations" callback function
@@ -262,6 +269,7 @@ function calculate_correlations_callback(~, ~, f)
     single_to_path_button.Enable = 'on';
     compare_paths_button.Enable = 'on';
     tsne_button.Enable = 'on';
+    network_button.Enable = 'on';
 
 
     f.WindowStyle = 'normal';
@@ -1072,10 +1080,10 @@ end
 
     % Define the path to the Excel file containing GO numbers and descriptions
     % Replace 'path_to_excel_file.xlsx' with the actual path to your Excel file
-    excelFilePath = 'GO terms 13200.xlsx'; 
+    excelFilePath = 'GO terms all 13383.xlsx'; 
 
    % Define the Excel file options
-    excelFileOptions = {'GO terms 13200.xlsx', 'Kegg terms 340.xlsx', 'ExcelFile3.xlsx', 'ExcelFile4.xlsx', 'ExcelFile5.xlsx'};
+    excelFileOptions = {'GO terms all 13383.xlsx', 'Kegg terms 340.xlsx', 'ExcelFile3.xlsx', 'ExcelFile4.xlsx', 'ExcelFile5.xlsx'};
     [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
                          'SelectionMode', 'single', ...
                          'ListString', excelFileOptions);
@@ -1202,6 +1210,86 @@ for i = 1:length(file_names)
 
 end
 end
+function calculate_network_callback(~, ~, f)
+    f.WindowStyle = 'normal';
+
+    % Retrieve correlation data and variable names (gene names)
+    cor_data = getappdata(0, 'correlations');
+    geneNames = getappdata(0, 'variable_names');
+
+    % Threshold for correlation
+    correlationThreshold = 0.75;
+
+    % Filter the correlation matrix
+    filteredCorData = cor_data;
+    filteredCorData(abs(filteredCorData) < correlationThreshold) = 0;
+
+    % Create a graph object from the filtered correlation matrix
+    G = graph(filteredCorData, geneNames, 'OmitSelfLoops');
+
+    % Remove edges with weight below the threshold
+    G = rmedge(G, find(G.Edges.Weight < correlationThreshold));
+
+    % Calculate the degree for each node
+    nodeDegree = degree(G);
+
+    % Create a table with gene names and their degrees
+    resultsTable = table(geneNames', nodeDegree, 'VariableNames', {'GeneName', 'Degree'});
+% f = uifigure('Name', 'Degree of connection', 'Position', [100 100 300 250]); % Adjust height for additional row
+f = uifigure('Name', ['Degree of Connection (Threshold: ' num2str(correlationThreshold) ')'], 'Position', [100 100 300 250]); % Adjust height for additional row
+
+
+t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
+t.ColumnSortable(1) = true;
+t.ColumnSortable(2) = true;
+
+
+    % Set edge weights based on correlation values
+    G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
+
+    % Number of nodes
+    numNodes = numnodes(G);
+
+    % Generate spherical coordinates for each node
+    [x, y, z] = spherePoints(numNodes);
+
+    % Plot the network in 3D with nodes on a sphere
+    figure; % Open a new figure
+    p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
+ %   p.LineWidth = 1 * G.Edges.Weight / max(G.Edges.Weight); % Line thickness
+    p.LineWidth = 0.3;
+    % Adjust node size based on degree
+    p.MarkerSize = 5 + (1.3 * (nodeDegree / max(nodeDegree))).^12;
+
+    % Set the view to 2D or 3D
+    view(2);
+
+    % Add labels to the nodes
+    labelnode(p, 1:numNodes, geneNames);
+
+    % Color nodes based on degree
+    colormap(jet(max(nodeDegree)));
+    %p.NodeCData = nodeDegree;
+    p.NodeColor =  'yellow';
+%     p.NodeColor =  [1, 0.5, 0.3];
+    p.NodeLabelColor = 'k';
+   p.NodeFontSize = 7;
+
+
+    % Save or display the figure
+%     saveas(gcf, '3d_spherical_gene_network.png');
+end
+
+function [x, y, z] = spherePoints(n)
+    % Generate n points distributed on the surface of a sphere
+    theta = linspace(0, 2*pi, n);
+    phi = acos(2 * linspace(0, 1, n) - 1);
+    x = sin(phi) .* cos(theta);
+    y = sin(phi) .* sin(theta);
+    z = cos(phi);
+end
+
+
 
 
 end
