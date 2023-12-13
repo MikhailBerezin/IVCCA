@@ -1182,6 +1182,9 @@ for i = 1:length(file_names)
     ratioDEGsToTotal = length(valid_indices) / length(selected_genes);
     ratioDEGsToTotalStr = num2str(ratioDEGsToTotal, '%.3f'); % Convert the ratio to a string with 2 decimal places
 
+    ratioDEGsToTotalNum = str2double(ratioDEGsToTotalStr);
+    strength_index = ratioDEGsToTotalNum*pciB*100; 
+
             % Store the results in the table data
             tableData{i, 1} = file_names{i};
             tableData{i, 2} = goDescription;  %  GO description
@@ -1189,7 +1192,8 @@ for i = 1:length(file_names)
             tableData{i, 4} = genesFoundInSet; %  number of genes found in the set
             tableData{i, 5} = ratioDEGsToTotalStr;  % Pathway activation Index
             tableData{i, 6} = pciB; % Extracted from the table
-            tableData{i, 7} = pciA; % internal correlation to each other
+            tableData{i, 7} = strength_index; % product of 5 and r
+            tableData{i, 8} = pciA; % internal correlation to each other
             
 
         end
@@ -1198,8 +1202,39 @@ for i = 1:length(file_names)
 notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
 filteredTableData = tableData(notEmptyRows, :);
 
-% Define the threshold value
-genesThreshold = 0;
+% Define the prompt, title, and default value for the input dialog
+prompt = {'Enter the threshold for genes:'};
+dlgtitle = 'Input';
+dims = [1 35];
+definput = {'4'};  % default value set to 4
+
+% Create the input dialog box
+answer = inputdlg(prompt, dlgtitle, dims, definput);
+
+% Check if a value was entered and if so, use it; otherwise, use the default value
+if ~isempty(answer)
+    genesThreshold = str2double(answer{1});
+else
+    genesThreshold = 4;
+end
+
+% Validate the input
+if ~isempty(answer)
+    tempValue = str2double(answer{1});
+    if ~isnan(tempValue) && tempValue >= 0 && tempValue <= 10
+        genesThreshold = tempValue;
+    else
+        % Optionally, you can display a message if the input is invalid
+        msgbox('Invalid input. Using default value of 4.', 'Error', 'error');
+    end
+end
+
+% The rest of your code here...
+% Convert 'Genes_Found' to numeric and filter rows where genes found is more than the threshold
+genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
+rowsWithMoreThanThresholdGenes = genesFoundNumeric > genesThreshold;  % Find rows with more than threshold genes
+filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
+
 
 % Convert 'Genes_Found' to numeric and filter rows where genes found is more than the threshold
 genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
@@ -1207,20 +1242,47 @@ rowsWithMoreThanThresholdGenes = genesFoundNumeric > genesThreshold;  % Find row
 filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
 
 % Create and display the table
-resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'PCI_B', 'PCI_A' });
+resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'CECI', 'PCI_B', 'PCI_A' });
 
 % Create a uifigure with a dynamic title that includes the threshold
 figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d Found in Set', genesThreshold);
 fig = uifigure('Position', [100, 100, 1150, 400], 'Name', figTitle);
 
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI Extracted from Global', 'PCI within Pathway' }, 'Position', [20, 20, 1100, 360]);
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI Extracted from Global', 'Correlation-Expression \nComposite Index (CECI)','PCI within Pathway' }, 'Position', [20, 20, 1100, 360]);
 
 % Set column width to auto
-uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
+uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
 
 % Adding sorting functionality
-uit.ColumnSortable = [true, true, true, true, true, true, true];
+uit.ColumnSortable = [true, true, true, true, true, true, true, true];
+
+
+% Extracting goDescription and strength indices
+goDescriptions = filteredTableData(:, 2);
+strengthIndices = cell2mat(filteredTableData(:, 7));
+
+% Sorting the data based on strength indices in descending order
+[sortedStrengthIndices, sortIndex] = sort(strengthIndices, 'descend');
+sortedGoDescriptions = goDescriptions(sortIndex);
+
+% Selecting the top 50 entries
+topGoDescriptions = sortedGoDescriptions(1:min(25, end));
+topStrengthIndices = sortedStrengthIndices(1:min(25, end));
+
+% Create the horizontal bar plot
+fig = figure;
+barh(topStrengthIndices, 'blue');
+set(gca, 'YTick', 1:length(topGoDescriptions), 'YTickLabel', string(topGoDescriptions));
+
+% Add labels and title
+xlabel('Strength Index');
+ylabel('GO Description');
+title('Top 50 GO Descriptions vs. Strength Index');
+
+% Adjust figure size and invert y-axis
+fig.Position = [100, 100, 1000, 600];
+set(gca, 'YDir', 'reverse');
 
 end
 end
@@ -1231,8 +1293,35 @@ function calculate_network_callback(~, ~, f)
     cor_data = getappdata(0, 'correlations');
     geneNames = getappdata(0, 'variable_names');
 
-    % Threshold for correlation
+
+% Define the prompt, title, and default value for the input dialog
+prompt = {'Enter the correlation threshold:'};
+dlgtitle = 'Input';
+dims = [1 35];
+definput = {'0.75'};  % default value set to 0.75
+
+% Create the input dialog box
+answer = inputdlg(prompt, dlgtitle, dims, definput);
+
+% Check if a value was entered and if so, use it; otherwise, use the default value
+if ~isempty(answer)
+    correlationThreshold = str2double(answer{1});
+else
     correlationThreshold = 0.75;
+end
+
+% Validate the input
+if ~isempty(answer)
+    tempValue = str2double(answer{1});
+    if ~isnan(tempValue) && tempValue >= 0 && tempValue < 1
+        genesThreshold = tempValue;
+    else
+        % Optionally, you can display a message if the input is invalid
+        msgbox('Invalid input. Using default value of 0.75.', 'Error', 'error');
+    end
+end
+
+
 
     % Filter the correlation matrix
     filteredCorData = cor_data;
