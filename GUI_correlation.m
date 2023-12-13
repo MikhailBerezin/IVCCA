@@ -1150,7 +1150,7 @@ for i = 1:length(file_names)
     variable_names_lower = lower(variable_names2);
     s_variable_names_lower = lower(s_variable_names); % Convert to lower case for comparison
     
-    [~, indices] = ismember(selected_genes_lower, variable_names_lower);
+    [~, indices] = ismember(selected_genes_lower, variable_names_lower');
     valid_indices = indices(indices > 0);
             
             if isempty(valid_indices)
@@ -1178,35 +1178,49 @@ for i = 1:length(file_names)
             % Calculate the number of genes found in the set
             genesFoundInSet = num2str(length(valid_indices)); % Genes found in the set
 
+            % Calculate the ratio of DEGs to total genes in the pathway
+    ratioDEGsToTotal = length(valid_indices) / length(selected_genes);
+    ratioDEGsToTotalStr = num2str(ratioDEGsToTotal, '%.3f'); % Convert the ratio to a string with 2 decimal places
+
             % Store the results in the table data
             tableData{i, 1} = file_names{i};
-            tableData{i, 2} = goDescription;  % Add GO description
-            tableData{i, 3} = totalGenesInPathway; % Add total genes in the pathway
-            tableData{i, 4} = genesFoundInSet; % Add number of genes found in the set
-            tableData{i, 5} = pciB; % Extracted from the table
-            tableData{i, 6} = pciA; % internal correlation to each other
+            tableData{i, 2} = goDescription;  %  GO description
+            tableData{i, 3} = totalGenesInPathway; %  total genes in the pathway            
+            tableData{i, 4} = genesFoundInSet; %  number of genes found in the set
+            tableData{i, 5} = ratioDEGsToTotalStr;  % Pathway activation Index
+            tableData{i, 6} = pciB; % Extracted from the table
+            tableData{i, 7} = pciA; % internal correlation to each other
             
 
         end
 
-       % Filter out empty rows
-        notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
-        filteredTableData = tableData(notEmptyRows, :);
+ % Filter out empty rows
+notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
+filteredTableData = tableData(notEmptyRows, :);
 
-        % Create and display the table
-        resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Total_Genes', 'Genes_Found', 'PCI_B', 'PCI_A' });
+% Define the threshold value
+genesThreshold = 0;
 
-        % Create a uifigure
-        fig = uifigure('Position', [100, 100, 1150, 400], 'Name', 'Multiple Pathway Analysis');
+% Convert 'Genes_Found' to numeric and filter rows where genes found is more than the threshold
+genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
+rowsWithMoreThanThresholdGenes = genesFoundNumeric > genesThreshold;  % Find rows with more than threshold genes
+filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
 
-        % Create a uitable in the uifigure with the sorted data
-        uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'File_Name', 'GO Description','Total Genes in Pathway', 'Genes Found in Set', 'PCI Extracted from Global', 'PCI within the Pathway' }, 'Position', [20, 20, 1100, 360]);
+% Create and display the table
+resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'PCI_B', 'PCI_A' });
 
-        % Set column width to auto
-        uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
+% Create a uifigure with a dynamic title that includes the threshold
+figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d Found in Set', genesThreshold);
+fig = uifigure('Position', [100, 100, 1150, 400], 'Name', figTitle);
 
-        % Adding sorting functionality
-        uit.ColumnSortable = [true, true, true, true, true, true];
+% Create a uitable in the uifigure with the sorted data
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI Extracted from Global', 'PCI within Pathway' }, 'Position', [20, 20, 1100, 360]);
+
+% Set column width to auto
+uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
+
+% Adding sorting functionality
+uit.ColumnSortable = [true, true, true, true, true, true, true];
 
 end
 end
