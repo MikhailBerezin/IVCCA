@@ -1203,10 +1203,10 @@ notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
 filteredTableData = tableData(notEmptyRows, :);
 
 % Define the prompt, title, and default value for the input dialog
-prompt = {'Enter the threshold for genes:'};
+prompt = {'Enter the minimum number of genes in a set:'};
 dlgtitle = 'Input';
 dims = [1 35];
-definput = {'4'};  % default value set to 4
+definput = {'5'};  % default value set to 5
 
 % Create the input dialog box
 answer = inputdlg(prompt, dlgtitle, dims, definput);
@@ -1215,7 +1215,7 @@ answer = inputdlg(prompt, dlgtitle, dims, definput);
 if ~isempty(answer)
     genesThreshold = str2double(answer{1});
 else
-    genesThreshold = 4;
+    genesThreshold = 5;
 end
 
 % Validate the input
@@ -1229,16 +1229,10 @@ if ~isempty(answer)
     end
 end
 
-% The rest of your code here...
-% Convert 'Genes_Found' to numeric and filter rows where genes found is more than the threshold
-genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
-rowsWithMoreThanThresholdGenes = genesFoundNumeric > genesThreshold;  % Find rows with more than threshold genes
-filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
-
 
 % Convert 'Genes_Found' to numeric and filter rows where genes found is more than the threshold
 genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
-rowsWithMoreThanThresholdGenes = genesFoundNumeric > genesThreshold;  % Find rows with more than threshold genes
+rowsWithMoreThanThresholdGenes = genesFoundNumeric >= genesThreshold;  % Find rows with more or equal than threshold genes
 filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
 
 % Create and display the table
@@ -1249,7 +1243,7 @@ figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d 
 fig = uifigure('Position', [100, 100, 1150, 400], 'Name', figTitle);
 
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI Extracted from Global', 'Correlation-Expression \nComposite Index (CECI)','PCI within Pathway' }, 'Position', [20, 20, 1100, 360]);
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI Extracted from Global', 'Correlation-Expression Composite Index (CECI)','PCI within Pathway' }, 'Position', [20, 20, 1100, 360]);
 
 % Set column width to auto
 uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
@@ -1266,9 +1260,23 @@ strengthIndices = cell2mat(filteredTableData(:, 7));
 [sortedStrengthIndices, sortIndex] = sort(strengthIndices, 'descend');
 sortedGoDescriptions = goDescriptions(sortIndex);
 
-% Selecting the top 50 entries
-topGoDescriptions = sortedGoDescriptions(1:min(25, end));
-topStrengthIndices = sortedStrengthIndices(1:min(25, end));
+% % Selecting the top 50 entries
+% topGoDescriptions = sortedGoDescriptions(1:min(25, end));
+% topStrengthIndices = sortedStrengthIndices(1:min(25, end));
+
+% Create a pop-up to input the number of entries
+prompt = {'Enter the number of entries for plotting:'};
+dlgtitle = 'Input';
+dims = [1 45];
+definput = {'25'}; % default value
+answer = inputdlg(prompt, dlgtitle, dims, definput);
+numEntries = str2double(answer{1});
+totalRows = size(filteredTableData, 1);
+numEntries = max(2, min(numEntries, totalRows)); % Ensure within valid range
+
+% Sorting and selecting the top entries based on the user input
+topGoDescriptions = sortedGoDescriptions(1:min(numEntries, end));
+topStrengthIndices = sortedStrengthIndices(1:min(numEntries, end));
 
 % Create the horizontal bar plot
 fig = figure;
@@ -1276,9 +1284,10 @@ barh(topStrengthIndices, 'blue');
 set(gca, 'YTick', 1:length(topGoDescriptions), 'YTickLabel', string(topGoDescriptions));
 
 % Add labels and title
-xlabel('Strength Index');
-ylabel('GO Description');
-title('Top 50 GO Descriptions vs. Strength Index');
+xlabel('Correlation-Expression Composite Index (CECI)');
+% ylabel('Pathways');
+% Modify the title to include the number of entries chosen by the user
+title(sprintf('Top %d Pathways vs. Correlation-Expression Composite Index (CECI)', numEntries));
 
 % Adjust figure size and invert y-axis
 fig.Position = [100, 100, 1000, 600];
