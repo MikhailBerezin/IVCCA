@@ -349,20 +349,24 @@ function selectFileCallback(src, event)
 
 
    persistent lastPath; % Declare a persistent variable to store the last used path
-
+    setappdata(0,'cluster',0)
     if isempty(lastPath)
         lastPath = pwd; % If lastPath is empty, set it to the current directory
     end
 
     % Open file selection dialog and read genes of interest
-    [file, path] = uigetfile({'*.txt', 'Select a gene list file'}, 'Select a gene list file', lastPath);
-    if file == 0
-        return; % User canceled file selection
-    else
-        lastPath = path; % Update lastPath with the new directory
-    end
+    [file, path] = uigetfile({'*.txt', 'Select a gene list file'}, 'Select a gene list file', lastPath, 'MultiSelect', 'on');
+%     if file == 0
+%         return; % User canceled file selection
+%     else
+%         lastPath = path; % Update lastPath with the new directory
+%     end
+if ischar(file)
     
-    genesOfInterest = readcell(fullfile(path, file));
+    file_path = fullfile(path, file);
+    genesOfInterest = textread(file_path, '%s');
+
+%     genesOfInterest = readcell(fullfile(path, file));
 
     % Convert genesOfInterest and geneNames to lowercase for case-insensitive matching
     genesOfInterestLower = lower(genesOfInterest);
@@ -374,7 +378,10 @@ function selectFileCallback(src, event)
 
     % Append new highlighted genes to the highlightedGenes structure
     newColor = rand(1,3); % Generate a new color
-    [~, fileName, ~] = fileparts(file); % Extract the file name without extension
+%     [~, fileName, ~] = fileparts(file); % Extract the file name without extension
+
+    fileName=file;
+
     newStruct = struct('indices', validIndices, 'colors', newColor, 'fileName', fileName);
     highlightedGenes = [highlightedGenes, newStruct];
     
@@ -383,6 +390,40 @@ function selectFileCallback(src, event)
 
     % Update the scatter plot
     updateScatterPlot();
+   
+else
+    for i = 1:length(file)
+     setappdata(0,'cluster',1)  
+     file_path = fullfile(path, file{i});
+       
+    genesOfInterest = textread(file_path, '%s');
+
+%     genesOfInterest = readcell(fullfile(path, file));
+
+    % Convert genesOfInterest and geneNames to lowercase for case-insensitive matching
+    genesOfInterestLower = lower(genesOfInterest);
+    geneNamesLower = lower(geneNames);
+
+    % Find the indices of these genes in geneNames
+    [isInList, geneIndices] = ismember(genesOfInterestLower, geneNamesLower);
+    validIndices = geneIndices(isInList);
+
+    % Append new highlighted genes to the highlightedGenes structure
+    newColor = rand(1,3); % Generate a new color
+%     [~, fileName, ~] = fileparts(file); % Extract the file name without extension
+
+    fileName=  file{i};
+
+    newStruct = struct('indices', validIndices, 'colors', newColor, 'fileName', fileName);
+    highlightedGenes = [highlightedGenes, newStruct];
+    
+    % Call the function to calculate and display nearest neighbor distances
+    calculateAndDisplayNearestNeighbor(Y, validIndices);
+
+    % Update the scatter plot
+    updateScatterPlot();
+    end
+end
 end
 
 function distributionSummary = calculateAndDisplayNearestNeighbor(Y, highlightedIndices)
@@ -437,10 +478,13 @@ function updateScatterPlot()
 %     global Y highlightedGenes scatterPlot;
 
     % Clear existing scatter plot and redraw
-    if ~isempty(scatterPlot) && isvalid(scatterPlot)
-        delete(scatterPlot);
+%     if ~isempty(scatterPlot) && isvalid(scatterPlot)
+%         delete(scatterPlot);
+%     end
+    pl= getappdata(0,'cluster');
+    if pl==0
+        delete(scatterPlot)
     end
-
     % Set the default color for non-highlighted points to grey
     scatterPlot = scatter3(Y(:,1), Y(:,2), Y(:,3), 25, [0.7, 0.7, 0.7]); % Grey color
     title('3D t-SNE visualization with K-means Clustering');
