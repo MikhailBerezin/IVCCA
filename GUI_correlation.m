@@ -990,7 +990,7 @@ end
     xticks(1:length(group_gene_names));
     xticklabels(group_gene_names);
     xtickangle(45); % Angle the labels for readability
-    set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
+    set(gcf, 'Position', [200, 200, 700, 500]); % Set the position of the figure
    
 end   
     
@@ -1071,7 +1071,7 @@ ylabel('Correlation Coefficient');
 xticks(1:length(pathway_genes_data));
 xticklabels(name);
 xtickangle(45); % Angle the labels for readability
-set(gcf, 'Position', [200, 200, 700, 400]); % Set the position of the figure
+set(gcf, 'Position', [200, 200, 700, 500]); % Set the position of the figure
 
 end
 
@@ -1185,15 +1185,25 @@ for i = 1:length(file_names)
     ratioDEGsToTotalNum = str2double(ratioDEGsToTotalStr);
     strength_index = ratioDEGsToTotalNum*pciB*100; 
 
+% Calculate the Z-score, from the randomly selected genes using random_sel_txt.m function. 
+% The average (A!) and standard dev (STD) of  CICI from random genes was calculated and the average is in cell A1, the standard deviation is in cell B1, and 
+% is in cell C1, the formula for the Z-score=(CICI-A)/ STD the values
+% Avearge = 7.908.  STD = 2.0605. For alpha = 0.05, the Critical Z-value = NORM.S.INV(1-0.05/2) = 1.960  Conclusion in Z-score:If Z-score > Critical Z-score, "Significantly Different")
+   
+  %  CECI = str2double(tableData{i, 8});
+    Z_score = (strength_index - 7.908) / 2.0605;
+
             % Store the results in the table data
             tableData{i, 1} = file_names{i};
             tableData{i, 2} = goDescription;  %  GO description
             tableData{i, 3} = totalGenesInPathway; %  total genes in the pathway            
             tableData{i, 4} = genesFoundInSet; %  number of genes found in the set
             tableData{i, 5} = ratioDEGsToTotalStr;  % Pathway activation Index
-            tableData{i, 6} = pciB; % Extracted from the table
-            tableData{i, 7} = strength_index; % product of 5 and r
-            tableData{i, 8} = pciA; % internal correlation to each other
+            tableData{i, 6} = pciA; % internal correlation to each other
+            tableData{i, 7} = pciB; % Extracted from the table
+            tableData{i, 8} = strength_index; % product of genesFoundInSet  and pciB multiply by 100
+            tableData{i, 9} = Z_score; % internal correlation to each other
+            
             
        %To get name 
        for j=1:length(valid_indices)
@@ -1210,7 +1220,7 @@ filteredTableData = tableData(notEmptyRows, :);
 % Define the prompt, title, and default value for the input dialog
 prompt = {'Enter the minimum number of genes in a set:'};
 dlgtitle = 'Input';
-dims = [1 35];
+dims = [1 45];
 definput = {'5'};  % default value set to 5
 
 % Create the input dialog box
@@ -1241,31 +1251,78 @@ rowsWithMoreThanThresholdGenes = genesFoundNumeric >= genesThreshold;  % Find ro
 filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
 
 % Create and display the table
-resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'CECI', 'PCI_B', 'PCI_A' });
+resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'PCI_B','PCI_A','CECI', 'Z-score' });
 
 % Create a uifigure with a dynamic title that includes the threshold
 figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d Found in Set', genesThreshold);
-fig = uifigure('Position', [100, 100, 1150, 400], 'Name', figTitle);
+fig = uifigure('Position', [50, 350, 1100, 300], 'Name', figTitle);
 
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI Extracted from Global', 'Correlation-Expression Composite Index (CECI)','PCI within Pathway' }, 'Position', [20, 20, 1100, 360]);
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI within Pathway','PCI Extracted from Global', 'Correlation-Expression Composite Index (CECI)','Z-Score' }, 'Position', [20, 20, 1100, 360]);
 
 % Set column width to auto
-uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'};
+
+uit.ColumnWidth = {120, 100, 100, 100, 100, 120, 120, 120, 120};
 
 % Adding sorting functionality
-uit.ColumnSortable = [true, true, true, true, true, true, true, true];
+uit.ColumnSortable = [true, true, true, true, true, true, true, true, true];
 
 
 % Extracting goDescription and strength indices
 goDescriptions = filteredTableData(:, 2);
-strengthIndices = cell2mat(filteredTableData(:, 7));
+strengthIndices = cell2mat(filteredTableData(:, 8)); %from column 8
 
 % Sorting the data based on strength indices in descending order
 [sortedStrengthIndices, sortIndex] = sort(strengthIndices, 'descend');
+[sortedZscores, ~] = sort(Z_score, 'descend');
 sortedGoDescriptions = goDescriptions(sortIndex);
 
-% % Selecting the top 50 entries
+
+
+
+
+
+%% Sorting and selecting the top entries based on the user input
+% topGoDescriptions = sortedGoDescriptions(1:min(numEntries, end));
+% topZscores = sortedStrengthIndices(1:min(numEntries, end)); % Use strength indices to sort Z-scores
+% 
+% % Create the horizontal bar plot for Z-score vs descriptions
+% fig_z = figure;
+% barh(topZscores, 'green');
+% set(gca, 'YTick', 1:length(topGoDescriptions), 'YTickLabel', string(topGoDescriptions)); % Correct labels
+% 
+% % Add labels and title for Z-score plot
+% xlabel('Z-score');
+% title(sprintf('Top %d Pathways vs. Z-Score', numEntries));
+% 
+% % Adjust figure size and invert y-axis for Z-score plot
+% fig_z.Position = [200, 200, 700, 400];
+% set(gca, 'YDir', 'reverse');
+
+% Filter out entries with Z-score greater than 1.906
+zScoreThreshold = 1.906; % Critical Z-score 
+filteredByZscore = cell2mat(filteredTableData(:, 9)) > zScoreThreshold;  % Assuming Z-score is in column 9
+filteredData = filteredTableData(filteredByZscore, :);
+
+% Sort the filtered data based on Z-score
+[sortedZscores, sortIndex] = sort(cell2mat(filteredData(:, 9)), 'descend');
+sortedGoDescriptions = filteredData(sortIndex, 2);  % Assuming descriptions are in column 2
+
+% Create the horizontal bar plot for Z-score vs descriptions
+fig_z = figure;
+barh(sortedZscores, 'green');
+set(gca, 'YTick', 1:length(sortedGoDescriptions), 'YTickLabel', string(sortedGoDescriptions));
+
+% Add labels and title for Z-score plot
+xlabel('Z-score');
+title('Pathways with statistically significant Z-Score P<0.05');
+
+% Adjust figure size and invert y-axis for Z-score plot
+fig_z.Position = [50, 50, 700, 400];
+set(gca, 'YDir', 'reverse');
+
+%% Plotting CECI
+% % Selecting the top 25 entries
 % topGoDescriptions = sortedGoDescriptions(1:min(25, end));
 % topStrengthIndices = sortedStrengthIndices(1:min(25, end));
 
@@ -1274,7 +1331,9 @@ prompt = {'Enter the number of entries for plotting:'};
 dlgtitle = 'Input';
 dims = [1 45];
 definput = {'25'}; % default value
+% answer = inputdlg(prompt, dlgtitle, dims, definput);
 answer = inputdlg(prompt, dlgtitle, dims, definput);
+
 numEntries = str2double(answer{1});
 totalRows = size(filteredTableData, 1);
 numEntries = max(2, min(numEntries, totalRows)); % Ensure within valid range
@@ -1282,6 +1341,7 @@ numEntries = max(2, min(numEntries, totalRows)); % Ensure within valid range
 % Sorting and selecting the top entries based on the user input
 topGoDescriptions = sortedGoDescriptions(1:min(numEntries, end));
 topStrengthIndices = sortedStrengthIndices(1:min(numEntries, end));
+topZscores = sortedZscores(1:min(numEntries, end));
 
 % Create the horizontal bar plot
 fig = figure;
@@ -1295,11 +1355,13 @@ xlabel('Correlation-Expression Composite Index (CECI)');
 title(sprintf('Top %d Pathways vs. Correlation-Expression Composite Index (CECI)', numEntries));
 
 % Adjust figure size and invert y-axis
-fig.Position = [100, 100, 1000, 600];
+fig.Position = [50, 500, 700, 400];
 set(gca, 'YDir', 'reverse');
 
 end
-end
+    end
+
+
 function calculate_network_callback(~, ~, f)
     f.WindowStyle = 'normal';
 
