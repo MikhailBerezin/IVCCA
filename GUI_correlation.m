@@ -1182,7 +1182,7 @@ for i = 1:length(file_names)
     else
         pciB = NaN; % Handle cases where there are no matches
     end
-
+  
             % Calculate the total number of genes in each pathway (from the text file)
             totalGenesInPathway = num2str(length(selected_genes)); % Total genes in the pathway from the file
 
@@ -1216,7 +1216,12 @@ for i = 1:length(file_names)
             tableData{i, 9} = Z_score; % internal correlation to each other
             
             
-
+       %To get name 
+       for j=1:length(valid_indices)
+           number= valid_indices(j);
+           name{i,j}=s_variable_names_lower{number};
+       end
+       
         end
 
  % Filter out empty rows
