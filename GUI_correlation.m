@@ -104,7 +104,7 @@ single_to_path_button.Enable = 'off';
 compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare Pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
 compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
-compare_paths_button.Tooltip = 'Calculate the correlation of betweeen two pathways';  % Adding tooltip
+compare_paths_button.Tooltip = 'Calculate the correlation betweeen two pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';
 
 % Create the "Network analysis" button
@@ -509,6 +509,13 @@ else
     
     % Filter out non-matching genes (indices == 0)
     valid_indices = indices(indices > 0);
+
+    % Check if there are no valid indices and display a message box if true
+if isempty(valid_indices)
+    uialert(f, 'The dataset does not have genes associated with the pathway.', 'No Match Found');
+    % msgbox('The pathway does not have genes associated with the dataset.', 'No Match Found');
+    return;
+end
     
     correlations = correlations2(valid_indices, valid_indices);
     variable_names = variable_names2(valid_indices);
@@ -585,14 +592,14 @@ array=[];
         array{j}= cor(matching_indices);
         
  end
-        modified_title = [title_str ' PCI (A)=' num2str(mean_average_abs_correlation) ', PCI (B)='  num2str(mean([array{:}]))];
+        modified_title = [title_str ' PCI_A=' num2str(mean_average_abs_correlation) ', PCI_B='  num2str(mean([array{:}]))];
         % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
         sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
         % Create a uitable in the new uifigure
         sorted_data = uitable(sorted_fig);
          % Display gene correlations in the new uitable
         sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation),array'];  % Add sum of absolute correlations to the table
-        sorted_data.ColumnName = {'Gene', 'A: Correlation within the Pathway','B: Correlation Extracted from Global'};  % Update column names
+        sorted_data.ColumnName = {'Gene', 'PCI_A: Correlation within the Pathway','PCI_B: Correlation Extracted from Global'};  % Update column names
         sorted_data.Position = [20 20 560 360];  
         
         setappdata(0,'cor_variable',top_variable_names2')
@@ -1064,7 +1071,11 @@ end
 hold off; 
 
 % Include the file name and the average of the absolute correlations in the title
-title_str = sprintf('Correlation of %s to pathway genes in %s (Avg. Abs. Corr. = %.2f)', single_gene_name, file, avg_abs_correlation);
+
+% Escape underscores to avoid them being interpreted as subscripts
+escaped_single_gene_name = strrep(single_gene_name, '_', '\_');
+escaped_file_name = strrep(file, '_', '\_');
+title_str = sprintf('Correlation of %s to genes in %s (Avg. Abs. Corr. = %.2f)', escaped_single_gene_name, escaped_file_name, avg_abs_correlation);
 title(title_str);
 
 ylabel('Correlation Coefficient');
@@ -1250,10 +1261,10 @@ resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_D
 
 % Create a uifigure with a dynamic title that includes the threshold
 figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d Found in Set', genesThreshold);
-fig = uifigure('Position', [50, 350, 1100, 300], 'Name', figTitle);
+fig = uifigure('Position', [50, 200, 1100, 400], 'Name', figTitle);
 
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI within Pathway','PCI Extracted from Global', 'Correlation-Expression Composite Index (CECI)','Z-Score' }, 'Position', [20, 20, 1100, 360]);
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI_A within Pathway','PCI_B Extracted from Dataset', 'Correlation-Expression Composite Index (CECI)','Z-Score' }, 'Position', [20, 20, 1100, 360]);
 
 % Set column width to auto
 
@@ -1294,27 +1305,7 @@ sortedGoDescriptions = goDescriptions(sortIndex);
 % fig_z.Position = [200, 200, 700, 400];
 % set(gca, 'YDir', 'reverse');
 
-% Filter out entries with Z-score greater than 1.906
-zScoreThreshold = 1.906; % Critical Z-score 
-filteredByZscore = cell2mat(filteredTableData(:, 9)) > zScoreThreshold;  % Assuming Z-score is in column 9
-filteredData = filteredTableData(filteredByZscore, :);
 
-% Sort the filtered data based on Z-score
-[sortedZscores, sortIndex] = sort(cell2mat(filteredData(:, 9)), 'descend');
-sortedGoDescriptions = filteredData(sortIndex, 2);  % Assuming descriptions are in column 2
-
-% Create the horizontal bar plot for Z-score vs descriptions
-fig_z = figure;
-barh(sortedZscores, 'green');
-set(gca, 'YTick', 1:length(sortedGoDescriptions), 'YTickLabel', string(sortedGoDescriptions));
-
-% Add labels and title for Z-score plot
-xlabel('Z-score');
-title('Pathways with statistically significant Z-Score P<0.05');
-
-% Adjust figure size and invert y-axis for Z-score plot
-fig_z.Position = [50, 50, 700, 400];
-set(gca, 'YDir', 'reverse');
 
 %% Plotting CECI
 % % Selecting the top 25 entries
@@ -1350,7 +1341,30 @@ xlabel('Correlation-Expression Composite Index (CECI)');
 title(sprintf('Top %d Pathways vs. Correlation-Expression Composite Index (CECI)', numEntries));
 
 % Adjust figure size and invert y-axis
-fig.Position = [50, 500, 700, 400];
+fig.Position = [450, 50, 800, 400];
+set(gca, 'YDir', 'reverse');
+
+%% Z-score figure 
+% Filter out entries with Z-score greater than 1.96
+zScoreThreshold = 1.96; % Critical Z-score 
+filteredByZscore = cell2mat(filteredTableData(:, 9)) > zScoreThreshold;  % Assuming Z-score is in column 9
+filteredData = filteredTableData(filteredByZscore, :);
+
+% Sort the filtered data based on Z-score
+[sortedZscores, sortIndex] = sort(cell2mat(filteredData(:, 9)), 'descend');
+sortedGoDescriptions = filteredData(sortIndex, 2);  % Assuming descriptions are in column 2
+
+% Create the horizontal bar plot for Z-score vs descriptions
+fig_z = figure;
+barh(sortedZscores, 'green');
+set(gca, 'YTick', 1:length(sortedGoDescriptions), 'YTickLabel', string(sortedGoDescriptions));
+
+% Add labels and title for Z-score plot
+xlabel('Z-score');
+title('Pathways with statistically significant Z-Score \alpha <0.05');
+
+% Adjust figure size and invert y-axis for Z-score plot
+fig_z.Position = [50, 50, 800, 400];
 set(gca, 'YDir', 'reverse');
 
 end
@@ -1364,35 +1378,26 @@ function calculate_network_callback(~, ~, f)
     cor_data = getappdata(0, 'correlations');
     geneNames = getappdata(0, 'variable_names');
 
+    % Define the prompt, title, and default value for the input dialog
+    prompt = {'Enter the correlation threshold:'};
+    dlgtitle = 'Input';
+    dims = [1 35];
+    definput = {'0.75'}; % default value set to 0.75
 
-% Define the prompt, title, and default value for the input dialog
-prompt = {'Enter the correlation threshold:'};
-dlgtitle = 'Input';
-dims = [1 35];
-definput = {'0.75'};  % default value set to 0.75
+    % Create the input dialog box
+    answer = inputdlg(prompt, dlgtitle, dims, definput);
 
-% Create the input dialog box
-answer = inputdlg(prompt, dlgtitle, dims, definput);
-
-% Check if a value was entered and if so, use it; otherwise, use the default value
-if ~isempty(answer)
-    correlationThreshold = str2double(answer{1});
-else
-    correlationThreshold = 0.75;
-end
-
-% Validate the input
-if ~isempty(answer)
-    tempValue = str2double(answer{1});
-    if ~isnan(tempValue) && tempValue >= 0 && tempValue < 1
-        genesThreshold = tempValue;
-    else
-        % Optionally, you can display a message if the input is invalid
-        msgbox('Invalid input. Using default value of 0.75.', 'Error', 'error');
+    % Validate and parse the input
+    correlationThreshold = 0.75; % Default threshold
+    if ~isempty(answer)
+        tempValue = str2double(answer{1});
+        if ~isnan(tempValue) && tempValue >= 0 && tempValue <= 1
+            correlationThreshold = tempValue;
+        else
+            % Display a message if the input is invalid
+            msgbox('Invalid input. Using default value of 0.75.', 'Error', 'error');
+        end
     end
-end
-
-
 
     % Filter the correlation matrix
     filteredCorData = cor_data;
@@ -1409,50 +1414,15 @@ end
 
     % Create a table with gene names and their degrees
     resultsTable = table(geneNames', nodeDegree, 'VariableNames', {'GeneName', 'Degree'});
-% f = uifigure('Name', 'Degree of connection', 'Position', [100 100 300 250]); % Adjust height for additional row
-f = uifigure('Name', ['Degree of Connection (Threshold: ' num2str(correlationThreshold) ')'], 'Position', [100 100 300 250]); % Adjust height for additional row
 
-
-t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
-t.ColumnSortable(1) = true;
-t.ColumnSortable(2) = true;
-
-
-    % Set edge weights based on correlation values
-    G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
-
-    % Number of nodes
-    numNodes = numnodes(G);
-
-    % Generate spherical coordinates for each node
-    [x, y, z] = spherePoints(numNodes);
-
-    % Plot the network in 3D with nodes on a sphere
-    figure; % Open a new figure
-    p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
- %   p.LineWidth = 1 * G.Edges.Weight / max(G.Edges.Weight); % Line thickness
-    p.LineWidth = 0.3;
-    % Adjust node size based on degree
-    p.MarkerSize = 5 + (1.3 * (nodeDegree / max(nodeDegree))).^12;
-
-    % Set the view to 2D or 3D
-    view(2);
-
-    % Add labels to the nodes
-    labelnode(p, 1:numNodes, geneNames);
-
-    % Color nodes based on degree
-    colormap(jet(max(nodeDegree)));
-    %p.NodeCData = nodeDegree;
-    p.NodeColor =  'yellow';
-%     p.NodeColor =  [1, 0.5, 0.3];
-    p.NodeLabelColor = 'k';
-   p.NodeFontSize = 7;
-
-
-    % Save or display the figure
-%     saveas(gcf, '3d_spherical_gene_network.png');
+    % Create a UI figure to display the table
+    figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
+    f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
+    t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
+    t.ColumnSortable(1) = true;
+    t.ColumnSortable(2) = true;
 end
+
 
 function [x, y, z] = spherePoints(n)
     % Generate n points distributed on the surface of a sphere

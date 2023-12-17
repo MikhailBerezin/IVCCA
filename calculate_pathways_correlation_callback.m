@@ -79,10 +79,11 @@ for j = 1:length(pathway2_genes)
     end
 end
 
+
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
 if isempty(pathway_genes_1) || isempty(pathway_genes_2)
-    h1 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
-    set(h1, 'Position', [200 300 width*1.3 height])
+    uialert(f,'One or more of the selected pathways have no genes found in the data. Stopping further calculations.', 'No Match Found');
+%     set(h1, 'Position', [200 300 width*1.3 height])
     return;
 end
 
@@ -117,8 +118,9 @@ end
 
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
 if isempty(pathway_genes_1) || isempty(pathway_genes_2)
-    h2 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
-    set(h2, 'Position', [300 300 width height])
+     h2 = uialert(f,'One or more of the selected pathways have no genes found in the data. Stopping further calculations.', 'No Match Found');
+%     h2 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
+%     set(h2, 'Position', [300 300 width height])
     return;
 end
 
@@ -131,8 +133,8 @@ num_overlapping_genes = length(overlapping_genes);
 
 % Check if there are overlapping genes
 if isempty(overlapping_genes)
-    h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
-    set(h3, 'Position', [300 200 width height])
+    h3 = uialert('No overlapping genes found between the two pathways.', 'No matching found');
+%     set(h3, 'Position', [300 200 width height])
 else
     % Display the overlapping genes and their count
     overlapping_genes_str = strjoin(overlapping_genes, ', ');
