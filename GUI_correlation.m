@@ -1227,7 +1227,8 @@ for i = 1:length(file_names)
  % Filter out empty rows
 notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
 filteredTableData = tableData(notEmptyRows, :);
-
+notEmptyRows2 = ~all(cellfun(@isempty, name), 2);
+name = name(notEmptyRows2, :);
 % Define the prompt, title, and default value for the input dialog
 prompt = {'Enter the minimum number of genes in a set:'};
 dlgtitle = 'Input';
@@ -1260,7 +1261,7 @@ end
 genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
 rowsWithMoreThanThresholdGenes = genesFoundNumeric >= genesThreshold;  % Find rows with more or equal than threshold genes
 filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
-
+name=name(rowsWithMoreThanThresholdGenes, :);
 % Create and display the table
 resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'PCI_B','PCI_A','CECI', 'Z-score' });
 
@@ -1269,7 +1270,7 @@ figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d 
 fig = uifigure('Position', [50, 200, 1100, 400], 'Name', figTitle);
 
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI_A within Pathway','PCI_B Extracted from Dataset', 'Correlation-Expression Composite Index (CECI)','Z-Score' }, 'Position', [20, 20, 1100, 360]);
+uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI_A within Pathway','PCI_B Extracted from Dataset', 'Correlation-Expression Composite Index (CECI)','Z-Score' }, 'Position', [20, 20, 1100, 360],'CellSelectionCallback', @cellSelectedCallback2);
 
 % Set column width to auto
 
@@ -1288,7 +1289,7 @@ strengthIndices = cell2mat(filteredTableData(:, 8)); %from column 8
 [sortedZscores, ~] = sort(Z_score, 'descend');
 sortedGoDescriptions = goDescriptions(sortIndex);
 
-
+setappdata(0,'name',name)
 
 
 
@@ -1374,7 +1375,25 @@ set(gca, 'YDir', 'reverse');
 
 end
     end
+function cellSelectedCallback2(src, event)
+    selectedRow = event.Indices(1);
+    selectedColumn = event.Indices(2);
 
+    if ~isempty(selectedRow) && ~isempty(selectedColumn)
+%         % Get the data from the selected cell
+%         selectedData = src.Dat
+% a{selectedRow, selectedColumn};
+        % Display information about the selected cell
+%         disp(['Selected Row: ' num2str(selectedRow)]);
+%         disp(['Selected Column: ' num2str(selectedColumn)]);
+%         disp(['Selected Data: ' num2str(selectedData)]);
+       names= getappdata(0,'name');
+       show= names(selectedRow,:);
+       fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist');
+       uit = uitable(fig, 'Data', show, 'Position', [20, 20, 1100, 360]);
+    end
+    
+end
 
 function calculate_network_callback(~, ~, f)
     f.WindowStyle = 'normal';
