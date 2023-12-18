@@ -435,7 +435,7 @@ else
     title_str = 'IVCCA: List of Correlated Genes';
 end
 
-sorted_fig = uifigure('Name', [title_str ' (PCI-Global: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+sorted_fig = uifigure('Name', [title_str ' (PCI_B (from Global: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
