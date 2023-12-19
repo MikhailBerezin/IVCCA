@@ -1091,10 +1091,10 @@ end
 
     % Define the path to the Excel file containing GO numbers and descriptions
     % Replace 'path_to_excel_file.xlsx' with the actual path to your Excel file
-    excelFilePath = 'GO terms all 13383.xlsx'; 
+    excelFilePath = 'GO terms.xlsx'; 
 
    % Define the Excel file options
-    excelFileOptions = {'GO terms all 13383.xlsx', 'Kegg terms 340.xlsx', 'ExcelFile3.xlsx', 'ExcelFile4.xlsx', 'ExcelFile5.xlsx'};
+    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
     [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
                          'SelectionMode', 'single', ...
                          'ListString', excelFileOptions);
@@ -1142,24 +1142,27 @@ end
 
 for i = 1:length(file_names)
     file_path = fullfile(path_name, file_names{i});
-        selected_genes = textread(file_path, '%s');
+    selected_genes = textread(file_path, '%s');
 
-        % Extract the identifier from the file name, handling both 'GO_' and 'path_mmu' formats
-        identifier = regexp(file_names{i}, '(GO_\d+|path_mmu\d+)', 'match', 'once');
-%         identifier = strrep(identifier, '_', ''); % Remove underscore for matching
+    % Extract the identifier from the file name, handling both 'GO_' and 'path_mmu' formats
+    identifier = regexp(file_names{i}, '(GO_\d+|path_mmu\d+)', 'match', 'once');
 
-        % Find the corresponding description in the Excel file
-        goIndex = find(strcmp(goDescriptions{:,1}, identifier));
-        if ~isempty(goIndex)
-            goDescription = goDescriptions{goIndex, 2};
-        else
-            goDescription = 'Description not found';
-        end
-    
+    % Find the corresponding description in the Excel file
+    goIndex = find(strcmp(goDescriptions{:,1}, identifier));
+    if ~isempty(goIndex)
+        goDescription = goDescriptions{goIndex, 2};
+    else
+        % Use a modified file name as the description if not found
+        % Example modification: remove file extension, replace underscores with spaces
+        goDescription = strrep(file_names{i}, '_', ' ');
+        goDescription = regexprep(goDescription, '\.[^.]*$', ''); % Remove file extension
+    end
+
     % Convert all gene names to lower case for case-insensitive comparison
     selected_genes_lower = lower(selected_genes); 
     variable_names_lower = lower(variable_names2);
     s_variable_names_lower = lower(s_variable_names); % Convert to lower case for comparison
+
     
     [~, indices] = ismember(selected_genes_lower, variable_names_lower');
     valid_indices = indices(indices > 0);
