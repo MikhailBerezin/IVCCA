@@ -83,7 +83,7 @@ clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',..
     'Callback', @clearClustersCallback); % Define the callback function
 
 % Create a push button for selecting a gene list file
-selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Pathway',...
+selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Pathway(s)',...
     'Position', [500, 380, 100, 35],... % Adjust position and size as needed
     'Callback', @selectFileCallback); 
 
@@ -356,11 +356,11 @@ function selectFileCallback(src, event)
 
     % Open file selection dialog and read genes of interest
     [file, path] = uigetfile({'*.txt', 'Select a gene list file'}, 'Select a gene list file', lastPath, 'MultiSelect', 'on');
-%     if file == 0
-%         return; % User canceled file selection
-%     else
-%         lastPath = path; % Update lastPath with the new directory
-%     end
+    if file == 0
+        return; % User canceled file selection
+    else
+        lastPath = path; % Update lastPath with the new directory
+    end
 if ischar(file)
     
     file_path = fullfile(path, file);
