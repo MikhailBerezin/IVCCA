@@ -1094,7 +1094,7 @@ end
     excelFilePath = 'GO terms.xlsx'; 
 
    % Define the Excel file options
-    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
+    excelFileOptions = {'GO terms 13200.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
     [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
                          'SelectionMode', 'single', ...
                          'ListString', excelFileOptions);
@@ -1224,7 +1224,10 @@ for i = 1:length(file_names)
            number= valid_indices(j);
            name{i,j}=s_variable_names_lower{number};
        end
-       
+       for k=1:length(selected_genes)
+%            number= selected_genes(j);
+           name2{i,k}=selected_genes{j};
+       end
         end
 
  % Filter out empty rows
@@ -1232,6 +1235,8 @@ notEmptyRows = ~all(cellfun(@isempty, tableData), 2);
 filteredTableData = tableData(notEmptyRows, :);
 notEmptyRows2 = ~all(cellfun(@isempty, name), 2);
 name = name(notEmptyRows2, :);
+notEmptyRows3 = ~all(cellfun(@isempty, name2), 2);
+name2 = name2(notEmptyRows3, :);
 % Define the prompt, title, and default value for the input dialog
 prompt = {'Enter the minimum number of genes in a set:'};
 dlgtitle = 'Input';
@@ -1265,6 +1270,7 @@ genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to nu
 rowsWithMoreThanThresholdGenes = genesFoundNumeric >= genesThreshold;  % Find rows with more or equal than threshold genes
 filteredTableData = filteredTableData(rowsWithMoreThanThresholdGenes, :);  % Apply the filter
 name=name(rowsWithMoreThanThresholdGenes, :);
+name2=name2(rowsWithMoreThanThresholdGenes, :);
 % Create and display the table
 resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'PCI_B','PCI_A','CECI', 'Z-score' });
 
@@ -1293,7 +1299,7 @@ strengthIndices = cell2mat(filteredTableData(:, 8)); %from column 8
 sortedGoDescriptions = goDescriptions(sortIndex);
 
 setappdata(0,'name',name)
-
+setappdata(0,'name2',name2)
 
 
 
@@ -1390,10 +1396,17 @@ function cellSelectedCallback2(src, event)
 %         disp(['Selected Row: ' num2str(selectedRow)]);
 %         disp(['Selected Column: ' num2str(selectedColumn)]);
 %         disp(['Selected Data: ' num2str(selectedData)]);
+      if selectedColumn==4
        names= getappdata(0,'name');
        show= names(selectedRow,:);
        fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist');
        uit = uitable(fig, 'Data', show, 'Position', [20, 20, 1100, 360]);
+      elseif selectedColumn==3
+               names= getappdata(0,'name2');
+       show= names(selectedRow,:);
+       fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist');
+       uit = uitable(fig, 'Data', show, 'Position', [20, 20, 1100, 360]);
+       end
     end
     
 end
