@@ -150,7 +150,7 @@ function load_data_callback(~, ~, f)
         [fPath, fName, fExt] = fileparts(file);
         waitbar(0.2, wb, 'Reading data...');
                
-               if fExt=='.tsv'
+               if strcmp(fExt,'.tsv')
                data_table = readtable(fullfile(path, file), "FileType","text",'Delimiter', '\t');
                data_table=rows2vars(data_table) ;
                else
