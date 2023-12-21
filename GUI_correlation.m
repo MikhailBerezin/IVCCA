@@ -435,7 +435,7 @@ else
     title_str = 'IVCCA: List of Correlated Genes';
 end
 
-sorted_fig = uifigure('Name', [title_str ' (PCI_B (from Global: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+sorted_fig = uifigure('Name', [title_str ' PCI_A (from Global: ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 
 % Create a uitable in the new uifigure
 sorted_data = uitable(sorted_fig);
@@ -1455,13 +1455,35 @@ function calculate_network_callback(~, ~, f)
     % Create a table with gene names and their degrees
     resultsTable = table(geneNames', nodeDegree, 'VariableNames', {'GeneName', 'Degree'});
 
-    % Create a UI figure to display the table
-    figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
-    f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
-    t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
-    t.ColumnSortable(1) = true;
-    t.ColumnSortable(2) = true;
-end
+
+
+ % Set edge weights based on correlation values
+    G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
+
+    % Number of nodes
+    numNodes = numnodes(G);
+
+    % Generate spherical coordinates for each node
+    [x, y, z] = spherePoints(numNodes);
+
+    % Plot the network in 3D with nodes on a sphere
+    figure; % Open a new figure
+    p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
+% Adjust line thickness based on correlation value
+maxWeight = max(G.Edges.Weight); % Find maximum edge weight
+minLineWidth = 0.5; % Minimum line width
+maxLineWidth = 4; % Maximum line width
+p.LineWidth = minLineWidth + ((G.Edges.Weight / maxWeight) * 0.32*(maxLineWidth - minLineWidth)).^12;
+
+% Adjust node size based on degree
+p.MarkerSize = 5 + (1.3 * (nodeDegree / max(nodeDegree))).^12;
+
+% Create a UI figure to display the table
+figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
+f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
+t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
+t.ColumnSortable(1) = true;
+t.ColumnSortable(2) = true;end
 
 
 function [x, y, z] = spherePoints(n)
