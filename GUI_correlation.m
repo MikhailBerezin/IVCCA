@@ -1233,7 +1233,7 @@ for i = 1:length(file_names)
        end
        for k=1:length(selected_genes)
 %            number= selected_genes(j);
-           name2{i,k}=selected_genes{j};
+           name2{i,k}=selected_genes{k};
        end
         end
 
