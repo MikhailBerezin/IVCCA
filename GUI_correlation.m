@@ -131,7 +131,7 @@ function load_data_callback(~, ~, f)
     end
 
     % Modify the uigetfile call to start in the last used directory
-    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx'), 'Select a data file');
+    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx','*.tsv'), 'Select a data file');
 
     % Check if the user canceled the file selection
     if isequal(file, 0)
@@ -147,8 +147,15 @@ function load_data_callback(~, ~, f)
 
     % Read the data from the file
     try
+        [fPath, fName, fExt] = fileparts(file);
         waitbar(0.2, wb, 'Reading data...');
-               data_table = readtable(fullfile(path, file));
+               
+               if fExt=='.tsv'
+               data_table = readtable(fullfile(path, file), "FileType","text",'Delimiter', '\t');
+               data_table=rows2vars(data_table) ;
+               else
+                   data_table = readtable(fullfile(path, file));
+               end
     catch
         errordlg('Error reading data. Please check the format of the data file.');
         delete(wb) % Close the waitbar if an error occurs
