@@ -1464,18 +1464,19 @@ function calculate_network_callback(~, ~, f)
 
 
 
- % Set edge weights based on correlation values
-    G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
+% Set edge weights based on correlation values
+G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
 
-    % Number of nodes
-    numNodes = numnodes(G);
+% Number of nodes
+numNodes = numnodes(G);
 
-    % Generate spherical coordinates for each node
-    [x, y, z] = spherePoints(numNodes);
+% Generate spherical coordinates for each node
+[x, y, z] = spherePoints(numNodes);
 
-    % Plot the network in 3D with nodes on a sphere
-    figure; % Open a new figure
-    p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
+% Plot the network in 3D with nodes on a sphere
+figure; % Open a new figure
+p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'r');
+
 % Adjust line thickness based on correlation value
 maxWeight = max(G.Edges.Weight); % Find maximum edge weight
 minLineWidth = 0.5; % Minimum line width
@@ -1485,14 +1486,19 @@ p.LineWidth = minLineWidth + ((G.Edges.Weight / maxWeight) * 0.32*(maxLineWidth 
 % Adjust node size based on degree
 p.MarkerSize = 5 + (1.3 * (nodeDegree / max(nodeDegree))).^12;
 
+% Set point color to yellow with transparency
+pointColor = [0, 1, 0]; % Yellow color with 
+p.NodeColor = pointColor;
+p.EdgeAlpha = 0.5;
+
 % Create a UI figure to display the table
 figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
 f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
 t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
 t.ColumnSortable(1) = true;
-t.ColumnSortable(2) = true;end
+t.ColumnSortable(2) = true;
 
-
+end
 function [x, y, z] = spherePoints(n)
     % Generate n points distributed on the surface of a sphere
     theta = linspace(0, 2*pi, n);
