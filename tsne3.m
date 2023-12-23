@@ -256,7 +256,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
         % Update the scatter plot for 3D
         cla; % Clear the current axes
-        scatter3(Y(:,1), Y(:,2), Y(:,3), 10, clusterIdx, 'filled'); % Use scatter3 for 3D plot
+        scatter3(Y(:,1), Y(:,2), Y(:,3), 10, clusterIdx, 'filled','MarkerEdgeColor', 'k'); % Use scatter3 for 3D plot
         title('3D t-SNE visualization with K-means Clustering');
         xlabel('Dimension 1');
         ylabel('Dimension 2');

@@ -54,13 +54,11 @@ cluster_button.Layout.Column = 2;
 cluster_button.Tooltip = 'Cluster the correlation matrix with a dendrogram';  % Adding tooltip
 cluster_button.Enable = 'off'; % Initially disabled
 
-
-% Create the "Dynamic Tree Cut" button
-dynamic_tree_button = uibutton(grid, 'push', 'Text', 'Dynamic Tree Cut', 'ButtonPushedFcn', {@dynamic_tree_cut_callback, f});
-dynamic_tree_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
-dynamic_tree_button.Layout.Column = 2;
-dynamic_tree_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
-dynamic_tree_button.Enable = 'off'; % Initially disabled
+pca_button = uibutton(grid, 'push', 'Text', 'PCA', 'ButtonPushedFcn', {@pca3, f});
+pca_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
+pca_button.Layout.Column = 2;
+pca_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
+pca_button.Enable = 'off'; % Initially disabled
 
 % Create the "tsne correlations" button
 tsne_button = uibutton(grid, 'push', 'Text', 't-SNE', 'ButtonPushedFcn', @tsne3);
@@ -119,6 +117,26 @@ network_button.Enable = 'off';
 result = uilabel(grid, 'Text', '');
 result.Layout.Row = 4; % Position for label
 result.Layout.Column = 1; % Positioned in the first column
+
+% Define the custom Close Request Function
+function customCloseRequest(src, event)
+    % Create a confirmation dialog box
+    selection = uiconfirm(src, 'Are you sure you want to close the application?', ...
+                          'Confirmation', ...
+                          'Options', {'Yes', 'No'}, ...
+                          'DefaultOption', 1, 'CancelOption', 2);
+    % Check the user's response
+    if strcmp(selection, 'Yes')
+        % If the user clicks 'Yes', delete the figure and close the application
+        delete(src);
+    else
+        % If the user clicks 'No', do nothing, the application remains open
+    end
+end
+
+% Set the CloseRequestFcn property of the figure
+f.CloseRequestFcn = @customCloseRequest;
+
 
 %% This function removes the rows with missing numbers
 function load_data_callback(~, ~, f)
@@ -271,7 +289,7 @@ function calculate_correlations_callback(~, ~, f)
     elbow_button.Enable = 'on';
     sort_mpath_button.Enable = 'on';
     cluster_button.Enable = 'on'; 
-    dynamic_tree_button.Enable = 'on';
+    pca_button.Enable = 'on';
     single_to_group_button.Enable = 'on';
     single_to_path_button.Enable = 'on';
     compare_paths_button.Enable = 'on';
@@ -722,7 +740,7 @@ set(fig, 'NumberTitle', 'off', 'Name', 'Dendrogram');
     % Enable the "Graph" button
     graph_button.Enable = 'on';
     
-    dynamic_tree_button.Enable = 'on';
+    pca_button.Enable = 'on';
 
     % Compute the number of clusters at the colorThreshold
     num_clusters_color_threshold = size(links, 1) + 1 - sum(links(:,3) < colorThreshold);
@@ -849,89 +867,9 @@ waitbar(0.8, hWaitBar, 'Plotting...');
     close(hWaitBar);
 end
 
-%% Dynamic_tree_cut function
-function dynamic_tree_cut_callback(~, ~, f)
-    % Get the correlations from the app data
-    correlations = getappdata(0, 'correlations');
-    correlations = abs(correlations);
-    variable_names = getappdata(0, 'variable_names');
-    
-    % Ask the user to specify cutoff_cl
-    prompt = {'Enter cutoff value (default is 0.15):'};
-    dlgtitle = 'Cutoff Input';
-    dims = [1 35];
-    definput = {'0.15'};
-    answer = inputdlg(prompt,dlgtitle,dims,definput);
-    
-    % If the user presses Cancel, the answer is empty. 
-    if isempty(answer)
-        disp('User cancelled the operation.');
-        return;
-    end
-    
-    % Convert the answer to a numeric value
-    cutoff_cl = str2double(answer{1});
-    
-    % Check if input is valid
-    if isnan(cutoff_cl) || cutoff_cl < 0 || cutoff_cl > 1
-        errordlg('Invalid input. Please enter a value between 0 and 1.', 'Error');
-        return;
-    end
-     % Perform hierarchical clustering
-    Z = linkage(correlations, 'average');
-    % Use inconsistency method to initially determine the number of clusters
-    T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
 
-    % Display the number of members in each cluster in the Command Window
-    unique_clusters = unique(T);
-    disp('Cluster Results:');
-    for i = 1:length(unique_clusters)
-        cluster_members = variable_names(T == unique_clusters(i));
-        disp(['Cluster ' num2str(i) ' (Size: ' num2str(length(cluster_members)) '):']);
-        disp(strjoin(cluster_members, ', '));
-    end
 
-    % Use inconsistency method to initially determine the number of clusters
-    T = cluster(Z, 'Cutoff', cutoff_cl * max(Z(:,3)), 'Criterion', 'distance'); % Larger cutoff value corresponds to fewer clusters
 
-    % Save the cluster assignments to the app data for further processing
-    setappdata(f, 'dynamic_tree_clusters', T);
-    
-    % Organize the correlation matrix according to the clusters
-    [~, order] = sort(T);
-    ordered_correlations = correlations(order, order);
-    
-    % Create a heatmap using the ordered correlation matrix
-    figure ('Name', 'IVCCA: Dynamic Tree Cutting', 'NumberTitle', 'off');
-    imagesc(ordered_correlations);
-    colorbar;
-    num_clusters = length(unique_clusters);
-    title(['Clustered Correlation Matrix using Dynamic Tree Cutting (', num2str(num_clusters), ' Clusters)']);
-
-   
-    xticks(1:length(variable_names));
-    yticks(1:length(variable_names));
-    xticklabels(variable_names(order));
-    yticklabels(variable_names(order));
-    colormap('parula');
-    caxis([-1, 1]); % Assuming correlations range from -1 to 1
-
-% Calculate the mean value of absolute correlations for each cluster
-    unique_clusters = unique(T);
-    cluster_mean_abs_correlations = zeros(length(unique_clusters), 1);
-
-    for i = 1:length(unique_clusters)
-        cluster_indices = find(T == unique_clusters(i));
-        cluster_correlations = ordered_correlations(cluster_indices, cluster_indices);
-        cluster_mean_abs_correlations(i) = mean(abs(cluster_correlations), 'all');
-    end
-
-    % Display the mean value of absolute correlations for each cluster
-    disp('Mean Absolute Correlations in Clusters:');
-    for i = 1:length(unique_clusters)
-        disp(['Cluster ' num2str(i) ': ' num2str(cluster_mean_abs_correlations(i))]);
-    end
-end
 
 %% Define a callback function for calculating single gene-to-group correlations
 function single_to_group_correlation_callback(~, ~, f)
