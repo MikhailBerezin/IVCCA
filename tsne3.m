@@ -10,7 +10,7 @@ global clusterIdx;
 
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
-
+outputDir = 'C:\Users\berezinm\Dropbox\Papers\2023 Correlation paper\Heart\Pearson folder'; % Modify with the desired path
 
 data=  getappdata(0, 'correlations');
 data = abs(data);
@@ -18,10 +18,11 @@ geneNames= getappdata(0,'variable_names');
 
 
 % Run t-SNE
-
+% Make t-SNE reproducible by having the initialization with three first
+% principal components
 % A higher perplexity value makes the algorithm consider more distant
 % points as neighbors, which can help spread out clusters that are too tight.
-% Typical values range from 5 to 50, but this depends on the size of your dataset. For larger datasets, a higher perplexity may be needed.
+% Typical values range from 5 to 50, but this depends on the size of your dataset. For larger datasets, a higher perplexity is needed.
 
 % Update the waitbar after loading and preparing data
 waitbar(0.2, hWaitBar, 'Performing t-SNE computation...');
@@ -29,10 +30,27 @@ waitbar(0.2, hWaitBar, 'Performing t-SNE computation...');
 % Fill NaN values in data with 0 (or any other suitable number)
 dataFilled = fillmissing(data, 'constant', 0);
 
-%Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25, sz);
-% 3D tsne
-Y = tsne(dataFilled, 'NumDimensions', 3, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
+% Step 1: Perform PCA to get the first two principal components
+[coeff, score, ~, ~, explained] = pca(dataFilled);
+firstTwoPCs = score(:, 1:3);  % Extract the first two components
 
+% Step 2: Standardize the components
+std_dev = std(firstTwoPCs(:, 1));
+firstTwoPCs = firstTwoPCs / std_dev;
+
+% Step 3: Multiply by a small number (0.0001)
+firstTwoPCs = firstTwoPCs * 0.0001;
+
+% Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
+% 3D tsne
+% Define your perplexity value
+perplexityValue = 60;
+
+% Step 4: Run t-SNE using the defined perplexity value
+% Y = tsne(dataFilled, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200, 'NumPCAComponents', 25);
+% Step 4: Run t-SNE with the PCA results as initialization
+Y = tsne(data, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200,'InitialY', firstTwoPCs, 'NumPCAComponents', 25);
+ 
 % Update the waitbar after completing t-SNE
 waitbar(0.6, hWaitBar, 'Plotting results...');
 
@@ -62,9 +80,31 @@ set(f, 'ResizeFcn', @resizeFigure);
 % xlabel('Dimension 1');
 % ylabel('Dimension 2');
 
+sigma = perplexityValue;  
 
-% Use scatter3 for 3D scatter plot
+   % Calculate the t-SNE result distribution
+originalDistribution = calculateOriginalDistribution(data, sigma);
+
+   % Calculate the t-SNE result distribution
+tsneResultDistribution = calculateTsneDistribution(Y, sigma);
+
+% KL value:
+   klValue = KLDivergence(originalDistribution, tsneResultDistribution);
+
+   % Convert klValue to string for displaying
+klValueStr = num2str(klValue);
+
+% Display the KL divergence value in a message box
+msgbox(['The KL Divergence value is: ', klValueStr], 'KL Divergence');
+disp(sigma)
+disp(klValueStr) 
+
+%% Use scatter3 for 3D scatter plot
 scatterPlot = scatter3(Y(:,1), Y(:,2), Y(:,3), 25);
+
+%% Use scatter for 2D scatter plot
+% scatterPlot = scatter(Y(:,1), Y(:,2),  25);
+
 % Adjust the scatter plot position
         set(gca, 'Position', [0.1, 0.1, 0.50, 0.8]);
 title('3D t-SNE visualization');
@@ -282,8 +322,30 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
                 'Position', [10, 10, 300, 460]); 
             kmeans_table.ColumnSortable(2) = true;
             kmeans_table.ColumnSortable(1) = true;
+  % Define a directory to save the cluster files
+   
+    if ~exist(outputDir, 'dir')
+       mkdir(outputDir);
+    end
 
-        end
+    % Iterate through each cluster to save the gene names in separate .txt files
+    uniqueClusters = unique(clusterIdx);
+    for i = 1:length(uniqueClusters)
+        % Find genes belonging to the i-th cluster
+        currentClusterIndices = find(clusterIdx == uniqueClusters(i));
+        currentClusterGeneNames = geneNames(currentClusterIndices);
+        
+        % Define a file name for the i-th cluster
+        filename = fullfile(outputDir, sprintf('tSNE_Cluster_%d.txt', i));
+        
+        % Write the gene names to the file
+        fileID = fopen(filename, 'w');
+        fprintf(fileID, '%s\n', currentClusterGeneNames{:});
+        fclose(fileID);
+    end
+     % Inform the user that files have been saved and provide the output directory
+    msgbox(sprintf('Clusters have been successfully saved in: %s', outputDir), 'Save Completed');
+      end
         toc
     end
 
@@ -580,6 +642,56 @@ function searchGeneCallback(src, event)
     
     hold off;
 end
+
+% Subfunction for KL Divergence within the same file
+    function klDiv = KLDivergence(P, Q)
+        % Ensure the vectors are of the same size
+        assert(numel(P) == numel(Q), 'The distributions must have the same number of elements');
+        
+        % Normalize P and Q
+        P = P / sum(P);
+        Q = Q / sum(Q);
+
+        % Indices where P is not zero
+        nonzeroIdx = P > 0;
+
+        % Calculate KL Divergence
+        klDiv = sum(P(nonzeroIdx) .* log(P(nonzeroIdx) ./ Q(nonzeroIdx)));
+    end
+
+ function originalDistribution = calculateOriginalDistribution(data, sigma)
+    % Transform correlation to a positive scale suitable for similarities  by inverting the correlation scores to represent distance
+    distances = 1 - abs(data);  % Convert correlation to distance
+
+    % Convert distances to similarities using a Gaussian-like kernel
+    % Avoid squaring as these are not Euclidean distances
+    similarities = exp(-distances / (2 * sigma^2));
+
+    % Convert the similarity matrix to a probability matrix
+    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
+    
+    % Symmetrize to get joint probabilities
+    P_joint = (P_conditional + P_conditional') / (2 * size(data, 1));
+
+    originalDistribution = P_joint; % This is the distribution to use for KL divergence
+end
+
+function tsneResultDistribution = calculateTsneDistribution(Y, sigma)
+    % Calculate pairwise Euclidean distances of Y
+    squareDist = pdist2(Y, Y).^2;
+    
+    % Convert distances to similarities using Gaussian kernel
+    similarities = exp(-squareDist / (2 * sigma^2));
+    
+    % Convert similarities to conditional probabilities
+    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
+    
+    % Symmetrize to get joint probabilities
+    P_joint = (P_conditional + P_conditional') / (2 * size(Y, 1));
+
+    tsneResultDistribution = P_joint;
+end
+
 
 end
 

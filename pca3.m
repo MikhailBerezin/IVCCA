@@ -4,10 +4,17 @@ function pca3(varargin)
     % Initialize the waitbar
     hWaitBar = waitbar(0, 'Initializing...');
 
-
 global geneNames score highlightedGenes scatterPlot geneIndices isHighlightedMode;
 global clusterIdx;
 
+global nn mm ll 
+       
+% select the principal components to show in the graph
+nn = 1;
+mm = 2;
+ll = 3;
+
+outputDir = 'C:\Users\berezinm\Dropbox\Papers\2023 Correlation paper\Heart\PCA folder\PCA comp 4-6'; % Modify with the desired path
 
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
@@ -31,7 +38,27 @@ highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 waitbar(0.2, hWaitBar, 'Performing PCA computation...');
 
     % Perform PCA
-    [coeff, score, ~] = pca(dataFilled);
+%     [coeff, score,~] = pca(dataFilled);
+
+    % Perform PCA
+[coeff, score, latent] = pca(dataFilled);
+
+% Calculate cumulative variance
+explainedVariance = latent./sum(latent) * 100; % Convert to percentage
+cumulativeVariance = cumsum(explainedVariance); % Cumulative sum of variance
+
+% Selecting only the first 25 components
+componentsToDisplay = min(length(cumulativeVariance), 25); % In case there are fewer than 25 components
+cumulativeVariance25 = cumulativeVariance(1:componentsToDisplay);
+
+% Plotting cumulative variability for the first 25 components
+figure;
+plot(1:componentsToDisplay, cumulativeVariance25, '-o');
+title('Cumulative Variance Explained by the First 25 Principal Components');
+xlabel('Number of Principal Components');
+ylabel('Cumulative Variance Explained (%)');
+grid on; % Adding a grid for better readabilityLimiting x-axis
+ylim([0 100]); % Limiting y-axis
 
     % Update the waitbar after completing PCA
     waitbar(0.6, hWaitBar, 'Plotting results...');
@@ -50,15 +77,35 @@ waitbar(0.2, hWaitBar, 'Performing PCA computation...');
     f = figure('Name', 'IVCCA: PCA visualization', 'NumberTitle', 'off', 'Position', [posX posY figWidth figHeight]);
     % Set the figure's resize function
     set(f, 'ResizeFcn', @resizeFigure)
+
+sigma = 1;
+
+   % Calculate the original distribution
+originalDistribution = calculateOriginalDistribution(data, sigma);
+
+   % Calculate the t-SNE result distribution
+PcaResultDistribution = calculatePcaDistribution(score, sigma);
+
+% KL value:
+   klValue = KLDivergence(originalDistribution, PcaResultDistribution);
+
+   % Convert klValue to string for displaying
+klValueStr = num2str(klValue);
+
+% Display the KL divergence value in a message box
+msgbox(['The KL Divergence value is: ', klValueStr], 'KL Divergence');
+disp(sigma)
+disp(klValueStr) 
+
     
     % Use scatter3 for 3D scatter plot of the first three PCA components
-    scatterPlot = scatter3(score(:,1), score(:,2), score(:,3), 25, 'MarkerEdgeColor', [0, 0.5, 0]);
+    scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25);
     % Adjust the scatter plot position
         set(gca, 'Position', [0.1, 0.1, 0.50, 0.8]);
     title('3D PCA visualization');
     xlabel('First Principal Component');
     ylabel('Second Principal Component');
-    zlabel('Third Principal Component'); % Label for the third dimension
+    zlabel('Third Principal Component'); 
     
     % Create data tips showing gene names
     dcm_obj = datacursormode(f);
@@ -67,6 +114,8 @@ waitbar(0.2, hWaitBar, 'Performing PCA computation...');
     % Close the waitbar after completing all tasks
     waitbar(1, hWaitBar, 'Completed.');
     close(hWaitBar);
+
+    
     toc
 
 
@@ -192,7 +241,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
         % Find the indices of these genes in geneNames
         [~, geneIndices] = ismember(genesOfInterest, geneNamesLower);
 
-        % Highlight these genes on the t-SNE plot
+        % Highlight these genes on the pca plot
         hold on;
         sz = 25; 
         highlightedGenes = scatter(score(geneIndices, 1), score(geneIndices, 2), 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'r', sz);
@@ -252,7 +301,8 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
 %             [clusterIdx, ~] = kmeans(dataFilled, numClusters,"cityblock");
 
             % Update the global clusterIdx variable after performing k-means clustering
-            clusterIdx = kmeans(dataFilled, numClusters, "Distance","cityblock");
+            clusterIdx = kmeans(dataFilled, numClusters, "Distance","sqeuclidean" + ...
+                "");
 
             % Update the waitbar
             waitbar(1, hWaitBar, 'Updating plot...');
@@ -261,17 +311,17 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
 %             % Update the scatter plot
 %             cla; % Clear the current axes
 %             gscatter(score(:,1), score(:,2), clusterIdx); % Use gscatter for coloring based on clusters
-%             title('t-SNE visualization with K-means Clustering');
-%             xlabel('Dimension 1');
-%             ylabel('Dimension 2');
+%             title('PCA visualization with K-means Clustering');
+%             xlabel('Principle component');
+%             ylabel('Principle component 2');
 
         % Update the scatter plot for 3D
         cla; % Clear the current axes
-        scatter3(score(:,1), score(:,2), score(:,3), 25, clusterIdx, 'filled', 'MarkerEdgeColor', 'k'); % Use scatter3 for 3D plot
-        title('3D t-SNE visualization with K-means Clustering');
-        xlabel('Dimension 1');
-        ylabel('Dimension 2');
-        zlabel('Dimension 3'); % Label for the third dimension
+        scatter3(score(:,nn), score(:,mm), score(:,ll), 25, clusterIdx, 'filled', 'MarkerEdgeColor', 'k'); % Use scatter3 for 3D plot
+        title('3D PCA visualization with K-means Clustering');
+        xlabel('Principle component 1');
+        ylabel('Principle component 2');
+        zlabel('Principle component 3'); 
 
 
             % Create a new figure for the clustering results table
@@ -293,12 +343,34 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
                 'Position', [10, 10, 300, 460]); 
             kmeans_table.ColumnSortable(2) = true;
             kmeans_table.ColumnSortable(1) = true;
+   % Define a directory to save the cluster files
+   
+    if ~exist(outputDir, 'dir')
+       mkdir(outputDir);
+    end
 
+    % Iterate through each cluster to save the gene names in separate .txt files
+    uniqueClusters = unique(clusterIdx);
+    for i = 1:length(uniqueClusters)
+        % Find genes belonging to the i-th cluster
+        currentClusterIndices = find(clusterIdx == uniqueClusters(i));
+        currentClusterGeneNames = geneNames(currentClusterIndices);
+        
+        % Define a file name for the i-th cluster
+        filename = fullfile(outputDir, sprintf('PCA_Cluster_%d.txt', i));
+        
+        % Write the gene names to the file
+        fileID = fopen(filename, 'w');
+        fprintf(fileID, '%s\n', currentClusterGeneNames{:});
+        fclose(fileID);
+    end
+     % Inform the user that files have been saved and provide the output directory
+    msgbox(sprintf('Clusters have been successfully saved in: %s', outputDir), 'Save Completed');
         end
         toc
     end
-
-%% Callback function to clear clusters from the t-SNE plot
+global nn mm ll
+%% Callback function to clear clusters from the PCA plot
     function clearClustersCallback(src, event)
     
 
@@ -319,18 +391,19 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
 
 %     % Redraw the original 2D scatter plot
 %     scatterPlot = scatter(score(:,1), score(:,2), sz);
-%     title('t-SNE visualization');
-%     xlabel('Dimension 1');
-%     ylabel('Dimension 2');
+%     title('PCA visualization');
+%     xlabel('Principle component 1');
+%     ylabel('Principle component 2');
 
 
     % Redraw the scatter plot for 3D
-       
-        scatterPlot = scatter3(score(:,1), score(:,2), score(:,3), 25); % Use scatter3 for 3D plot
-        title('3D t-SNE visualization ');
-        xlabel('Dimension 1');
-        ylabel('Dimension 2');
-        zlabel('Dimension 3'); % Label for the third dimension
+
+ 
+        scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25); % Use scatter3 for 3D plot
+        title('3D PCA visualization ');
+        xlabel('Principle component 1');
+        ylabel('Principle component 2');
+        zlabel('Principle component 3'); 
     
 
     % Restore the brush data
@@ -346,7 +419,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
         %for 2D
 %         highlighted = scatter(score(geneIndices, 1), score(geneIndices, 2), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
         %for3D
-        highlightedGenes = scatter3(score(geneIndices, 1), score(geneIndices, 2), score(geneIndices, 3), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
+        highlightedGenes = scatter3(score(geneIndices, nn), score(geneIndices, mm), score(geneIndices, ll), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'g');
         hold off;
     end
 end
@@ -497,16 +570,16 @@ function updateScatterPlot()
         delete(scatterPlot)
     end
     % Set the default color for non-highlighted points to grey
-    scatterPlot = scatter3(score(:,1), score(:,2), score(:,3), 25, [0.7, 0.7, 0.7]); % Grey color
+    scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25, [0.7, 0.7, 0.7]); % Grey color
     title('3D PCA visualization with K-means Clustering');
-    xlabel('Dimension 1');
-    ylabel('Dimension 2');
-    zlabel('Dimension 3'); % Label for the third dimension
+    xlabel('Principle component 1');
+    ylabel('Principle component 2');
+    zlabel('Principle component 3'); 
 
     hold on;
     legendEntries = {'All Genes (Grey)'}; % Updated legend entry
     for i = 1:length(highlightedGenes)
-        hp = scatter3(score(highlightedGenes(i).indices, 1), score(highlightedGenes(i).indices, 2), score(highlightedGenes(i).indices, 3), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', highlightedGenes(i).colors);
+        hp = scatter3(score(highlightedGenes(i).indices, nn), score(highlightedGenes(i).indices, mm), score(highlightedGenes(i).indices, ll), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', highlightedGenes(i).colors);
         fileNameForLegend = strrep(highlightedGenes(i).fileName, '_', '\_'); % Replace underscore with escaped underscore
 %         legendEntries{end+1} = highlightedGenes(i).fileName; % Add file name to legend entries
          legendEntries{end+1} = fileNameForLegend;
@@ -579,7 +652,7 @@ function searchGeneCallback(src, event)
   %  for 2D
 %     highlighted = scatter(score(geneIndex, 1), score(geneIndex, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
  %  for 3D
-    highlightedGenes = scatter3(score(geneIndex, 1), score(geneIndex, 2), score(geneIndex, 3), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+    highlightedGenes = scatter3(score(geneIndex, nn), score(geneIndex, mm), score(geneIndex, ll), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
      
 
     % Update the legend to show the name of the gene
@@ -591,6 +664,53 @@ function searchGeneCallback(src, event)
     
     hold off;
 end
+% Subfunction for KL Divergence within the same file
+    function klDiv = KLDivergence(P, Q)
+        % Ensure the vectors are of the same size
+        assert(numel(P) == numel(Q), 'The distributions must have the same number of elements');
+        
+        % Normalize P and Q
+        P = P / sum(P);
+        Q = Q / sum(Q);
 
+        % Indices where P is not zero
+        nonzeroIdx = P > 0;
+
+        % Calculate KL Divergence
+        klDiv = sum(P(nonzeroIdx) .* log(P(nonzeroIdx) ./ Q(nonzeroIdx)));
+    end
+
+ function originalDistribution = calculateOriginalDistribution(data, sigma)
+    % Transform correlation to a positive scale suitable for similarities  by inverting the correlation scores to represent distance
+    distances = 1 - abs(data);  % Convert correlation to distance
+
+    % Convert distances to similarities using a Gaussian-like kernel
+    % Avoid squaring as these are not Euclidean distances
+    similarities = exp(-distances / (2 * sigma^2));
+
+    % Convert the similarity matrix to a probability matrix
+    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
+    
+    % Symmetrize to get joint probabilities
+    P_joint = (P_conditional + P_conditional') / (2 * size(data, 1));
+
+    originalDistribution = P_joint; % This is the distribution to use for KL divergence
+end
+
+function PcaResultDistribution = calculatePcaDistribution(score, sigma)
+    % Calculate pairwise Euclidean distances of score
+    squareDist = pdist2(score, score).^2;
+    
+    % Convert distances to similarities using Gaussian kernel
+    similarities = exp(-squareDist / (2 * sigma^2));
+    
+    % Convert similarities to conditional probabilities
+    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
+    
+    % Symmetrize to get joint probabilities
+    P_joint = (P_conditional + P_conditional') / (2 * size(score, 1));
+
+    PcaResultDistribution = P_joint;
+end
 end
 

@@ -149,7 +149,7 @@ function load_data_callback(~, ~, f)
     end
 
     % Modify the uigetfile call to start in the last used directory
-    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx','*.tsv'), 'Select a data file');
+    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx;*.tsv'), 'Select a data file');
 
     % Check if the user canceled the file selection
     if isequal(file, 0)
@@ -167,32 +167,39 @@ function load_data_callback(~, ~, f)
     try
         [fPath, fName, fExt] = fileparts(file);
         waitbar(0.2, wb, 'Reading data...');
-               
-               if strcmp(fExt,'.tsv')
-               data_table = readtable(fullfile(path, file), "FileType","text",'Delimiter', '\t');
-               data_table=rows2vars(data_table) ;
-               else
-                   data_table = readtable(fullfile(path, file));
-               end
+        
+        if strcmp(fExt, '.tsv')
+            data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t');
+            data_table = rows2vars(data_table);
+        else
+            data_table = readtable(fullfile(path, file));
+        end
     catch
         errordlg('Error reading data. Please check the format of the data file.');
         delete(wb) % Close the waitbar if an error occurs
         return
     end
 
-    % Load gene list from a text file
-    [geneFile, genePath] = uigetfile('*.txt', 'Select the gene list file');
-    if ~isequal(geneFile, 0)
-        geneList = readlines(fullfile(genePath, geneFile));
-        geneList = lower(geneList); % Convert gene list to lower case
+    % Ask the user if they want to open a new file for the gene list
+    choice = uiconfirm(f, 'Would you like to filter for the gene set?', 'Open Gene List', ...
+                       'Options', {'Yes', 'No'}, 'DefaultOption', 1, 'CancelOption', 2);
+    
+    % Handle response
+    if strcmp(choice, 'Yes')
+        % Load gene list from a text file
+        [geneFile, genePath] = uigetfile('*.txt', 'Select the gene list file', lastUsedPath); % Start in the last used directory
+        if ~isequal(geneFile, 0)
+            geneList = readlines(fullfile(genePath, geneFile));
+            geneList = lower(geneList); % Convert gene list to lower case
 
-        % Filter the data table to include only columns that match the gene list
-        waitbar(0.6, wb, 'Filtering data...');
-        variableNamesLower = lower(data_table.Properties.VariableNames); % Convert column names to lower case
-        filteredColumns = data_table(:, ismember(variableNamesLower, geneList));
+            % Filter the data table to include only columns that match the gene list
+            waitbar(0.6, wb, 'Filtering data...');
+            variableNamesLower = lower(data_table.Properties.VariableNames); % Convert column names to lower case
+            filteredColumns = data_table(:, ismember(variableNamesLower, geneList));
 
-        % Keep the first column and concatenate with filtered columns
-        data_table = [data_table(:, 1), filteredColumns];
+            % Keep the first column and concatenate with filtered columns
+            data_table = [data_table(:, 1), filteredColumns];
+        end
     end
 
     % Check for Cancel button press
@@ -238,7 +245,8 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-   correlations = corrcoef(table2array(data_table)).^1;
+%   correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
+    correlations= corr(table2array(data_table), 'Type', 'Kendall'); %Spearman
 
 
 
@@ -1039,7 +1047,7 @@ end
     excelFilePath = 'GO terms.xlsx'; 
 
    % Define the Excel file options
-    excelFileOptions = {'GO terms 13200.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
+    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
     [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
                          'SelectionMode', 'single', ...
                          'ListString', excelFileOptions);
