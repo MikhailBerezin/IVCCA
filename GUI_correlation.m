@@ -182,7 +182,7 @@ function load_data_callback(~, ~, f)
 
     % Ask the user if they want to open a new file for the gene list
     choice = uiconfirm(f, 'Would you like to filter for the gene set?', 'Open Gene List', ...
-                       'Options', {'Yes', 'No'}, 'DefaultOption', 1, 'CancelOption', 2);
+                       'Options', {'Yes', 'No'}, 'DefaultOption', 2, 'CancelOption', 2);
     
     % Handle response
     if strcmp(choice, 'Yes')
@@ -245,8 +245,11 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-%   correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
-    correlations= corr(table2array(data_table), 'Type', 'Kendall'); %Spearman
+    correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
+
+    % Can be used with Spearman and Kendall
+%   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
+
 
 
 

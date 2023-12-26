@@ -92,12 +92,15 @@ PcaResultDistribution = calculatePcaDistribution(score, sigma);
    % Convert klValue to string for displaying
 klValueStr = num2str(klValue);
 
-% Display the KL divergence value in a message box
-msgbox(['The KL Divergence value is: ', klValueStr], 'KL Divergence');
-disp(sigma)
-disp(klValueStr) 
 
-    
+% msgbox(['The KL Divergence value is: ', klValueStr], 'KL Divergence');
+% Creating a table with the results
+resultsTable = table(sigma, klValue, 'VariableNames', {'Sigma', 'KL_Divergence'});
+
+% Displaying the table
+disp(resultsTable);
+
+   
     % Use scatter3 for 3D scatter plot of the first three PCA components
     scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25);
     % Adjust the scatter plot position
@@ -312,16 +315,16 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
 %             cla; % Clear the current axes
 %             gscatter(score(:,1), score(:,2), clusterIdx); % Use gscatter for coloring based on clusters
 %             title('PCA visualization with K-means Clustering');
-%             xlabel('Principle component');
-%             ylabel('Principle component 2');
+%             xlabel('Principal component');
+%             ylabel('Principal component 2');
 
         % Update the scatter plot for 3D
         cla; % Clear the current axes
         scatter3(score(:,nn), score(:,mm), score(:,ll), 25, clusterIdx, 'filled', 'MarkerEdgeColor', 'k'); % Use scatter3 for 3D plot
         title('3D PCA visualization with K-means Clustering');
-        xlabel('Principle component 1');
-        ylabel('Principle component 2');
-        zlabel('Principle component 3'); 
+        xlabel('Principal component 1');
+        ylabel('Principal component 2');
+        zlabel('Principal component 3'); 
 
 
             % Create a new figure for the clustering results table
@@ -392,8 +395,8 @@ global nn mm ll
 %     % Redraw the original 2D scatter plot
 %     scatterPlot = scatter(score(:,1), score(:,2), sz);
 %     title('PCA visualization');
-%     xlabel('Principle component 1');
-%     ylabel('Principle component 2');
+%     xlabel('Principal component 1');
+%     ylabel('Principal component 2');
 
 
     % Redraw the scatter plot for 3D
@@ -401,9 +404,9 @@ global nn mm ll
  
         scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25); % Use scatter3 for 3D plot
         title('3D PCA visualization ');
-        xlabel('Principle component 1');
-        ylabel('Principle component 2');
-        zlabel('Principle component 3'); 
+        xlabel('Principal component 1');
+        ylabel('Principal component 2');
+        zlabel('Principal component 3'); 
     
 
     % Restore the brush data
@@ -425,7 +428,7 @@ global nn mm ll
 end
 
 %% Callback function for selecting a gene list file
-% Global variable declaration at the beginning of tsne2 function
+% Global variable declaration at the beginning of PCA3 function
 global highlightedGenes;
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
@@ -572,9 +575,9 @@ function updateScatterPlot()
     % Set the default color for non-highlighted points to grey
     scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25, [0.7, 0.7, 0.7]); % Grey color
     title('3D PCA visualization with K-means Clustering');
-    xlabel('Principle component 1');
-    ylabel('Principle component 2');
-    zlabel('Principle component 3'); 
+    xlabel('Principal component 1');
+    ylabel('Principal component 2');
+    zlabel('Principal component 3'); 
 
     hold on;
     legendEntries = {'All Genes (Grey)'}; % Updated legend entry
@@ -705,12 +708,12 @@ function PcaResultDistribution = calculatePcaDistribution(score, sigma)
     similarities = exp(-squareDist / (2 * sigma^2));
     
     % Convert similarities to conditional probabilities
-    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
+    Q_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
     
     % Symmetrize to get joint probabilities
-    P_joint = (P_conditional + P_conditional') / (2 * size(score, 1));
+    Q_joint = (Q_conditional + Q_conditional') / (2 * size(score, 1));
 
-    PcaResultDistribution = P_joint;
+    PcaResultDistribution = Q_joint;
 end
 end
 

@@ -45,12 +45,14 @@ firstTwoPCs = firstTwoPCs * 0.0001;
 % 3D tsne
 % Define your perplexity value
 perplexityValue = 60;
+setappdata(0, 'perplexityValue', perplexityValue);
 
 % Step 4: Run t-SNE using the defined perplexity value
 % Y = tsne(dataFilled, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200, 'NumPCAComponents', 25);
 % Step 4: Run t-SNE with the PCA results as initialization
 Y = tsne(data, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200,'InitialY', firstTwoPCs, 'NumPCAComponents', 25);
- 
+
+setappdata(0, 'Y', Y);
 % Update the waitbar after completing t-SNE
 waitbar(0.6, hWaitBar, 'Plotting results...');
 
@@ -80,24 +82,10 @@ set(f, 'ResizeFcn', @resizeFigure);
 % xlabel('Dimension 1');
 % ylabel('Dimension 2');
 
-sigma = perplexityValue;  
+ 
+% Calculate the t-SNE Kullback-Leibler divergence
 
-   % Calculate the t-SNE result distribution
-originalDistribution = calculateOriginalDistribution(data, sigma);
-
-   % Calculate the t-SNE result distribution
-tsneResultDistribution = calculateTsneDistribution(Y, sigma);
-
-% KL value:
-   klValue = KLDivergence(originalDistribution, tsneResultDistribution);
-
-   % Convert klValue to string for displaying
-klValueStr = num2str(klValue);
-
-% Display the KL divergence value in a message box
-msgbox(['The KL Divergence value is: ', klValueStr], 'KL Divergence');
-disp(sigma)
-disp(klValueStr) 
+calculateKLDivergence;
 
 %% Use scatter3 for 3D scatter plot
 scatterPlot = scatter3(Y(:,1), Y(:,2), Y(:,3), 25);
@@ -296,7 +284,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
         % Update the scatter plot for 3D
         cla; % Clear the current axes
-        scatter3(Y(:,1), Y(:,2), Y(:,3), 10, clusterIdx, 'filled','MarkerEdgeColor', 'k'); % Use scatter3 for 3D plot
+        scatter3(Y(:,1), Y(:,2), Y(:,3), 25, clusterIdx, 'filled','MarkerEdgeColor', 'k'); % Use scatter3 for 3D plot
         title('3D t-SNE visualization with K-means Clustering');
         xlabel('Dimension 1');
         ylabel('Dimension 2');
@@ -418,9 +406,15 @@ function selectFileCallback(src, event)
 
     % Open file selection dialog and read genes of interest
     [file, path] = uigetfile({'*.txt', 'Select a gene list file'}, 'Select a gene list file', lastPath, 'MultiSelect', 'on');
-    if file == 0
-        return; % User canceled file selection
-    else
+%     if file == 0
+%         return; % User canceled file selection
+%     else
+% Check if the user canceled the file selection
+if isequal(file, 0)
+    return; % User canceled file selection
+else
+
+
         lastPath = path; % Update lastPath with the new directory
     end
 if ischar(file)
@@ -489,10 +483,11 @@ end
 end
 
 function distributionSummary = calculateAndDisplayNearestNeighbor(Y, highlightedIndices)
-    if isempty(highlightedIndices)
-        msgbox('No genes in the set.');
-        return;
-    end
+    
+%     if isempty(highlightedIndices)
+%         msgbox('No genes in the set.');
+%         return;
+%     end
 
     % Calculate nearest neighbor distance for each point in highlightedIndices
     distances = zeros(size(highlightedIndices));
@@ -561,6 +556,7 @@ function updateScatterPlot()
         fileNameForLegend = strrep(highlightedGenes(i).fileName, '_', '\_'); % Replace underscore with escaped underscore
 %         legendEntries{end+1} = highlightedGenes(i).fileName; % Add file name to legend entries
          legendEntries{end+1} = fileNameForLegend;
+         
     end
     hold off;
 
@@ -617,10 +613,10 @@ function searchGeneCallback(src, event)
     % Find the index of the gene
     geneIndex = find(strcmpi(geneNames, geneToFind));
 
-    if isempty(geneIndex)
-        msgbox(['Gene ' geneToFind ' not found.']);
-        return;
-    end
+%     if isempty(geneIndex)
+%         msgbox(['Gene ' geneToFind ' not found.']);
+%         return;
+%     end
 
     % Highlight the found gene on the scatter plot
     if ~isempty(highlightedGenes) && isvalid(highlightedGenes)
@@ -643,54 +639,7 @@ function searchGeneCallback(src, event)
     hold off;
 end
 
-% Subfunction for KL Divergence within the same file
-    function klDiv = KLDivergence(P, Q)
-        % Ensure the vectors are of the same size
-        assert(numel(P) == numel(Q), 'The distributions must have the same number of elements');
-        
-        % Normalize P and Q
-        P = P / sum(P);
-        Q = Q / sum(Q);
 
-        % Indices where P is not zero
-        nonzeroIdx = P > 0;
-
-        % Calculate KL Divergence
-        klDiv = sum(P(nonzeroIdx) .* log(P(nonzeroIdx) ./ Q(nonzeroIdx)));
-    end
-
- function originalDistribution = calculateOriginalDistribution(data, sigma)
-    % Transform correlation to a positive scale suitable for similarities  by inverting the correlation scores to represent distance
-    distances = 1 - abs(data);  % Convert correlation to distance
-
-    % Convert distances to similarities using a Gaussian-like kernel
-    % Avoid squaring as these are not Euclidean distances
-    similarities = exp(-distances / (2 * sigma^2));
-
-    % Convert the similarity matrix to a probability matrix
-    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
-    
-    % Symmetrize to get joint probabilities
-    P_joint = (P_conditional + P_conditional') / (2 * size(data, 1));
-
-    originalDistribution = P_joint; % This is the distribution to use for KL divergence
-end
-
-function tsneResultDistribution = calculateTsneDistribution(Y, sigma)
-    % Calculate pairwise Euclidean distances of Y
-    squareDist = pdist2(Y, Y).^2;
-    
-    % Convert distances to similarities using Gaussian kernel
-    similarities = exp(-squareDist / (2 * sigma^2));
-    
-    % Convert similarities to conditional probabilities
-    P_conditional = bsxfun(@rdivide, similarities, sum(similarities, 2));
-    
-    % Symmetrize to get joint probabilities
-    P_joint = (P_conditional + P_conditional') / (2 * size(Y, 1));
-
-    tsneResultDistribution = P_joint;
-end
 
 
 end
