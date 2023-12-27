@@ -1050,7 +1050,7 @@ end
     excelFilePath = 'GO terms.xlsx'; 
 
    % Define the Excel file options
-    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
+    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx','Kegg terms 340', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
     [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
                          'SelectionMode', 'single', ...
                          'ListString', excelFileOptions);
@@ -1178,7 +1178,8 @@ for i = 1:length(file_names)
        %To get name 
        for j=1:length(valid_indices)
            number= valid_indices(j);
-           name{i,j}=s_variable_names_lower{number};
+           
+           name{i,j}= variable_names_lower{number};
        end
        for k=1:length(selected_genes)
 %            number= selected_genes(j);
