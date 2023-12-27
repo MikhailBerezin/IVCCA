@@ -24,10 +24,10 @@ else
 end
 
 % Create a popup dialog to select pathway 2 data file
-[filename2, pathname2] = uigetfile([lastUsedDir, '/*.txt'], 'Select pathway 2 data file');
+[file_name2, pathname2] = uigetfile([lastUsedDir, '/*.txt'], 'Select pathway 2 data file','MultiSelect', 'on');
 
 % Check if the user canceled file selection
-if isequal(filename2, 0)
+if isequal(file_name2, 0)
     disp('File selection canceled.');
     return;
 else
@@ -40,10 +40,22 @@ end
     file_path = fullfile(pathname1, filename1);
     pathway1_genes = textread(file_path, '%s');
 %     pathway2_data = textread(fullfile(pathname2, filename2), '%f');
-    file_path2 = fullfile(pathname2, filename2);
-    pathway2_genes = textread(file_path2, '%s');
+%     file_path2 = fullfile(pathname2, filename2);
+%     pathway2_genes = textread(file_path2, '%s');
 
+
+% Get all file and concetanate
+
+%%
+    for i = 1:length(file_name2)
+    file_path = fullfile(pathname2, file_name2{i});
+    selected_genes = textread(file_path, '%s');
+    all_selected_genes{i} = selected_genes;
   
+    end
+    pathway2_genes = vertcat(all_selected_genes{:});
+    
+    %%
     % Initialize an empty array to store absolute correlation coefficients
     abs_correlation_coeffs = [];
     
