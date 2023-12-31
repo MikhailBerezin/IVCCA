@@ -72,14 +72,14 @@ tsne_button.Enable = 'off';
 sort_path_button = uibutton(grid, 'push', 'Text', 'Single Pathway', 'ButtonPushedFcn', {@sort_path_callback, f});
 sort_path_button.Layout.Row = 9; % Position for "SinglePathway" button
 sort_path_button.Layout.Column = 2;
-sort_path_button.Tooltip = 'Sort the correlation matrix for a selected pathway';  % Adding tooltip
+sort_path_button.Tooltip = 'Sort genes based on their average correlation values for a selected pathway';  % Adding tooltip
 sort_path_button.Enable = 'off'; % Initially disabled
 
 % Create the "Multiple Pathways" button
 sort_mpath_button = uibutton(grid, 'push', 'Text', 'Multi Pathways', 'ButtonPushedFcn', {@sort_mpath_callback, f});
 sort_mpath_button.Layout.Row = 10; % Position for "Mutliple Pathways" button
 sort_mpath_button.Layout.Column = 2;
-sort_mpath_button.Tooltip = 'Sort multiple pathways based on the correlation values of their members';  % Adding tooltip
+sort_mpath_button.Tooltip = 'Sort multiple pathways based on the correlation values of the genes';  % Adding tooltip
 sort_mpath_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Group Correlation" button
