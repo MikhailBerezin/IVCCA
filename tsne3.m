@@ -12,6 +12,7 @@ highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
 outputDir = 'C:\Users\berezinm\Dropbox\Papers\2023 Correlation paper\Heart\Pearson folder'; % Modify with the desired path
 
+
 data=  getappdata(0, 'correlations');
 data = abs(data);
 geneNames= getappdata(0,'variable_names');
@@ -32,14 +33,14 @@ dataFilled = fillmissing(data, 'constant', 0);
 
 % Step 1: Perform PCA to get the first two principal components
 [coeff, score, ~, ~, explained] = pca(dataFilled);
-firstTwoPCs = score(:, 1:3);  % Extract the first two components
+firstThreePCs = score(:, 1:3);  % Extract the first two components
 
 % Step 2: Standardize the components
-std_dev = std(firstTwoPCs(:, 1));
-firstTwoPCs = firstTwoPCs / std_dev;
+std_dev = std(firstThreePCs(:, 1));
+firstThreePCs = firstThreePCs / std_dev;
 
 % Step 3: Multiply by a small number (0.0001)
-firstTwoPCs = firstTwoPCs * 0.0001;
+firstThreePCs = firstThreePCs * 0.0001;
 
 % Y = tsne(data, 'NumDimensions', 2, 'Perplexity', 40, 'LearnRate', 200, 'NumPCAComponents', 25);
 % 3D tsne
@@ -50,7 +51,7 @@ setappdata(0, 'perplexityValue', perplexityValue);
 % Step 4: Run t-SNE using the defined perplexity value
 % Y = tsne(dataFilled, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200, 'NumPCAComponents', 25);
 % Step 4: Run t-SNE with the PCA results as initialization
-Y = tsne(data, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200,'InitialY', firstTwoPCs, 'NumPCAComponents', 25);
+Y = tsne(data, 'NumDimensions', 3, 'Perplexity', perplexityValue, 'LearnRate', 200,'InitialY', firstThreePCs, 'NumPCAComponents', 25,'Distance','euclidean');
 
 setappdata(0, 'Y', Y);
 % Update the waitbar after completing t-SNE

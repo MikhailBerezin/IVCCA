@@ -2,8 +2,8 @@ function GUI_correlation
 % Mikhail Berezin 2023
 f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 450], 'Icon','Corr_icon.png');  % adjusted width
 close all
-% f.WindowStyle = 'normal';
-% uifigureOnTop (f, true) 
+ f.WindowStyle = 'normal';
+  uifigureOnTop (f, true) 
 
 % Create the grid layout
 grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x', '1x', '1x', '1x', '1x'});  % now 4x2 grid, second column smaller
@@ -159,14 +159,14 @@ function load_data_callback(~, ~, f)
         lastUsedPath = path;
     end
 
-    % Initialize the waitbar
-    wb = waitbar(0, 'Loading data...', 'Name', 'Processing', 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
-    setappdata(wb, 'canceling', 0)
+%     % Initialize the waitbar
+%     wb = waitbar(0, 'Loading data...', 'Name', 'Processing', 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
+%     setappdata(wb, 'canceling', 0)
 
     % Read the data from the file
     try
         [fPath, fName, fExt] = fileparts(file);
-        waitbar(0.2, wb, 'Reading data...');
+%         waitbar(0.2, wb, 'Reading data...');
         
         if strcmp(fExt, '.tsv')
             data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t');
@@ -176,10 +176,12 @@ function load_data_callback(~, ~, f)
         end
     catch
         errordlg('Error reading data. Please check the format of the data file.');
-        delete(wb) % Close the waitbar if an error occurs
+%         delete(wb) % Close the waitbar if an error occurs
         return
     end
 
+
+    
     % Ask the user if they want to open a new file for the gene list
     choice = uiconfirm(f, 'Would you like to filter for the gene set?', 'Open Gene List', ...
                        'Options', {'Yes', 'No'}, 'DefaultOption', 2, 'CancelOption', 2);
@@ -187,13 +189,14 @@ function load_data_callback(~, ~, f)
     % Handle response
     if strcmp(choice, 'Yes')
         % Load gene list from a text file
+        uifigureOnTop (f, false)
         [geneFile, genePath] = uigetfile('*.txt', 'Select the gene list file', lastUsedPath); % Start in the last used directory
         if ~isequal(geneFile, 0)
             geneList = readlines(fullfile(genePath, geneFile));
             geneList = lower(geneList); % Convert gene list to lower case
 
             % Filter the data table to include only columns that match the gene list
-            waitbar(0.6, wb, 'Filtering data...');
+%             waitbar(0.6, wb, 'Filtering data...');
             variableNamesLower = lower(data_table.Properties.VariableNames); % Convert column names to lower case
             filteredColumns = data_table(:, ismember(variableNamesLower, geneList));
 
@@ -203,14 +206,15 @@ function load_data_callback(~, ~, f)
     end
 
     % Check for Cancel button press
-    if getappdata(wb, 'canceling')
-        delete(wb)
-        return
-    end
+%     if getappdata(wb, 'canceling')
+%         delete(wb)
+%         return
+%     end
     
-    waitbar(1, wb, 'Done loading data');
-    pause(1) % For user to notice the message
-    delete(wb) % Close waitbar dialog box
+    
+%     waitbar(1, wb, 'Done loading data');
+%     pause(1) % For user to notice the message
+%     delete(wb) % Close waitbar dialog box
 
     % Set the data table in the GUI
     data.Data = data_table;
@@ -1368,95 +1372,6 @@ function cellSelectedCallback2(src, event)
     
 end
 
-function calculate_network_callback(~, ~, f)
-    f.WindowStyle = 'normal';
-
-    % Retrieve correlation data and variable names (gene names)
-    cor_data = getappdata(0, 'correlations');
-    geneNames = getappdata(0, 'variable_names');
-
-    % Define the prompt, title, and default value for the input dialog
-    prompt = {'Enter the correlation threshold:'};
-    dlgtitle = 'Input';
-    dims = [1 35];
-    definput = {'0.75'}; % default value set to 0.75
-
-    % Create the input dialog box
-    answer = inputdlg(prompt, dlgtitle, dims, definput);
-
-    % Validate and parse the input
-    correlationThreshold = 0.75; % Default threshold
-    if ~isempty(answer)
-        tempValue = str2double(answer{1});
-        if ~isnan(tempValue) && tempValue >= 0 && tempValue <= 1
-            correlationThreshold = tempValue;
-        else
-            % Display a message if the input is invalid
-            msgbox('Invalid input. Using default value of 0.75.', 'Error', 'error');
-        end
-    end
-
-    % Filter the correlation matrix
-    filteredCorData = cor_data;
-    filteredCorData(abs(filteredCorData) < correlationThreshold) = 0;
-
-    % Create a graph object from the filtered correlation matrix
-    G = graph(filteredCorData, geneNames, 'OmitSelfLoops');
-
-    % Remove edges with weight below the threshold
-    G = rmedge(G, find(G.Edges.Weight < correlationThreshold));
-
-    % Calculate the degree for each node
-    nodeDegree = degree(G);
-
-    % Create a table with gene names and their degrees
-    resultsTable = table(geneNames', nodeDegree, 'VariableNames', {'GeneName', 'Degree'});
-
-
-
-% Set edge weights based on correlation values
-G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
-
-% Number of nodes
-numNodes = numnodes(G);
-
-% Generate spherical coordinates for each node
-[x, y, z] = spherePoints(numNodes);
-
-% Plot the network in 3D with nodes on a sphere
-figure; % Open a new figure
-p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'r');
-
-% Adjust line thickness based on correlation value
-maxWeight = max(G.Edges.Weight); % Find maximum edge weight
-minLineWidth = 0.5; % Minimum line width
-maxLineWidth = 4; % Maximum line width
-p.LineWidth = minLineWidth + ((G.Edges.Weight / maxWeight) * 0.32*(maxLineWidth - minLineWidth)).^12;
-
-% Adjust node size based on degree
-p.MarkerSize = 5 + (1.3 * (nodeDegree / max(nodeDegree))).^12;
-
-% Set point color to yellow with transparency
-pointColor = [0, 1, 0]; % Yellow color with 
-p.NodeColor = pointColor;
-p.EdgeAlpha = 0.5;
-
-% Create a UI figure to display the table
-figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
-f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
-t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
-t.ColumnSortable(1) = true;
-t.ColumnSortable(2) = true;
-
-end
-function [x, y, z] = spherePoints(n)
-    % Generate n points distributed on the surface of a sphere
-    theta = linspace(0, 2*pi, n);
-    phi = acos(2 * linspace(0, 1, n) - 1);
-    x = sin(phi) .* cos(theta);
-    y = sin(phi) .* sin(theta);
-    z = cos(phi);
-end
 
 
 
