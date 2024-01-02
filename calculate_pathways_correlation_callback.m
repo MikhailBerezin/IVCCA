@@ -64,7 +64,7 @@ end
     %%
    
       k=1;
-      l=1;
+      m=1;
       
 % Initialize empty cell arrays for storing filtered gene names
 pathway_genes_1 = {};
@@ -88,11 +88,11 @@ for i = 1:length(file_name2)
             columnNameToFind = pathway2_genes{j};
             columnIndex = find(strcmp(geneNames, columnNameToFind));
             if ~isempty(columnIndex)
-                pathway_genes_2{l} = columnNameToFind;
-                l = l + 1;
+                pathway_genes_2{m} = columnNameToFind;
+                m = m + 1;
             end
         end
-
+        m=1;
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
 %             h1 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
@@ -101,15 +101,16 @@ for i = 1:length(file_name2)
             tableData{i, 2} = 0;  %  num over genes
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
+            pathway_genes_2 = {};
             continue
 %             return;
         end
 
-        for i = 1:length(pathway_genes_1)
+        for l = 1:length(pathway_genes_1)
         
         for j = 1:length(pathway_genes_2)
 
-            rowNameToFind = pathway_genes_1{i};  % Replace with the actual row name
+            rowNameToFind = pathway_genes_1{l};  % Replace with the actual row name
             rowIndex = find(strcmp(geneNames, rowNameToFind));
 
             % Find the column index based on the column name
@@ -122,7 +123,7 @@ for i = 1:length(file_name2)
                 cellValue = data(rowIndex, columnIndex);
 
                 % Display the result
-                new_data{i,j}=cellValue;
+                new_data{l,j}=cellValue;
                
                 
             else
@@ -142,13 +143,17 @@ for i = 1:length(file_name2)
             tableData{i, 2} = 0;  %  num over genes
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
+            pathway_genes_2 = {};
             continue;
         end
 
         % Find overlapping genes between pathway_genes_1 and pathway_genes_2
+        try
         overlapping_genes = intersect(pathway_genes_1, pathway_genes_2);
 
-
+        catch
+            print(pathway_genes_1)
+        end
         % Calculate the number of overlapping genes
         num_overlapping_genes = length(overlapping_genes);
 
@@ -158,6 +163,7 @@ for i = 1:length(file_name2)
             tableData{i, 2} = 0;  %  num over genes
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
+            pathway_genes_2 = {};
             continue
 %             h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
 %             set(h3, 'Position', [300 200 width height])
@@ -244,7 +250,7 @@ for i = 1:length(file_name2)
             tableData{i, 2} = num_overlapping_genes;  %  num over genes
             tableData{i, 3} = overlapping_genes; % overlapping       
             tableData{i, 4} = adjusted_cosine_similarity; % cosine
-
+            pathway_genes_2 = {}
 end
 figTitle = 'Compare pathways: Pathway 1 in column, Pathway 2 in row';
 % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
