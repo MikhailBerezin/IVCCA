@@ -183,12 +183,18 @@ for i = 1:length(file_name2)
 
         % Calculate the total number of genes in both pathways
         total_genes = length(pathway_genes_1) + length(pathway_genes_2) + num_overlapping_genes;
+        overlapping_genes_str = strjoin(overlapping_genes, ', ');
         if num_overlapping_genes == total_genes
             % All genes overlap, cosine similarity is 1
 %            h5 = msgbox('All genes in both pathways overlap. Cosine similarity index is 1.', ...
 %                    'Cosine Similarity', 'non-modal');
 %            set(h5, 'Position', [300 100 width height])
-            return
+            tableData{i, 1} = file_name2{i};
+            tableData{i, 2} = num_overlapping_genes;  %  num over genes
+            tableData{i, 3} = overlapping_genes_str; % overlapping
+            tableData{i, 4} = 1; % cos
+            pathway_genes_2 = {};
+            continue
         end
 
         % Check if either pathway_genes_1 or pathway_genes_2 is empty after
@@ -248,9 +254,9 @@ for i = 1:length(file_name2)
             
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = num_overlapping_genes;  %  num over genes
-            tableData{i, 3} = overlapping_genes; % overlapping       
-            tableData{i, 4} = adjusted_cosine_similarity; % cosine
-            pathway_genes_2 = {}
+            tableData{i, 3} = char(overlapping_genes(:)); % overlapping       
+            tableData{i, 4} = overlapping_genes_str; % cosine
+            pathway_genes_2 = {};
 end
 figTitle = 'Compare pathways: Pathway 1 in column, Pathway 2 in row';
 % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
