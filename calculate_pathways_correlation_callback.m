@@ -144,7 +144,7 @@ for i = 1:length(file_name2)
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
             pathway_genes_2 = {};
-            continue;
+%             continue;
         end
 
         % Find overlapping genes between pathway_genes_1 and pathway_genes_2
@@ -164,7 +164,7 @@ for i = 1:length(file_name2)
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
             pathway_genes_2 = {};
-            continue
+%             continue
 %             h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
 %             set(h3, 'Position', [300 200 width height])
         else
