@@ -1,9 +1,38 @@
 function calculate_network_callback(~, ~, f)
     f.WindowStyle = 'normal';
+   
 
     % Retrieve correlation data and variable names (gene names)
     cor_data = abs(getappdata(0, 'correlations'));
     geneNames = getappdata(0, 'variable_names');
+
+    % Ask the user if they want to filter the gene set
+    choice = uiconfirm(f, 'Would you like to filter for the gene set (optional)?', 'Open Gene List', ...
+                       'Options', {'Yes', 'No'}, 'DefaultOption', 1, 'CancelOption', 2);
+
+    if strcmp(choice, 'Yes')
+        % User chooses to filter for the gene set
+        [file, path] = uigetfile('*.txt', 'Select the file with the gene list');
+        if isequal(file, 0)
+            disp('User selected Cancel');
+            return;
+        else
+            disp(['User selected ', fullfile(path, file)]);
+            % Read the list of genes from the file
+            fileID = fopen(fullfile(path, file), 'r');
+            filterGeneNames = textscan(fileID, '%s');
+            filterGeneNames = filterGeneNames{1}; % Convert cell array to a regular array of strings
+            fclose(fileID);
+            
+            % Filter the correlation data and gene names
+            [isValidGene, loc] = ismember(geneNames, filterGeneNames);
+            cor_data = cor_data(isValidGene, isValidGene);
+            geneNames = geneNames(isValidGene);
+        end
+    else
+        % If the user chooses 'No', or closes the dialog, proceed without filtering
+        disp('Proceeding without gene set filtering.');
+    end
 
     % Define the prompt, title, and default value for the input dialog
     prompt = {'Enter the correlation threshold:'};

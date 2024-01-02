@@ -183,7 +183,7 @@ function load_data_callback(~, ~, f)
 
     
     % Ask the user if they want to open a new file for the gene list
-    choice = uiconfirm(f, 'Would you like to filter for the gene set?', 'Open Gene List', ...
+    choice = uiconfirm(f, 'Would you like to filter for the gene set (Optional)?', 'Open Gene List', ...
                        'Options', {'Yes', 'No'}, 'DefaultOption', 2, 'CancelOption', 2);
     
     % Handle response
