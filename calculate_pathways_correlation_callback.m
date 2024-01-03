@@ -159,11 +159,11 @@ for i = 1:length(file_name2)
 
         % Check if there are overlapping genes
         if isempty(overlapping_genes)
-             tableData{i, 1} = file_name2{i};
+            tableData{i, 1} = file_name2{i};
             tableData{i, 2} = 0;  %  num over genes
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
-            pathway_genes_2 = {};
+            
 %             continue
 %             h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
 %             set(h3, 'Position', [300 200 width height])
@@ -202,7 +202,8 @@ for i = 1:length(file_name2)
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
 %           h6 =  msgbox('No unique genes found for comparison after excluding overlapping genes.Cosine similarity index is 0');
 %           set(h6, 'Position', [300 200 width height])
-            return;
+             pathway_genes_2 = {};
+            continue;
         end
 
         % Initialize new_data for the table
@@ -215,9 +216,9 @@ for i = 1:length(file_name2)
 
 
          % Loop through the non-overlapping genes to fill in new_data and calculate cosine similarity
-            for i = 1:length(pathway_genes_1)
+            for n = 1:length(pathway_genes_1)
                 for j = 1:length(pathway_genes_2)
-                    rowNameToFind = pathway_genes_1{i}; 
+                    rowNameToFind = pathway_genes_1{n}; 
                     rowIndex = find(strcmp(geneNames, rowNameToFind));
 
                     columnNameToFind = pathway_genes_2{j}; 
@@ -225,7 +226,7 @@ for i = 1:length(file_name2)
 
                     if ~isempty(rowIndex) && ~isempty(columnIndex)
                         cellValue = data(rowIndex, columnIndex);
-                        new_data{i,j} = cellValue;
+                        new_data{n,j} = cellValue;
 
                         % Update values for cosine similarity
                         dot_product = dot_product + cellValue^2;
@@ -236,7 +237,7 @@ for i = 1:length(file_name2)
             end
 
             % Include overlapping genes in the cosine similarity calculation
-            for i = 1:num_overlapping_genes
+            for p = 1:num_overlapping_genes
                 dot_product = dot_product + 1; % Add 1 for each overlapping gene
                 norm_set1 = norm_set1 + 1;
                 norm_set2 = norm_set2 + 1;
@@ -254,8 +255,8 @@ for i = 1:length(file_name2)
             
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = num_overlapping_genes;  %  num over genes
-            tableData{i, 3} = char(overlapping_genes(:)); % overlapping       
-            tableData{i, 4} = overlapping_genes_str; % cosine
+            tableData{i, 3} = overlapping_genes_str; % overlapping       
+            tableData{i, 4} = adjusted_cosine_similarity; % cosine
             pathway_genes_2 = {};
 end
 figTitle = 'Compare pathways: Pathway 1 in column, Pathway 2 in row';
