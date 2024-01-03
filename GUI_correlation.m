@@ -249,7 +249,8 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-    correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
+%    correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
+    [correlations, p_values] = corr(table2array(data_table), 'Type', 'Pearson');
 
     % Can be used with Spearman and Kendall
 %   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
@@ -295,6 +296,7 @@ function calculate_correlations_callback(~, ~, f)
 
     % Save the correlations to the app data
     setappdata(0, 'correlations', correlations);
+    setappdata(0, 'p_values', p_values);
     setappdata(0, 'variable_names', data_table.Properties.VariableNames);
     
     % Enable buttons

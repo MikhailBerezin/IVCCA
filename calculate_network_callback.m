@@ -83,7 +83,11 @@ numNodes = numnodes(G);
 % Plot the network in 2D with nodes on a circle
 figure; % Open a new figure
 [x, y] = circlePoints(numNodes);
-p = plot(G, 'XData', x, 'YData', y, 'EdgeColor',  [91, 207, 244] / 255, 'NodeFontSize',14);
+p = plot(G, 'XData', x, 'YData', y,...
+    'EdgeColor',[0.0745098039215686 0.623529411764706 1],...
+    'NodeColor',[1 0.0745098039215686 0.650980392156863],...
+    'NodeFontSize',16);
+
 % Remove box around the plot
 box off;
 
@@ -121,12 +125,12 @@ maxLineWidth = 4; % Maximum line width
 p.LineWidth = minLineWidth + ((G.Edges.Weight / maxWeight) * 0.32*(maxLineWidth - minLineWidth)).^12;
 
 % Adjust node size based on degree
-p.MarkerSize = 5 + (1.3 * (nodeDegree / max(nodeDegree))).^12;
+p.MarkerSize = 10 + (1.5 * (nodeDegree / max(nodeDegree))).^10;
 
 % Set point color to yellow with transparency
-pointColor = [0, 1, 0]; % Yellow color with 
-p.NodeColor = pointColor;
-p.EdgeAlpha = 0.5;
+% pointColor = [0, 1, 0]; % Yellow color with 
+% p.NodeColor = pointColor;
+% p.EdgeAlpha = 0.5;
 
 % Create a UI figure to display the table
 figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
