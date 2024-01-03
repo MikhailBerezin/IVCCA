@@ -83,7 +83,7 @@ numNodes = numnodes(G);
 % Plot the network in 2D with nodes on a circle
 figure; % Open a new figure
 [x, y] = circlePoints(numNodes);
-p = plot(G, 'XData', x, 'YData', y, 'EdgeColor', 'b', 'NodeFontSize',14);
+p = plot(G, 'XData', x, 'YData', y, 'EdgeColor',  [91, 207, 244] / 255, 'NodeFontSize',14);
 % Remove box around the plot
 box off;
 
