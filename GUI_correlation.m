@@ -99,11 +99,14 @@ single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a
 single_to_path_button.Enable = 'off'; 
 
 % Create the "Compare pathways" button
-compare_paths_button = uibutton(grid, 'push', 'Text', 'Compare Pathways', 'ButtonPushedFcn', {@calculate_pathways_correlation_callback, f});
+compare_paths_button = uibutton(grid, 'push', ...
+    'Text', 'Compare Pathways', ...
+    'ButtonPushedFcn', @(btn,event) mainDialogBox(btn, event, f));
+
 compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
-compare_paths_button.Tooltip = 'Calculate the correlation betweeen two pathways';  % Adding tooltip
-compare_paths_button.Enable = 'off';
+compare_paths_button.Tooltip = 'Calculate the correlation between two pathways';  % Adding tooltip
+compare_paths_button.Enable = 'off';  % You might want to enable this once it's ready to be used
 
 % Create the "Network analysis" button
 network_button = uibutton(grid, 'push', 'Text', 'Network analysis', 'ButtonPushedFcn', {@calculate_network_callback, f});
@@ -1372,6 +1375,20 @@ function cellSelectedCallback2(src, event)
        end
     end
     
+end
+function mainDialogBox(src, event, f)
+    % Create a UI figure or use 'f' if it's intended to be the parent of the dialog
+    fig = uifigure('Name', 'Selection pathways', 'Position', [100, 100, 500, 300],'Color', [0.8, 0.8, 0.8]);
+
+    % Create Button for Function 1
+    btn1 = uibutton(fig, 'Text', 'Compare a single pathway to a single pathway', ...
+           'Position', [100, 150, 300, 30], ...
+           'ButtonPushedFcn', @(btn,event) calculate_pathways_correlation_callback2());
+
+    % Create Button for Function 2
+    btn2 = uibutton(fig, 'Text', 'Compare a single pathway to multiple pathways', ...
+           'Position', [100, 100, 300, 30], ...
+           'ButtonPushedFcn', @(btn,event) calculate_pathways_correlation_callback());
 end
 
 
