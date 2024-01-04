@@ -71,18 +71,23 @@ pathway_genes_1 = {};
 pathway_genes_2 = {};
 
 % Populate pathway_genes_1
-for i = 1:length(pathway1_genes)
-    rowNameToFind = pathway1_genes{i};
+
+tableData = cell(length(file_name2), 4);
+for i = 1:length(file_name2)
+    file_path = fullfile(pathname2, file_name2{i});
+    pathway2_genes = textread(file_path, '%s');
+    
+    
+    for u = 1:length(pathway1_genes)
+    rowNameToFind = pathway1_genes{u};
     rowIndex = find(strcmp(geneNames, rowNameToFind));
     if ~isempty(rowIndex)
         pathway_genes_1{k} = rowNameToFind;
         k = k + 1;
     end
-end
-tableData = cell(length(file_name2), 4);
-for i = 1:length(file_name2)
-    file_path = fullfile(pathname2, file_name2{i});
-    pathway2_genes = textread(file_path, '%s');
+   
+    end
+     k=1;
 % Populate pathway_genes_2
         for j = 1:length(pathway2_genes)
             columnNameToFind = pathway2_genes{j};
@@ -102,6 +107,7 @@ for i = 1:length(file_name2)
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
             pathway_genes_2 = {};
+             pathway_genes_1={};
             continue
 %             return;
         end
@@ -144,6 +150,7 @@ for i = 1:length(file_name2)
             tableData{i, 3} = 'N/A'; % overlapping       
             tableData{i, 4} = 0; % cos
             pathway_genes_2 = {};
+             pathway_genes_1={};
 %             continue;
         end
 
@@ -194,6 +201,7 @@ for i = 1:length(file_name2)
             tableData{i, 3} = overlapping_genes_str; % overlapping
             tableData{i, 4} = 1; % cos
             pathway_genes_2 = {};
+             pathway_genes_1={};
             continue
         end
 
@@ -203,6 +211,7 @@ for i = 1:length(file_name2)
 %           h6 =  msgbox('No unique genes found for comparison after excluding overlapping genes.Cosine similarity index is 0');
 %           set(h6, 'Position', [300 200 width height])
              pathway_genes_2 = {};
+             pathway_genes_1 = {};
             continue;
         end
 
@@ -258,6 +267,7 @@ for i = 1:length(file_name2)
             tableData{i, 3} = overlapping_genes_str; % overlapping       
             tableData{i, 4} = adjusted_cosine_similarity; % cosine
             pathway_genes_2 = {};
+            pathway_genes_1={};
 end
 % figTitle = 'Compare pathways to ';
  figTitle = ['Compare ' filename1 ' to other pathways' ];
