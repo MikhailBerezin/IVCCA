@@ -208,10 +208,15 @@ for i = 1:length(file_name2)
         % Check if either pathway_genes_1 or pathway_genes_2 is empty after
         % no genes overlap, cosine similarity is 1
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
+            tableData{i, 1} = file_name2{i};
+            tableData{i, 2} = num_overlapping_genes;  %  num over genes
+            tableData{i, 3} = overlapping_genes_str; % overlapping
+            tableData{i, 4} = 1; % cos
+            pathway_genes_2 = {};
+             pathway_genes_1={};
 %           h6 =  msgbox('No unique genes found for comparison after excluding overlapping genes.Cosine similarity index is 0');
 %           set(h6, 'Position', [300 200 width height])
-             pathway_genes_2 = {};
-             pathway_genes_1 = {};
+             
             continue;
         end
 
