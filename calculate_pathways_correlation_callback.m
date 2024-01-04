@@ -259,56 +259,23 @@ for i = 1:length(file_name2)
             tableData{i, 4} = adjusted_cosine_similarity; % cosine
             pathway_genes_2 = {};
 end
-figTitle = 'Compare pathways: Pathway 1 in column, Pathway 2 in row';
+% figTitle = 'Compare pathways to ';
+ figTitle = ['Compare ' filename1 ' to other pathways' ];
 % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 % sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png', 'Visible', 'on');
 % Create a uitable in the new uifigure
-fig = uifigure('Position', [50, 200, 1100, 400], 'Name', figTitle);
+fig = uifigure('Position', [50, 200, 900, 400], 'Name', figTitle);
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Name', 'Number of operlapping genes','Name of the Genes', 'Cosine' }, 'Position', [20, 20, 1100, 360]);
+uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 1100, 360]);
 
 % Set column width to auto
-
-uit.ColumnWidth = {120, 100, 100, 100, 100, 120, 120, 120, 120};
+% uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto'};
+ uit.ColumnWidth = {250, 100, 150, 200};
 
 % Adding sorting functionality
-uit.ColumnSortable = [true, true, true, true, true, true, true, true, true];
+uit.ColumnSortable = [true, true, true, true];
 
 
 
 
-
-% sorted_data = uitable(sorted_fig);
-%  % Display gene correlations in the new uitable
-% sorted_data.Data = new_data;  % Add sum of absolute correlations to the table
-% sorted_data.ColumnName = pathway_genes_2;
-% sorted_data.RowName = pathway_genes_1;  % Update column names
-% sorted_data.Position = [20 20 560 360];  
-% 
-% %     Calculate the average absolute correlation
-%     average_abs_correlation = mean(abs_correlation_coeffs);
-% 
-%     fprintf('Average Absolute Pairwise Correlation: %.4f\n', average_abs_correlation);
-% 
-% 
-% % Initialize variables for calculating the average
-% totalValue = 0;
-% count = 0;
-% 
-% % Loop through new_data to accumulate values and count valid entries
-% for i = 1:size(new_data, 1)
-%     for j = 1:size(new_data, 2)
-%         if ~isempty(new_data{i,j})
-%             totalValue = totalValue + abs(new_data{i,j});
-%             count = count + 1;
-%         end
-%     end
-% end
-
-%  h7 =   msgbox(['Cosine similarity index between two pathways: ', num2str(adjusted_cosine_similarity)], ...
-%            'Cosine Similarity', 'non-modal');
-% %  h7 =   msgbox(['Cosine similarity index between two pathways: ', num2str(cosine_similarity)], ...
-% %            'Cosine Similarity', 'non-modal');
-%     
-%  set(h7, 'Position', [300 300 width height])
 end
