@@ -3,14 +3,13 @@ function GUI_correlation
 f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 450], 'Icon','Corr_icon.png');  % adjusted width
 close all
  f.WindowStyle = 'normal';
-  uifigureOnTop (f, true) 
+% uifigureOnTop (f, true) 
 
 % Create the grid layout
-grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x', '1x', '1x', '1x', '1x'});  % now 4x2 grid, second column smaller
-
+grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x', '1x', '1x', '1x', '1x'}); 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 14]; % Spans across all rows
+data.Layout.Row = [1 15]; % Spans across all rows
 data.Layout.Column = 1; % Occupies the first column
 
 % Create the "Load Data" button
@@ -55,9 +54,9 @@ cluster_button.Tooltip = 'Cluster the correlation matrix with a dendrogram';  % 
 cluster_button.Enable = 'off'; % Initially disabled
 
 pca_button = uibutton(grid, 'push', 'Text', 'PCA', 'ButtonPushedFcn', {@pca3, f});
-pca_button.Layout.Row = 7; % Position for "Dynamic Tree Cut" button
+pca_button.Layout.Row = 7; % Position for "PCA" button
 pca_button.Layout.Column = 2;
-pca_button.Tooltip = 'Perform Dynamic Tree Cutting on the correlation matrix';  % Adding tooltip
+pca_button.Tooltip = 'Perform PCA analysis on the correlation matrix';  % Adding tooltip
 pca_button.Enable = 'off'; % Initially disabled
 
 % Create the "tsne correlations" button
@@ -105,14 +104,21 @@ compare_paths_button = uibutton(grid, 'push', ...
 
 compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
-compare_paths_button.Tooltip = 'Calculate the correlation between two pathways';  % Adding tooltip
+compare_paths_button.Tooltip = 'Calculate the correlation between two or multiple pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';  % You might want to enable this once it's ready to be used
+
+% Create the "Venn diagram" button
+venn_button = uibutton(grid, 'push', 'Text', 'Venn diagram', 'ButtonPushedFcn', {@venn_new_Gui_2, f});
+venn_button.Layout.Row = 14; % Position for "Network" button
+venn_button.Layout.Column = 2;
+venn_button.Tooltip = 'Generate Venn diagram';  % Adding tooltip
+venn_button.Enable = 'off';
 
 % Create the "Network analysis" button
 network_button = uibutton(grid, 'push', 'Text', 'Network analysis', 'ButtonPushedFcn', {@calculate_network_callback, f});
-network_button.Layout.Row = 14; % Position for "Network" button
+network_button.Layout.Row = 15; % Position for "Network" button
 network_button.Layout.Column = 2;
-network_button.Tooltip = 'Generate the network';  % Adding tooltip
+network_button.Tooltip = 'Generate network graph';  % Adding tooltip
 network_button.Enable = 'off';
 %%
 
@@ -231,10 +237,6 @@ function load_data_callback(~, ~, f)
     uifigureOnTop(f, true) 
 end
 
-
-
-
-
 %% Define the "Calculate Correlations" callback function
 function calculate_correlations_callback(~, ~, f)
     f.WindowStyle = 'normal';
@@ -258,9 +260,6 @@ function calculate_correlations_callback(~, ~, f)
     % Can be used with Spearman and Kendall
 %   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
 
-
-
-
         % Check for Cancel button press
     if getappdata(wb, 'canceling')
         delete(wb)
@@ -269,9 +268,7 @@ function calculate_correlations_callback(~, ~, f)
     
     waitbar(1, wb, 'Done calculating correlations');
     pause(1) % For user to notice the message
-    delete(wb) % Close waitbar dialog box
-
-    
+    delete(wb) % Close waitbar dialog box  
 
      % Find and print NaN values
     [nan_rows, nan_cols] = find(isnan(correlations));
@@ -281,7 +278,6 @@ function calculate_correlations_callback(~, ~, f)
             fprintf('Row: %d, Column: %d\n', nan_rows(i), nan_cols(i));
         end
     end
-
 
     % Set the results in the GUI
     f.Name = ['IVCCA: Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
@@ -294,8 +290,7 @@ function calculate_correlations_callback(~, ~, f)
     % Keep the first column editable after updating the data
     columnEditable = false(1, size(correlations, 2));
     columnEditable(1) = true;
-    data.ColumnEditable = columnEditable;
-    
+    data.ColumnEditable = columnEditable;    
 
     % Save the correlations to the app data
     setappdata(0, 'correlations', correlations);
@@ -314,8 +309,8 @@ function calculate_correlations_callback(~, ~, f)
     single_to_path_button.Enable = 'on';
     compare_paths_button.Enable = 'on';
     tsne_button.Enable = 'on';
+    venn_button.Enable = 'on';
     network_button.Enable = 'on';
-
 
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
@@ -339,7 +334,6 @@ function calculate_correlations_callback(~, ~, f)
     yticklabels(data_table.Properties.VariableNames);
     
 end
-
 
 %% Define the "Graph" callback function
 function graph_callback(~, ~, f)    
@@ -595,8 +589,7 @@ end
  
   % Adjust calculation for average absolute correlation after excluding self-correlation 
     average_abs_correlation2 = top_sum_abs_correlations2 / (total_genes2 - 1);
-    mean_average_abs_correlation2 = sum(average_abs_correlation2)/total_genes2;
-    
+    mean_average_abs_correlation2 = sum(average_abs_correlation2)/total_genes2;    
     
     % Update the data in the existing uitable instead of creating a new one
     data.Data = sorted_correlations;
@@ -654,11 +647,8 @@ array=[];
         
         % Enable sorting for the second and third columns
         sorted_data.ColumnSortable(2) = true;
-        sorted_data.ColumnSortable(3) = true;
-        
-    
-end
-
+        sorted_data.ColumnSortable(3) = true;     
+  end
 
 %% Perform clustering
 function cluster_callback(~, ~, f)
@@ -730,9 +720,6 @@ function findGeneCallback(~, ~)
         end
     end
 end
-
-
-
 
 % Find the current figure and turn off the number title
 fig = gcf; % Get the current figure handle
@@ -819,8 +806,6 @@ cluster_info_table.ColumnSortable(2) = true;
 % Enable sorting for the second column (Index)
 cluster_info_table.ColumnSortable(3) = true;
 
-
-
 end
 %%
 
@@ -886,10 +871,6 @@ waitbar(0.8, hWaitBar, 'Plotting...');
     waitbar(1, hWaitBar, 'Complete...');
     close(hWaitBar);
 end
-
-
-
-
 
 %% Define a callback function for calculating single gene-to-group correlations
 function single_to_group_correlation_callback(~, ~, f)
@@ -1181,9 +1162,7 @@ for i = 1:length(file_names)
             tableData{i, 6} = pciA; % internal correlation to each other
             tableData{i, 7} = pciB; % Extracted from the table
             tableData{i, 8} = strength_index; % product of genesFoundInSet  and pciB multiply by 100
-            tableData{i, 9} = Z_score; % internal correlation to each other
-            
-            
+            tableData{i, 9} = Z_score; % internal correlation to each other                      
        %To get name 
        for j=1:length(valid_indices)
            number= valid_indices(j);
@@ -1230,7 +1209,6 @@ if ~isempty(answer)
     end
 end
 
-
 % Convert 'Genes_Found' to numeric and filter rows where genes found is more than the threshold
 genesFoundNumeric = cellfun(@str2num, filteredTableData(:, 4));  % Convert to numeric
 rowsWithMoreThanThresholdGenes = genesFoundNumeric >= genesThreshold;  % Find rows with more or equal than threshold genes
@@ -1266,7 +1244,6 @@ sortedGoDescriptions = goDescriptions(sortIndex);
 
 setappdata(0,'name',name)
 setappdata(0,'name2',name2)
-
 
 
 %% Sorting and selecting the top entries based on the user input
@@ -1355,13 +1332,7 @@ function cellSelectedCallback2(src, event)
     selectedColumn = event.Indices(2);
 
     if ~isempty(selectedRow) && ~isempty(selectedColumn)
-%         % Get the data from the selected cell
-%         selectedData = src.Dat
-% a{selectedRow, selectedColumn};
-        % Display information about the selected cell
-%         disp(['Selected Row: ' num2str(selectedRow)]);
-%         disp(['Selected Column: ' num2str(selectedColumn)]);
-%         disp(['Selected Data: ' num2str(selectedData)]);
+
       if selectedColumn==4
        names= getappdata(0,'name');
        show= names(selectedRow,:);
@@ -1390,9 +1361,6 @@ function mainDialogBox(src, event, f)
            'Position', [100, 100, 300, 30], ...
            'ButtonPushedFcn', @(btn,event) calculate_pathways_correlation_callback());
 end
-
-
-
 
 
 end
