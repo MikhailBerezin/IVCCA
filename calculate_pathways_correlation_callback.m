@@ -91,10 +91,10 @@ for i = 1:length(file_name2)
 
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-%             tableData{i, 3} = length(pathway_genes_2);
-            tableData{i, 3} = 0;  %  num over genes
-            tableData{i, 4} = ''; % overlapping       
-            tableData{i, 5} = 0; % cos
+             tableData{i, 3} = length(pathway_genes_2);
+            tableData{i, 4} = 0;  %  num over genes
+            tableData{i, 5} = ''; % overlapping       
+            tableData{i, 6} = 0; % cos
                        
             pathway_genes_2 = {};
              pathway_genes_1={};
@@ -132,10 +132,10 @@ for i = 1:length(file_name2)
 
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-%             tableData{i, 3} =  length(pathway_genes_2);
-            tableData{i, 3} = 0;  %  num over genes
-            tableData{i, 4} = ''; % overlapping       
-            tableData{i, 5} = 0; % cos            
+            tableData{i, 3} =  length(pathway_genes_2);
+            tableData{i, 4} = 0;  %  num over genes
+            tableData{i, 5} = ''; % overlapping       
+            tableData{i, 6} = 0; % cos            
 
             pathway_genes_2 = {};
             pathway_genes_1={};
@@ -156,10 +156,10 @@ for i = 1:length(file_name2)
         if isempty(overlapping_genes)
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-%             tableData{i, 3} =  length(pathway_genes_2);
-            tableData{i, 3} = 0;  %  num over genes
-            tableData{i, 4} = ''; % overlapping       
-            tableData{i, 5} = 0; % cos        
+            tableData{i, 3} =  length(pathway_genes_2);
+            tableData{i, 4} = 0;  %  num over genes
+            tableData{i, 5} = ''; % overlapping       
+            tableData{i, 6} = 0; % cos        
 
         else
             % Display the overlapping genes and their count
@@ -179,10 +179,10 @@ for i = 1:length(file_name2)
            
             tableData{i, 1} = file_name2{i};            
             tableData{i, 2} = uint16(num_genes_in_file);
-%             tableData{i, 3} = num_overlapping_genes; %  
-            tableData{i, 3} = num_overlapping_genes;  %  num over genes
-            tableData{i, 4} = overlapping_genes_str; % overlapping
-            tableData{i, 5} = 1; % cos
+             tableData{i, 3} = length(num_overlapping_genes); %  
+            tableData{i, 4} = num_overlapping_genes;  %  num over genes
+            tableData{i, 5} = overlapping_genes_str; % overlapping
+            tableData{i, 6} = 1; % cos
            
             pathway_genes_2 = {};
             pathway_genes_1={};
@@ -194,10 +194,10 @@ for i = 1:length(file_name2)
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);% number of genes
-%             tableData{i, 3} = length(pathway_genes_2); % found genes
-            tableData{i, 3} = num_overlapping_genes;  %  number overlapped genes 
-            tableData{i, 4} = overlapping_genes_str; % names of overlapped genes 
-            tableData{i, 5} = 1; % cosine
+            tableData{i, 3} = length(pathway_genes_2); % found genes
+            tableData{i, 4} = num_overlapping_genes;  %  number overlapped genes 
+            tableData{i, 5} = overlapping_genes_str; % names of overlapped genes 
+            tableData{i, 6} = 1; % cosine
 
             
 
@@ -255,10 +255,10 @@ for i = 1:length(file_name2)
             
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file); % number of genes
-%             tableData{i, 3} = length(pathway_genes_2); % found genes
-            tableData{i, 3} = num_overlapping_genes;  %  number overlapped genes
-            tableData{i, 4} = overlapping_genes_str; % names of overlapped genes     
-            tableData{i, 5} = adjusted_cosine_similarity; % cosine             
+            tableData{i, 3} = length(pathway_genes_2); % found genes
+            tableData{i, 4} = num_overlapping_genes;  %  number overlapped genes
+            tableData{i, 5} = overlapping_genes_str; % names of overlapped genes     
+            tableData{i, 6} = adjusted_cosine_similarity; % cosine             
 
             pathway_genes_2 = {};
             pathway_genes_1={};
@@ -267,13 +267,13 @@ end
 figTitle = ['Compare ' filename1 ' to other pathways' ];
 fig = uifigure('Position', [50, 200, 1350, 400], 'Name', figTitle);
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 1300, 360]);
+uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number ##','Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 1300, 360]);
 
 % Set column width to auto
 % uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto'};
- uit.ColumnWidth = {250, 150, 150, 150, 150};
+ uit.ColumnWidth = {250, 150, 150, 150, 150, 150};
 
 % Adding sorting functionality
-uit.ColumnSortable = [true, true, true, true, true, true];
+uit.ColumnSortable = [true, true, true, true, true, true, true];
 
 end
