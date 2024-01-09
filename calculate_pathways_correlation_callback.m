@@ -179,7 +179,7 @@ for i = 1:length(file_name2)
            
             tableData{i, 1} = file_name2{i};            
             tableData{i, 2} = uint16(num_genes_in_file);
-             tableData{i, 3} = length(num_overlapping_genes); %  
+             tableData{i, 3} = num_overlapping_genes; %  
             tableData{i, 4} = num_overlapping_genes;  %  num over genes
             tableData{i, 5} = overlapping_genes_str; % overlapping
             tableData{i, 6} = 1; % cos
