@@ -178,10 +178,10 @@ function load_data_callback(~, ~, f)
 %         waitbar(0.2, wb, 'Reading data...');
         
         if strcmp(fExt, '.tsv')
-            data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t');
+            data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t', 'VariableNamingRule', 'preserve');
             data_table = rows2vars(data_table);
         else
-            data_table = readtable(fullfile(path, file));
+            data_table = readtable(fullfile(path, file), 'VariableNamingRule', 'preserve');
         end
     catch
         errordlg('Error reading data. Please check the format of the data file.');
@@ -1143,7 +1143,7 @@ for i = 1:length(file_names)
     ratioDEGsToTotalStr = num2str(ratioDEGsToTotal, '%.3f'); % Convert the ratio to a string with 2 decimal places
 
     ratioDEGsToTotalNum = str2double(ratioDEGsToTotalStr);
-    strength_index = ratioDEGsToTotalNum*pciB*100; 
+    strength_index = ratioDEGsToTotalNum*pciB*100; % PAI: Pathway Activated Index
 
 % Calculate the Z-score, from the randomly selected genes using random_sel_txt.m function. 
 % The average (A!) and standard dev (STD) of  CICI from random genes was calculated and the average is in cell A1, the standard deviation is in cell B1, and 

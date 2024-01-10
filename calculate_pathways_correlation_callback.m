@@ -1,6 +1,6 @@
 function calculate_pathways_correlation_callback(~, ~, f)
 
-% Find all open message boxes and close them
+ % Find all open message boxes and close them
     msgBoxes = findall(0, 'Type', 'figure', 'Tag', 'msgbox');
     delete(msgBoxes);
 
@@ -36,10 +36,24 @@ end
 
 
   % Read data from the selected text files
-
+%     pathway1_data = textread(fullfile(pathname1, filename1), '%f');
     file_path = fullfile(pathname1, filename1);
     pathway1_genes = textread(file_path, '%s');
-   
+%     pathway2_data = textread(fullfile(pathname2, filename2), '%f');
+%     file_path2 = fullfile(pathname2, filename2);
+%     pathway2_genes = textread(file_path2, '%s');
+
+
+% Get all file and concetanate
+
+%%
+%     for i = 1:length(file_name2)
+%     
+%     all_selected_genes{i} = selected_genes;
+%   
+%     end
+%     pathway2_genes = vertcat(all_selected_genes{:});
+    
     %%
     % Initialize an empty array to store absolute correlation coefficients
     abs_correlation_coeffs = [];
@@ -88,14 +102,14 @@ for i = 1:length(file_name2)
         m=1;
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
-
+%             h1 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
+%             set(h1, 'Position', [200 300 width*1.3 height])
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-             tableData{i, 3} = length(pathway_genes_2);
-            tableData{i, 4} = 0;  %  num over genes
-            tableData{i, 5} = ''; % overlapping       
-            tableData{i, 6} = 0; % cos
-                       
+            tableData{i, 3} = 0;  %  num over genes
+            tableData{i, 4} = 'N/A'; % overlapping       
+            tableData{i, 5} = 0; % cos
+            
             pathway_genes_2 = {};
              pathway_genes_1={};
             continue
@@ -119,9 +133,13 @@ for i = 1:length(file_name2)
                 cellValue = data(rowIndex, columnIndex);
 
                 % Display the result
-                new_data{l,j}=cellValue;               
+                new_data{l,j}=cellValue;
+               
                 
-            else               
+            else
+               
+%                 disp('Row or column not found.');
+                
                 break
             end
          end
@@ -129,17 +147,18 @@ for i = 1:length(file_name2)
 
         % Check if either pathway_genes_1 or pathway_genes_2 is empty
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
+%             h2 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
+%             set(h2, 'Position', [300 300 width height])
 
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-            tableData{i, 3} =  length(pathway_genes_2);
-            tableData{i, 4} = 0;  %  num over genes
-            tableData{i, 5} = ''; % overlapping       
-            tableData{i, 6} = 0; % cos            
+            tableData{i, 3} = 0;  %  num over genes
+            tableData{i, 4} = 'N/A'; % overlapping       
+            tableData{i, 5} = 0; % cos
 
             pathway_genes_2 = {};
-            pathway_genes_1={};
-%           continue;
+             pathway_genes_1={};
+%             continue;
         end
 
         % Find overlapping genes between pathway_genes_1 and pathway_genes_2
@@ -156,15 +175,20 @@ for i = 1:length(file_name2)
         if isempty(overlapping_genes)
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-            tableData{i, 3} =  length(pathway_genes_2);
-            tableData{i, 4} = 0;  %  num over genes
-            tableData{i, 5} = ''; % overlapping       
-            tableData{i, 6} = 0; % cos        
-
+            tableData{i, 3} = 0;  %  num over genes
+            tableData{i, 4} = 'N/A'; % overlapping       
+            tableData{i, 5} = 0; % cos            
+%             continue
+%             h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
+%             set(h3, 'Position', [300 200 width height])
         else
             % Display the overlapping genes and their count
             overlapping_genes_str = strjoin(overlapping_genes, ', ');%            
-%            
+%             message = {['Number of overlapping genes: ', num2str(num_overlapping_genes)], ...
+%                    ['Overlapping genes: ', overlapping_genes_str]};
+%            h4 = msgbox(message, 'Overlapping Genes', 'non-modal');
+%            set(h4, 'Position', [300 200 width height])
+
         end
 
         % Exclude overlapping genes from pathway_genes_1 and pathway_genes_2
@@ -174,35 +198,31 @@ for i = 1:length(file_name2)
         % Calculate the total number of genes in both pathways
         total_genes = length(pathway_genes_1) + length(pathway_genes_2) + num_overlapping_genes;
         overlapping_genes_str = strjoin(overlapping_genes, ', ');
-        
         if num_overlapping_genes == total_genes
-           
-            tableData{i, 1} = file_name2{i};            
+            % All genes overlap, cosine similarity is 1
+%            h5 = msgbox('All genes in both pathways overlap. Cosine similarity index is 1.', ...
+%                    'Cosine Similarity', 'non-modal');
+%            set(h5, 'Position', [300 100 width height])
+
+            tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
-             tableData{i, 3} = num_overlapping_genes; %  
-            tableData{i, 4} = num_overlapping_genes;  %  num over genes
-            tableData{i, 5} = overlapping_genes_str; % overlapping
-            tableData{i, 6} = 1; % cos
-           
+            tableData{i, 3} = num_overlapping_genes;  %  num over genes
+            tableData{i, 4} = overlapping_genes_str; % overlapping
+            tableData{i, 5} = 1; % cos
+     
+
             pathway_genes_2 = {};
-            pathway_genes_1={};
+             pathway_genes_1={};
             continue
         end
 
         % Check if either pathway_genes_1 or pathway_genes_2 is empty after
         % no genes overlap, cosine similarity is 1
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
-            tableData{i, 1} = file_name2{i};
-            tableData{i, 2} = uint16(num_genes_in_file);% number of genes
-            tableData{i, 3} = length(pathway_genes_2); % found genes
-            tableData{i, 4} = num_overlapping_genes;  %  number overlapped genes 
-            tableData{i, 5} = overlapping_genes_str; % names of overlapped genes 
-            tableData{i, 6} = 1; % cosine
-
-            
-
-            pathway_genes_2 = {};
-            pathway_genes_1={};
+%           h6 =  msgbox('No unique genes found for comparison after excluding overlapping genes.Cosine similarity index is 0');
+%           set(h6, 'Position', [300 200 width height])
+             pathway_genes_2 = {};
+             pathway_genes_1 = {};
             continue;
         end
 
@@ -254,26 +274,31 @@ for i = 1:length(file_name2)
             adjusted_cosine_similarity = (cosine_similarity + num_overlapping_genes) / (num_overlapping_genes + 1);
             
             tableData{i, 1} = file_name2{i};
-            tableData{i, 2} = uint16(num_genes_in_file); % number of genes
-            tableData{i, 3} = length(pathway_genes_2); % found genes
-            tableData{i, 4} = num_overlapping_genes;  %  number overlapped genes
-            tableData{i, 5} = overlapping_genes_str; % names of overlapped genes     
-            tableData{i, 6} = adjusted_cosine_similarity; % cosine             
+            tableData{i, 2} = uint16(num_genes_in_file);
+            tableData{i, 3} = num_overlapping_genes;  %  num over genes
+            tableData{i, 4} = overlapping_genes_str; % overlapping       
+            tableData{i, 5} = adjusted_cosine_similarity; % cosine             
 
             pathway_genes_2 = {};
             pathway_genes_1={};
 end
 % figTitle = 'Compare pathways to ';
-figTitle = ['Compare ' filename1 ' to other pathways' ];
-fig = uifigure('Position', [50, 200, 1350, 400], 'Name', figTitle);
+ figTitle = ['Compare ' filename1 ' to other pathways' ];
+% sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
+% sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png', 'Visible', 'on');
+% Create a uitable in the new uifigure
+fig = uifigure('Position', [50, 200, 1000, 400], 'Name', figTitle);
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number ##','Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 1300, 360]);
+uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 950, 360]);
 
 % Set column width to auto
 % uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto'};
- uit.ColumnWidth = {250, 150, 150, 150, 150, 150};
+ uit.ColumnWidth = {250, 150, 150, 150, 150};
 
 % Adding sorting functionality
-uit.ColumnSortable = [true, true, true, true, true, true, true];
+uit.ColumnSortable = [true, true, true, true, true];
+
+
+
 
 end
