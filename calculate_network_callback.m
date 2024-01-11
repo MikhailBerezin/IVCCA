@@ -60,7 +60,7 @@ function calculate_network_callback(~, ~, f)
     filteredCorData(abs(filteredCorData) < correlationThreshold) = 0;
 
     % Create a graph object from the filtered correlation matrix
-    G = graph(filteredCorData, geneNames, 'OmitSelfLoops');
+    G = graph(filteredCorData, geneNames, 'OmitSelfLoops','Upper');
 
     % Remove edges with weight below the threshold
     G = rmedge(G, find(G.Edges.Weight < correlationThreshold));
@@ -79,44 +79,55 @@ G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
 % Number of nodes
 numNodes = numnodes(G);
 
-
-% Plot the network in 2D with nodes on a circle
-figure; % Open a new figure
-[x, y] = circlePoints(numNodes);
-p = plot(G, 'XData', x, 'YData', y,...
-    'EdgeColor',[0.0745098039215686 0.623529411764706 1],...
-    'NodeColor',[1 0.0745098039215686 0.650980392156863],...
-    'NodeFontSize',16);
-
-% Remove box around the plot
-box off;
-
-% Remove ticks
-% set(gca, 'XTick', [], 'YTick', []);
-
-%  to remove the axis lines entirely:
- axis off;
+% Ask the user to choose between 2D and 3D plot
+    plotChoice = questdlg('Choose the network plot type:', ...
+                          'Network Plot Type', ...
+                          '2D', '3D', '2D'); % Default to 2D
 
 
+if strcmp(plotChoice, '2D')
+            % Plot the network in 2D with nodes on a circle
+            figure; % Open a new figure
+            [x, y] = circlePoints(numNodes);
+            p = plot(G, 'XData', x, 'YData', y,...
+                'EdgeColor',[0.0745098039215686 0.623529411764706 1],...
+                'NodeColor',[1 0.0745098039215686 0.650980392156863],...
+                'NodeFontSize',16);
+            
+            % Remove box around the plot
+            box off;
+            
+            % Remove ticks
+            % set(gca, 'XTick', [], 'YTick', []);
+            
+            %  to remove the axis lines entirely:
+             axis off;
+    elseif strcmp(plotChoice, '3D')
+            % Plot the network in 3D with nodes on a sphere
 
+            figure; % Open a new figure
+               
+            % Generate spherical coordinates for each node
+            [x, y, z] = spherePoints(numNodes);            
+           
+            p = plot(G, 'XData', x, 'YData', y, 'ZData', z,...
+                'EdgeColor',[0.0745098039215686 0.623529411764706 1],...
+                'NodeColor',[1 0.0745098039215686 0.650980392156863],...
+                'NodeFontSize',16);
 
-%% ------------3D-------
-% % Plot the network in 3D with nodes on a sphere
-% figure; % Open a new figure
-% p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
-% [x, y] = spherePoints(numNodes);
-% 
-% % Plot the network in 3D with nodes on a sphere
-% figure; % Open a new figure
-% p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
-% 
-% % Generate spherical coordinates for each node
-% [x, y, z] = spherePoints(numNodes);
-
-% Plot the network in 3D with nodes on a sphere
-% figure; % Open a new figure
-% p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
-%% --------------
+             % Remove box around the plot
+            box on;
+            
+            % Remove ticks
+            % set(gca, 'XTick', [], 'YTick', []);
+            
+            %  to remove the axis lines entirely:
+             axis off;
+    else
+        % If the user closes the dialog or an unexpected value is returned
+        disp('Plotting cancelled or invalid selection made.');
+        return;
+    end
 
 % Adjust line thickness based on correlation value
 maxWeight = max(G.Edges.Weight); % Find maximum edge weight
@@ -142,19 +153,20 @@ t.ColumnSortable(2) = true;
 end
 function [x, y, z] = spherePoints(n)
     % Generate n points distributed on the surface of a sphere
-    theta = linspace(0, 2*pi, n);
-    phi = acos(2 * linspace(0, 1, n) - 1);
-    x = sin(phi) .* cos(theta);
-    y = sin(phi) .* sin(theta);
+    indices = 0:n-1;
+    phi = acos(1 - 2*(indices+0.5)/n);
+    theta = pi * (1 + sqrt(5)) * indices;
+
+    x = cos(theta) .* sin(phi);
+    y = sin(theta) .* sin(phi);
     z = cos(phi);
 end
 
 function [x, y] = circlePoints(n)
     % Generate n points distributed on the circumference of a circle
-    theta = linspace(0, 2*pi, n);  % n points evenly spaced around the circle
+    theta = linspace(0, 2*pi, n+1);  % n+1 points around the circle
+    theta(end) = [];  % Remove the last point to avoid overlap
 
-    % The radius of the circle is assumed to be 1 for simplicity
-    % If you want a different radius, multiply x and y by the radius
     x = cos(theta);  % x coordinate
     y = sin(theta);  % y coordinate
 end
