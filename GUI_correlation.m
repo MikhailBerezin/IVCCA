@@ -955,6 +955,9 @@ end
     
 %% Define a callback function for calculating single gene-to-pathway correlations
 function single_to_pathway_correlation_callback(~, ~, f)
+   % Define a persistent variable to store the last used directory
+    persistent last_used_directory;
+
     % Get the data table from the app data
     data_table = getappdata(f, 'data_table');
 
@@ -966,22 +969,28 @@ function single_to_pathway_correlation_callback(~, ~, f)
     end
     single_gene_name = single_gene_name{1};
 
+    % Convert both the input and the data table gene names to lower case for comparison
+    single_gene_name_lower = single_gene_name;
+    data_table_gene_names_lower = data_table.Properties.VariableNames;
 
-% Convert both the input and the data table gene names to lower case for comparison
-single_gene_name_lower = single_gene_name;
-data_table_gene_names_lower = data_table.Properties.VariableNames;
+    % Validate if the single gene name exists in the data, ignoring case
+    single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
+    if isempty(single_gene_index)
+        errordlg('The specified gene was not found in the data.');
+        return;
+    end
 
-% Validate if the single gene name exists in the data, ignoring case
-single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
-if isempty(single_gene_index)
-    errordlg('The specified gene was not found in the data.');
-    return;
-end
- 
+    % Check if the last used directory is still valid
+    if isempty(last_used_directory) || ~isfolder(last_used_directory)
+        last_used_directory = pwd; % Use the current working directory if no valid last directory
+    end
+
     % Ask the user for the txt file containing the list of genes
-    [file, path] = uigetfile('*.txt', 'Select the txt file with the list of genes');
+    [file, path] = uigetfile([last_used_directory, '/*.txt'], 'Select the txt file with the list of genes');
     if isequal(file, 0)
-        return
+        return;
+    else
+        last_used_directory = path; % Update the last used directory
     end
     
     % Read the list of genes from the file
@@ -989,6 +998,7 @@ end
     genes_list = textscan(fileID, '%s');
     fclose(fileID);
     genes_list = genes_list{1}; % Convert from cell array to simple string array
+
 
     % Find the indices of the genes in the list that are present in the data
     [~, pathway_gene_indices] = ismember(genes_list, data_table.Properties.VariableNames);
