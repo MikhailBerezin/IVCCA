@@ -294,7 +294,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
             % Create a new figure for the clustering results table
             clusterResultsFig = uifigure;
-            set(clusterResultsFig, 'Position', [900, 100, 320, 500], 'Name', 'IVCCA (Berezin Lab)', 'Icon','Corr_icon.png'); % Adjust as needed
+            set(clusterResultsFig, 'Position', [900, 100, 320, 500], 'Name', 'IVCCA (Berezin Lab)', 'Icon','Corr_iconsorta.png'); % Adjust as needed
 
             % Create data for the table
             tableData = [geneNames(:), num2cell(clusterIdx)]; % Pair gene names with cluster index
@@ -611,6 +611,19 @@ function searchGeneCallback(src, event)
   % Get the gene name from the input field
     geneToFind = get(searchField, 'String');
 
+
+    % Find the index of the gene
+    geneIndex = find(strcmpi(geneNames, geneToFind));
+
+%     if isempty(geneIndex)
+%         msgbox(['Gene ' geneToFind ' not found.']);
+%         return;
+%     end
+
+
+
+
+
     % Find the index of the gene
     geneIndex = find(strcmpi(geneNames, geneToFind));
 
@@ -638,6 +651,40 @@ function searchGeneCallback(src, event)
     end
     
     hold off;
+        % Calculate distances from this gene to all others
+    allDistances = sqrt(sum((Y - Y(geneIndex, :)).^2, 2));
+
+    % Find indices of 12 closest genes
+    [~, sortedIndices] = sort(allDistances);
+    closestGenesIndices = sortedIndices(2:13); % Excluding the gene itself
+
+    % Retrieve names of the 12 closest genes
+    closestGenes = geneNames(closestGenesIndices);
+
+    % Convert the list of closest genes to a column cell array
+    closestGenesColumn = closestGenes(:); % Convert to column cell array
+
+    % Update the uitable with the closest genes
+    set(uitableHandle, 'Data', closestGenesColumn);
+
+ 
+  % Highlight the searched gene on the plot
+    hold on;
+    scatter3(Y(geneIndex, 1), Y(geneIndex, 2), Y(geneIndex, 3), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'm'); % magenta color
+
+    % Highlight the 10 closest genes
+    scatter3(Y(closestGenesIndices, 1), Y(closestGenesIndices, 2), Y(closestGenesIndices, 3), 36, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'c'); % cyan color
+
+    
+    
+    hold off;
+
+    % Update the legend to include the searched gene and closest genes
+    % Modify this part as per your existing plot legend configuration
+    legend({'All Genes', 'Searched Gene', '12 Closest Genes'}, 'Location', 'best');
+
+
+
 end
 
 

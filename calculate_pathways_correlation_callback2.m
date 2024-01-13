@@ -216,7 +216,9 @@ new_data = cell(length(pathway_genes_1), length(pathway_genes_2));
 % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png', 'Visible', 'on');
 % Create a uitable in the new uifigure
-sorted_data = uitable(sorted_fig);
+numColumns = 100;  % Assuming 100 is the max columns in the table data
+sorted_data = uitable(sorted_fig, 'ColumnSortable', true(1, numColumns));
+
  % Display gene correlations in the new uitable
 sorted_data.Data = new_data;  % Add sum of absolute correlations to the table
 sorted_data.ColumnName = pathway_genes_2;
