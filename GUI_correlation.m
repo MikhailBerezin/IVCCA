@@ -91,7 +91,7 @@ single_to_group_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Pathway Correlation" button
 single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
-                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
+                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback2, f});
 single_to_path_button.Layout.Row = 12; 
 single_to_path_button.Layout.Column = 2;
 single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
@@ -1376,6 +1376,105 @@ function mainDialogBox(src, event, f)
     btn2 = uibutton(fig, 'Text', 'Compare a single pathway to multiple pathways', ...
            'Position', [100, 100, 300, 30], ...
            'ButtonPushedFcn', @(btn,event) calculate_pathways_correlation_callback());
+end
+function single_to_pathway_correlation_callback2(~, ~, f)
+   % Define a persistent variable to store the last used directory
+    persistent last_used_directory;
+
+    % Get the data table from the app data
+    data_table = getappdata(f, 'data_table');
+
+    % Ask the user for the name of the single gene
+    single_gene_name = inputdlg('Enter the name of the single gene:');
+    if isempty(single_gene_name)
+        errordlg('No gene name was provided.');
+        return;
+    end
+    single_gene_name = single_gene_name{1};
+
+    % Convert both the input and the data table gene names to lower case for comparison
+    single_gene_name_lower = single_gene_name;
+    data_table_gene_names_lower = data_table.Properties.VariableNames;
+
+    % Validate if the single gene name exists in the data, ignoring case
+    single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
+    if isempty(single_gene_index)
+        errordlg('The specified gene was not found in the data.');
+        return;
+    end
+
+    % Check if the last used directory is still valid
+    if isempty(last_used_directory) || ~isfolder(last_used_directory)
+        last_used_directory = pwd; % Use the current working directory if no valid last directory
+    end
+
+    % Ask the user for the txt file containing the list of genes
+    [file_name2, pathname2] = uigetfile([last_used_directory, '/*.txt'], 'Select pathway 2 data file','MultiSelect', 'on');
+    if isequal(file_name2, 0)
+        return;
+    else
+        last_used_directory = pathname2; % Update the last used directory
+    end
+        for i = 1:length(file_name2)
+            file_path = fullfile(pathname2, file_name2{i});
+            all_selected_genes{i} = textread(file_path, '%s');
+
+        end
+         genes_list = vertcat(all_selected_genes{:});
+        
+    % Read the list of genes from the file
+%     fileID = fopen(fullfile(path, file), 'r');
+%     genes_list = textscan(fileID, '%s');
+%     fclose(fileID);
+%     genes_list = genes_list{1}; % Convert from cell array to simple string array
+
+
+    % Find the indices of the genes in the list that are present in the data
+    [~, pathway_gene_indices] = ismember(genes_list, data_table.Properties.VariableNames);
+    pathway_gene_indices(pathway_gene_indices == 0) = []; % Remove genes not found in the data
+
+    % Extract the data for the single gene and the pathway genes
+    single_gene_data = table2array(data_table(:, single_gene_index));
+    pathway_genes_data = table2array(data_table(:, pathway_gene_indices));
+
+    % Calculate the correlation between the single gene and each gene in the pathway
+    single_to_pathway_correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
+
+    % Calculate the average of the absolute values of the correlation coefficients
+    avg_abs_correlation = mean(abs(single_to_pathway_correlations));
+
+    % Display the results
+     figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
+
+% Display the results with color coding
+
+hold on; 
+for i = 1:length(single_to_pathway_correlations)
+    if single_to_pathway_correlations(i) < 0
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
+    else
+        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
+    end
+    name{i}=data_table.Properties.VariableNames{pathway_gene_indices(i)};
+end
+
+
+hold off; 
+
+% Include the file name and the average of the absolute correlations in the title
+
+% Escape underscores to avoid them being interpreted as subscripts
+escaped_single_gene_name = strrep(single_gene_name, '_', '\_');
+% escaped_file_name = strrep(file, '_', '\_');
+title_str = sprintf('Correlation of %s  (Avg. Abs. Corr. = %.2f)', escaped_single_gene_name, avg_abs_correlation);
+title(title_str);
+
+ylabel('Correlation Coefficient');
+xticks(1:length(pathway_genes_data));
+xticklabels(name);
+xtickangle(45); % Angle the labels for readability
+set(gcf, 'Position', [200, 200, 700, 500]); % Set the position of the figure
+
 end
 
 
