@@ -90,8 +90,13 @@ single_to_group_button.Tooltip = 'Calculate correlation of a single gene to a gr
 single_to_group_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Pathway Correlation" button
-single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
-                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback2, f});
+
+% single_to_path_button = uibutton(grid, 'push', ...
+%     'Text', 'Gene to Pathway(s)', ...
+%     'ButtonPushedFcn', @(btn,event) mainDialogBox2(btn, event, f));
+
+single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway(s)', ...
+                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback_multi_table, f});
 single_to_path_button.Layout.Row = 12; 
 single_to_path_button.Layout.Column = 2;
 single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
@@ -1377,6 +1382,22 @@ function mainDialogBox(src, event, f)
            'Position', [100, 100, 300, 30], ...
            'ButtonPushedFcn', @(btn,event) calculate_pathways_correlation_callback());
 end
+
+function mainDialogBox2(src, event, f)
+    % Create a UI figure or use 'f' if it's intended to be the parent of the dialog
+    fig = uifigure('Name', 'Selection pathways', 'Position', [100, 100, 500, 300],'Color', [0.8, 0.8, 0.8]);
+
+    % Create Button for Function 1
+    btn1 = uibutton(fig, 'Text', 'Compare a single gene to a single pathway', ...
+           'Position', [100, 150, 300, 30], ...
+           'ButtonPushedFcn', @(btn,event) calculate_pathways_correlation_callback());
+
+    % Create Button for Function 2
+    btn2 = uibutton(fig, 'Text', 'Compare a single pathway to multiple pathways', ...
+           'Position', [100, 100, 300, 30], ...
+           'ButtonPushedFcn', @(btn,event) single_to_pathway_correlation_callback_multi_table());
+end
+
 function single_to_pathway_correlation_callback2(~, ~, f)
    % Define a persistent variable to store the last used directory
     persistent last_used_directory;
@@ -1476,6 +1497,76 @@ xtickangle(45); % Angle the labels for readability
 set(gcf, 'Position', [200, 200, 700, 500]); % Set the position of the figure
 
 end
+
+function single_to_pathway_correlation_callback_multi_table(~, ~, f)
+    % Define a persistent variable to store the last used directory
+    persistent last_used_directory;
+
+    % Get the data table from the app data
+    data_table = getappdata(f, 'data_table');
+
+    % Ask the user for the name of the single gene
+    single_gene_name = inputdlg('Enter the name of the single gene:');
+    if isempty(single_gene_name)
+        errordlg('No gene name was provided.');
+        return;
+    end
+    single_gene_name = single_gene_name{1};
+
+    % Validate if the single gene name exists in the data, ignoring case
+    single_gene_index = find(strcmpi(data_table.Properties.VariableNames, single_gene_name));
+    if isempty(single_gene_index)
+        errordlg('The specified gene was not found in the data.');
+        return;
+    end
+
+    % Check if the last used directory is still valid
+    if isempty(last_used_directory) || ~isfolder(last_used_directory)
+        last_used_directory = pwd; % Use the current working directory if no valid last directory
+    end
+
+    % Ask the user for the txt file containing the list of genes
+    [file_name2, pathname2] = uigetfile([last_used_directory, '/*.txt'], 'Select pathway data files', 'MultiSelect', 'on');
+    if isequal(file_name2, 0)
+        return;
+    else
+        last_used_directory = pathname2; % Update the last used directory
+    end
+
+    % Initialize a table to store file names and avg_abs_correlation
+    % Initialize a table to store indices, file names, and avg_abs_correlation
+    correlationResults = table([], [], [], 'VariableNames', {'Index', 'File Name', 'Avg. Abs. Correlation'});
+
+    % Loop over each selected file
+    for i = 1:length(file_name2)
+        file_path = fullfile(pathname2, file_name2{i});
+        selected_genes = textread(file_path, '%s');
+
+        % Find indices of the genes in the list present in the data
+        [~, pathway_gene_indices] = ismember(selected_genes, data_table.Properties.VariableNames);
+        pathway_gene_indices(pathway_gene_indices == 0) = []; % Remove genes not found in the data
+
+        % Extract the data for the single gene and the pathway genes
+        single_gene_data = table2array(data_table(:, single_gene_index));
+        pathway_genes_data = table2array(data_table(:, pathway_gene_indices));
+
+        % Calculate the correlation between the single gene and each gene in the pathway
+        single_to_pathway_correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
+
+        % Calculate the average of the absolute values of the correlation coefficients
+        avg_abs_correlation = mean(abs(single_to_pathway_correlations));
+
+       % Add the results to the table with an index
+        correlationResults = [correlationResults; {i, file_name2{i}, avg_abs_correlation}];
+    end
+
+    % Create a new uifigure for the uitable
+    tableFig = uifigure('Name', 'Gene to Pathways: Correlation Results', 'Position', [100, 100, 500, 300]);
+
+    % Create a uitable in the uifigure and display the correlationResults table
+    uitable(tableFig, 'Data', correlationResults, 'ColumnName', correlationResults.Properties.VariableNames, 'RowName', [], 'Position', [0, 0, 500, 300], 'ColumnSortable', true, 'ColumnWidth', {50, 200, 200});
+end
+
 
 
 end
