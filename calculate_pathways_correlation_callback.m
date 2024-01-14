@@ -287,7 +287,8 @@ end
 % sorted_fig = uifigure('Name', [title_str ' (PCI from the Pathway): ' num2str(mean_average_abs_correlation) ')'], 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png');
 % sorted_fig = uifigure('Name', modified_title, 'Position', [600 250 600 400], 'Icon', 'Corr_icon.png', 'Visible', 'on');
 % Create a uitable in the new uifigure
-fig = uifigure('Position', [50, 200, 1000, 400], 'Name', figTitle);
+fig = uifigure('Position', [50, 200, 1000, 400], 'Name', figTitle, 'Icon','Corr_icon.png');
+
 % Create a uitable in the uifigure with the sorted data
 uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 950, 360]);
 

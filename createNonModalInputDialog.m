@@ -1,6 +1,6 @@
 function createNonModalInputDialog()
     % Create a figure for the dialog
-    fig = uifigure('Name', 'Input', 'Position', [100, 100, 300, 150]);
+    fig = uifigure('Name', 'Input', 'Position', [100, 100, 300, 150], 'Icon','Corr_icon.png');
     fig.WindowStyle = 'normal'; % Make it non-modal
 
     % Create an edit field for input

@@ -1,6 +1,6 @@
 function GUI_correlation
 % Mikhail Berezin 2023
-f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [200 200 700 450], 'Icon','Corr_icon.png');  % adjusted width
+f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [150 150 750 500], 'Icon','Corr_icon.png');  % adjusted width
 close all
  f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
@@ -9,8 +9,8 @@ close all
 grid = uigridlayout(f, [5 2], 'ColumnWidth', {'1x', '0.2x'}, 'RowHeight', {'1x', '1x', '1x', '1x', '1x'}); 
 % Create the uitable
 data = uitable(grid, 'ColumnEditable', true);
-data.Layout.Row = [1 15]; % Spans across all rows
-data.Layout.Column = 1; % Occupies the first column
+data.Layout.Row = [1 16]; % Spans across all rows
+data.Layout.Column = 1; % Occupies the first columnsingle_to_multipath_button
 
 % Create the "Load Data" button
 load_button = uibutton(grid, 'push', 'Text', 'Load Data', 'ButtonPushedFcn', {@load_data_callback, f});
@@ -81,47 +81,52 @@ sort_mpath_button.Layout.Column = 2;
 sort_mpath_button.Tooltip = 'Sort multiple pathways based on the correlation values of the genes';  % Adding tooltip
 sort_mpath_button.Enable = 'off'; % Initially disabled
 
-% Create the "Single to Group Correlation" button
+% Create the "Single Gene to Group Correlation" button
 single_to_group_button = uibutton(grid, 'push', 'Text', 'Gene to Genes', ...
                                   'ButtonPushedFcn', {@single_to_group_correlation_callback, f});
 single_to_group_button.Layout.Row = 11; % Choose an appropriate row
 single_to_group_button.Layout.Column = 2;
-single_to_group_button.Tooltip = 'Calculate correlation of a single gene to a group of genes';
+single_to_group_button.Tooltip = 'Calculate correlation of a single gene to a one group of genes';
 single_to_group_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Pathway Correlation" button
 
-% single_to_path_button = uibutton(grid, 'push', ...
-%     'Text', 'Gene to Pathway(s)', ...
-%     'ButtonPushedFcn', @(btn,event) mainDialogBox2(btn, event, f));
-
-single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway(s)', ...
-                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback_multi_table, f});
+single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
+                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
 single_to_path_button.Layout.Row = 12; 
 single_to_path_button.Layout.Column = 2;
-single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to a pathway';
+single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to genes in a single pathway';
 single_to_path_button.Enable = 'off'; 
+
+% Create the "Single to Pathway Correlation" button
+
+single_to_multipath_button = uibutton(grid, 'push', 'Text', 'Gene to Pathways', ...
+                                  'ButtonPushedFcn', {@single_to_pathway_correlation_callback_multi_table, f});
+single_to_multipath_button.Layout.Row = 13; 
+single_to_multipath_button.Layout.Column = 2;
+single_to_multipath_button.Tooltip = 'Calculate the correlation of a single gene to multiple pathways';
+single_to_multipath_button.Enable = 'off'; 
 
 % Create the "Compare pathways" button
 compare_paths_button = uibutton(grid, 'push', ...
     'Text', 'Compare Pathways', ...
     'ButtonPushedFcn', @(btn,event) mainDialogBox(btn, event, f));
 
-compare_paths_button.Layout.Row = 13; % Position for "Compare pathways" button
+compare_paths_button.Layout.Row = 14; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
 compare_paths_button.Tooltip = 'Calculate the correlation between two or multiple pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';  % You might want to enable this once it's ready to be used
 
 % Create the "Venn diagram" button
 venn_button = uibutton(grid, 'push', 'Text', 'Venn diagram', 'ButtonPushedFcn', {@venn_new_Gui_2, f});
-venn_button.Layout.Row = 14; % Position for "Network" button
+venn_button.Layout.Row = 15; % Position for "Network" button
 venn_button.Layout.Column = 2;
 venn_button.Tooltip = 'Generate Venn diagram';  % Adding tooltip
-venn_button.Enable = 'off';
+venn_button.Enable = 'on';
 
 % Create the "Network analysis" button
 network_button = uibutton(grid, 'push', 'Text', 'Network analysis', 'ButtonPushedFcn', {@calculate_network_callback, f});
-network_button.Layout.Row = 15; % Position for "Network" button
+network_button.Layout.Row = 16; % Position for "Network" button
 network_button.Layout.Column = 2;
 network_button.Tooltip = 'Generate network graph';  % Adding tooltip
 network_button.Enable = 'off';
@@ -175,6 +180,8 @@ function load_data_callback(~, ~, f)
 
 %     % Initialize the waitbar
 %     wb = waitbar(0, 'Loading data...', 'Name', 'Processing', 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
+%     iconFilePath = fullfile('Corr_icon.png');
+%     setIcon(fig_heatmap, iconFilePath);
 %     setappdata(wb, 'canceling', 0)
 
     % Read the data from the file
@@ -261,6 +268,8 @@ function calculate_correlations_callback(~, ~, f)
 
     % Initialize the waitbar
     wb = waitbar(0, 'Calculating correlations...', 'Name', 'Processing', 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(wb, iconFilePath);
     setappdata(wb, 'canceling', 0)
     
     % Calculate the pairwise correlations
@@ -326,7 +335,14 @@ function calculate_correlations_callback(~, ~, f)
     f.WindowStyle = 'normal';
 %     uifigureOnTop (f, true)
 %     Create a figure for the heatmap
-    figure ('Name', 'IVCCA: Correlation Histogram', 'NumberTitle', 'off','Position',[100 300 400 400])
+
+%% Change figure title icon
+
+
+
+    fig_distr = figure ('Name', 'IVCCA: Correlation Histogram', 'NumberTitle', 'off','Position',[100 300 400 400]);
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_distr, iconFilePath);
     histogram (correlations)
     title('Correlation Histogram');
     xlabel('Pairwise Correlation Coefficient, q');
@@ -334,7 +350,9 @@ function calculate_correlations_callback(~, ~, f)
 
 %   Create a figure for the heatmap
     
-    figure('Name', 'IVCCA: Correlation Heatmap', 'NumberTitle', 'off', 'Position', [100, 100, 400, 400]);
+    fig_heatmap = figure('Name', 'IVCCA: Correlation Heatmap', 'NumberTitle', 'off', 'Position', [100, 100, 400, 400]);
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_heatmap, iconFilePath);
     imagesc(tril(correlations)); % Create a heatmap
     colorbar; % Add a colorbar
     colormap('parula'); % Set the colormap
@@ -365,8 +383,12 @@ function graph_callback(~, ~, f)
     folder = fileparts(mfilename('fullpath'));
     iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
     setIcon(gcf, iconFilePath)
-    figure('Name', 'IVCCA: Sorted Correlation Heatmap', 'NumberTitle', 'off', "Position",[800,100, 400,400]);
+    fig_sorted = figure('Name', 'IVCCA: Sorted Correlation Heatmap', 'NumberTitle', 'off', "Position",[800,100, 400,400]);
+
+     iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_sorted, iconFilePath);
     h = imagesc(correlations); % Create a heatmap
+
     colorbar; % Add a colorbar
 
     % Modify colormap
@@ -399,6 +421,8 @@ function sort_callback(~, ~, f)
     f.WindowStyle = 'normal';
         % Initialize the waitbar
     hWaitBar = waitbar(0, 'Initializing...');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(hWaitBar, iconFilePath);
 
 %     uifigureOnTop (f, true)
     % Get the correlations and variable names from the app data
@@ -675,18 +699,22 @@ function cluster_callback(~, ~, f)
     
     % Prompt for color threshold
     prompt = {'Enter color threshold:'};
+   
+    
     title = 'Color Threshold';
     dims = [1 35];
     definput = {'3'}; % default value, adjust as necessary
     f.WindowStyle = 'normal';
+      iconFilePath = fullfile('Corr_icon.png');
+    setIcon(f, iconFilePath);
 
     answer = inputdlg_id(prompt, title, dims, definput);
     colorThreshold = str2double(answer{1}); 
 
     % Create a dendrogram
-    folder = fileparts(mfilename('fullpath'));
-    iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
-    setIcon(figure, iconFilePath)
+%     folder = fileparts(mfilename('fullpath'));
+%     iconFilePath = fullfile(folder, 'Images', 'Corr_icon.png');
+%     setIcon(figure, iconFilePath)
     
    [H,T,outperm] = dendrogram(links, 0, 'Orientation','top', 'Reorder',cluster_order, 'colorThreshold', colorThreshold); % Create a dendrogram
     set(H, 'LineWidth', 1);  % Set to desired line width
@@ -698,8 +726,12 @@ function cluster_callback(~, ~, f)
 set(H, 'LineWidth', 1);  % Set to desired line width
 ylabel('Distance')
 
+
+
 % Get the current figure and add a button for searching genes
 fig = gcf; % Get the current figure handle
+  iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig, iconFilePath);
 btn = uicontrol('Style', 'pushbutton', 'String', 'Find Gene',...
         'Position', [20 20 100 30], 'Callback', @findGeneCallback);
 
@@ -734,7 +766,7 @@ end
 
 % Find the current figure and turn off the number title
 fig = gcf; % Get the current figure handle
-set(fig, 'NumberTitle', 'off', 'Name', 'Dendrogram');
+set(fig, 'NumberTitle', 'off', 'Name', 'IVCCA: Dendrogram');
 
     xticklabels(variable_names(outperm));
     xtickangle(45); % Rotate the x-axis labels
@@ -801,7 +833,7 @@ for i = 1:length(unique_clusters)
 end
 
 % Create a new uifigure to display cluster information
-cluster_info_fig = uifigure('Name', 'Cluster Information', 'Position', [800, 250, 400, 300]);
+cluster_info_fig = uifigure('Name', 'Cluster Information', 'Position', [800, 250, 400, 300],'Icon','Corr_icon.png');
 cluster_info_table = uitable(cluster_info_fig,'CellSelectionCallback', @cellSelectedCallback);
 button = uibutton(cluster_info_fig, 'Text', 'API String', 'Position', [350, 60, 80, 30], 'ButtonPushedFcn', @(btn, event) api_to_string_2());
 cluster_info_table.Data = cluster_info;
@@ -840,6 +872,8 @@ end
 function elbow_curve_callback(~, ~, f)
     % Initialize the waitbar
     hWaitBar = waitbar(0, 'Initializing...');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(hWaitBar, iconFilePath);
 
     correlations = getappdata(0, 'correlations');  % Get correlations from app data
     correlations = abs(correlations);
@@ -866,8 +900,9 @@ function elbow_curve_callback(~, ~, f)
 
 waitbar(0.8, hWaitBar, 'Plotting...');
 % Create a subplot to show both elbow and silhouette plots side by side
-    figure ('Name', 'IVCCA: Number of clusters', 'NumberTitle', 'off');
-    
+    fig_elbow = figure ('Name', 'IVCCA: Number of clusters', 'NumberTitle', 'off');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_elbow, iconFilePath);
     subplot(1, 2, 1);
     plot(1:maxK, log(sum_of_squared_distances), 'bo-');
     title('Elbow Curve');
@@ -935,7 +970,9 @@ disp(group_gene_names);  % This should print the selected gene names in the Comm
     avg_abs_correlation = mean(abs(single_to_group_correlations));
     
     % Display or plot the results
-    figure ('Name', 'IVCCA: Single gene to other genes', 'NumberTitle', 'off');
+   fig_gene_to_gene =  figure ('Name', 'IVCCA: Single gene to other genes', 'NumberTitle', 'off');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_gene_to_gene, iconFilePath);
 
 hold on; % Hold on to the current figure
 for i = 1:length(single_to_group_correlations)
@@ -1020,7 +1057,9 @@ function single_to_pathway_correlation_callback(~, ~, f)
     avg_abs_correlation = mean(abs(single_to_pathway_correlations));
 
     % Display the results
-     figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
+    fig_g_to_path =  figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_g_to_path, iconFilePath);
 
 % Display the results with color coding
 
@@ -1241,7 +1280,7 @@ resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_D
 
 % Create a uifigure with a dynamic title that includes the threshold
 figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d Found in Set', genesThreshold);
-fig = uifigure('Position', [50, 200, 1100, 400], 'Name', figTitle);
+fig = uifigure('Position', [50, 200, 1100, 400], 'Name', figTitle, 'Icon','Corr_icon.png');
 
 % Create a uitable in the uifigure with the sorted data
 uit = uitable(fig, 'Data', table2cell(resultTable), 'ColumnName', {'Pathway', 'Description','Genes in Pathway', 'Genes in Set', 'PAI','PCI_A within Pathway','PCI_B Extracted from Dataset', 'Correlation-Expression Composite Index (CECI)','Z-Score' }, 'Position', [20, 20, 1100, 360],'CellSelectionCallback', @cellSelectedCallback2);
@@ -1310,6 +1349,8 @@ topZscores = sortedZscores(1:min(numEntries, end));
 
 % Create the horizontal bar plot
 fig = figure;
+ iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig, iconFilePath);
 barh(topStrengthIndices, 'blue');
 set(gca, 'YTick', 1:length(topGoDescriptions), 'YTickLabel', string(topGoDescriptions));
 
@@ -1335,6 +1376,9 @@ sortedGoDescriptions = filteredData(sortIndex, 2);  % Assuming descriptions are 
 
 % Create the horizontal bar plot for Z-score vs descriptions
 fig_z = figure;
+ iconFilePath = fullfile('Corr_icon.png');
+ setIcon(fig_z, iconFilePath);
+
 barh(sortedZscores, 'green');
 set(gca, 'YTick', 1:length(sortedGoDescriptions), 'YTickLabel', string(sortedGoDescriptions));
 
@@ -1357,20 +1401,20 @@ function cellSelectedCallback2(src, event)
       if selectedColumn==4
        names= getappdata(0,'name');
        show= names(selectedRow,:);
-       fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist');
+       fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist', 'Icon','Corr_icon.png');
        uit = uitable(fig, 'Data', show, 'Position', [20, 20, 1100, 360]);
       elseif selectedColumn==3
                names= getappdata(0,'name2');
        show= names(selectedRow,:);
-       fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist');
-       uit = uitable(fig, 'Data', show, 'Position', [20, 20, 1100, 360]);
+       fig = uifigure('Position', [50, 200, 1100, 400], 'Name', 'Genelist', 'Icon','Corr_icon.png');
+       uit = uitable(fig, 'Data', show, 'Position', [20, 20, 1100, 360], 'Icon','Corr_icon.png');
        end
     end
     
 end
 function mainDialogBox(src, event, f)
     % Create a UI figure or use 'f' if it's intended to be the parent of the dialog
-    fig = uifigure('Name', 'Selection pathways', 'Position', [100, 100, 500, 300],'Color', [0.8, 0.8, 0.8]);
+    fig = uifigure('Name', 'Selection pathways', 'Position', [100, 100, 500, 300],'Color', [0.8, 0.8, 0.8], 'Icon','Corr_icon.png');
 
     % Create Button for Function 1
     btn1 = uibutton(fig, 'Text', 'Compare a single pathway to a single pathway', ...
@@ -1385,7 +1429,7 @@ end
 
 function mainDialogBox2(src, event, f)
     % Create a UI figure or use 'f' if it's intended to be the parent of the dialog
-    fig = uifigure('Name', 'Selection pathways', 'Position', [100, 100, 500, 300],'Color', [0.8, 0.8, 0.8]);
+    fig = uifigure('Name', 'Selection pathways', 'Position', [100, 100, 500, 300],'Color', [0.8, 0.8, 0.8], 'Icon','Corr_icon.png');
 
     % Create Button for Function 1
     btn1 = uibutton(fig, 'Text', 'Compare a single gene to a single pathway', ...
@@ -1465,8 +1509,9 @@ function single_to_pathway_correlation_callback2(~, ~, f)
     avg_abs_correlation = mean(abs(single_to_pathway_correlations));
 
     % Display the results
-     figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
-
+     fig_g_to_path2 = figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_g_to_path2, iconFilePath);
 % Display the results with color coding
 
 hold on; 
@@ -1561,7 +1606,7 @@ function single_to_pathway_correlation_callback_multi_table(~, ~, f)
     end
 
     % Create a new uifigure for the uitable
-    tableFig = uifigure('Name', 'Gene to Pathways: Correlation Results', 'Position', [100, 100, 500, 300]);
+    tableFig = uifigure('Name', 'Gene to Pathways: Correlation Results', 'Position', [100, 100, 500, 300], 'Icon','Corr_icon.png');
 
     % Create a uitable in the uifigure and display the correlationResults table
     uitable(tableFig, 'Data', correlationResults, 'ColumnName', correlationResults.Properties.VariableNames, 'RowName', [], 'Position', [0, 0, 500, 300], 'ColumnSortable', true, 'ColumnWidth', {50, 200, 200});

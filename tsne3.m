@@ -3,6 +3,8 @@ tic
 
 % Initialize the waitbar
 hWaitBar = waitbar(0, 'Initializing...');
+  iconFilePath = fullfile('Corr_icon.png');
+    setIcon(hWaitBar, iconFilePath);
 
 global geneNames Y highlightedGenes scatterPlot geneIndices isHighlightedMode ;
 global clusterIdx;
@@ -71,7 +73,8 @@ figHeight = 560; % adjust height
 posX = (screenWidth - figWidth) / 2;
 posY = (screenHeight - figHeight) / 2;
 f =figure ( 'Name', 'IVCCA: t-SNE visualization', 'NumberTitle', 'off', 'Position', [posX posY figWidth figHeight]);
-
+ iconFilePath = fullfile('Corr_icon.png');
+    setIcon(f, iconFilePath);
 % Set the figure's resize function
 set(f, 'ResizeFcn', @resizeFigure);
 
@@ -264,6 +267,8 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             end
             % Initialize the waitbar
             hWaitBar = waitbar(0, 'Performing K-means clustering...');
+              iconFilePath = fullfile('Corr_icon.png');
+    setIcon(hWaitBar, iconFilePath);
             % Update the waitbar
             waitbar(0.5, hWaitBar, 'Updating plot...');
             % Perform K-means clustering
@@ -333,7 +338,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         fclose(fileID);
     end
      % Inform the user that files have been saved and provide the output directory
-    msgbox(sprintf('Clusters have been successfully saved in: %s', outputDir), 'Save Completed');
+    msgbox(sprintf('Clusters have been successfully saved in: %s', outputDir), 'Saving is completed');
       end
         toc
     end
@@ -523,7 +528,7 @@ medianDensity = median(densityB);
     distributionSummary = table(metricNames', metricValues', 'VariableNames', {'Metric', 'Value'}); % Note the transposition of metricValues
 
 % Create a uifigure
-f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 250]); % Adjust height for additional row
+f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 250],'Icon','Corr_icon.png'); % Adjust height for additional row
 
 % Display the calculated summary in a uitable within the uifigure
 disp('Summary of distribution for highlighted genes:');

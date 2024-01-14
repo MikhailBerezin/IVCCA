@@ -13,7 +13,9 @@ flatR2 = R2(:);  % Flatten the matrix
 cos_sim = dot(flatR1, flatR2) / (norm(flatR1) * norm(flatR2));
 
 % Visualization
-figure;
+fig_venn = figure;
+ iconFilePath = fullfile('Corr_icon.png');
+    setIcon(fig_venn, iconFilePath);
 
 % Subplot 1: Heatmap of the first correlation matrix
 subplot(1,3,1);

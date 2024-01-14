@@ -3,6 +3,8 @@ function pca3(varargin)
     
     % Initialize the waitbar
     hWaitBar = waitbar(0, 'Initializing...');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(hWaitBar, iconFilePath);
 
 global geneNames score highlightedGenes scatterPlot geneIndices isHighlightedMode;
 global clusterIdx;
@@ -52,7 +54,9 @@ componentsToDisplay = min(length(cumulativeVariance), 25); % In case there are f
 cumulativeVariance25 = cumulativeVariance(1:componentsToDisplay);
 
 % Plotting cumulative variability for the first 25 components
-figure;
+spree_fig = figure ('Name', 'IVCCA: Spree graph', 'NumberTitle', 'off');
+  iconFilePath = fullfile('Corr_icon.png');
+    setIcon(spree_fig, iconFilePath);
 plot(1:componentsToDisplay, cumulativeVariance25, '-o');
 title('Cumulative Variance Explained by the First 25 Principal Components');
 xlabel('Number of Principal Components');
@@ -75,6 +79,8 @@ ylim([0 100]); % Limiting y-axis
     posY = (screenHeight - figHeight) / 2;
     
     f = figure('Name', 'IVCCA: PCA visualization', 'NumberTitle', 'off', 'Position', [posX posY figWidth figHeight]);
+     iconFilePath = fullfile('Corr_icon.png');
+    setIcon(f, iconFilePath);
     % Set the figure's resize function
     set(f, 'ResizeFcn', @resizeFigure)
 
@@ -298,6 +304,8 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
             end
             % Initialize the waitbar
             hWaitBar = waitbar(0, 'Performing K-means clustering...');
+             iconFilePath = fullfile('Corr_icon.png');
+            setIcon(hWaitBar, iconFilePath);
             % Update the waitbar
             waitbar(0.5, hWaitBar, 'Updating plot...');
             % Perform K-means clustering
@@ -552,7 +560,7 @@ medianDensity = median(densityB);
     distributionSummary = table(metricNames', metricValues', 'VariableNames', {'Metric', 'Value'}); % Note the transposition of metricValues
 
 % Create a uifigure
-f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 250]); % Adjust height for additional row
+f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 250], 'Icon','Corr_icon.png'); % Adjust height for additional row
 
 % Display the calculated summary in a uitable within the uifigure
 disp('Summary of distribution for highlighted genes:');

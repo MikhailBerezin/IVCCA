@@ -145,7 +145,7 @@ p.MarkerSize = 10 + (1.5 * (nodeDegree / max(nodeDegree))).^10;
 
 % Create a UI figure to display the table
 figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
-f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
+f = uifigure('Name', figureTitle, 'Position', [100 100 300 250], 'Icon','Corr_icon.png');
 t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
 t.ColumnSortable(1) = true;
 t.ColumnSortable(2) = true;
