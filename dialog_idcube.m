@@ -114,7 +114,6 @@ fig = get(groot,'CurrentFigure');
 %     'backgroundcolor',bgc*1.4);
 
 %% Change figure title icon
-folder = fileparts(mfilename('fullpath'));
-iconFilePath = fullfile(folder, 'Images', 'idcube-icon-transparent.png');
-setIcon(fig, iconFilePath)
+ iconFilePath = fullfile('Corr_icon.png');
+    setIcon(hDialog, iconFilePath);
 

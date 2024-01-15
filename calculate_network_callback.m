@@ -41,7 +41,7 @@ function calculate_network_callback(~, ~, f)
     definput = {'0.75'}; % default value set to 0.75
 
     % Create the input dialog box
-    answer = inputdlg(prompt, dlgtitle, dims, definput);
+    answer = inputdlg_id(prompt, dlgtitle, dims, definput);
 
     % Validate and parse the input
     correlationThreshold = 0.75; % Default threshold

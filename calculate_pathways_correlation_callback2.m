@@ -82,6 +82,8 @@ end
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
 if isempty(pathway_genes_1) || isempty(pathway_genes_2)
     h1 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
+      iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h1, iconFilePath);
     set(h1, 'Position', [200 300 width*1.3 height])
     return;
 end
@@ -118,6 +120,8 @@ end
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
 if isempty(pathway_genes_1) || isempty(pathway_genes_2)
     h2 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
+      iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h2, iconFilePath);
     set(h2, 'Position', [300 300 width height])
     return;
 end
@@ -132,6 +136,8 @@ num_overlapping_genes = length(overlapping_genes);
 % Check if there are overlapping genes
 if isempty(overlapping_genes)
     h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
+      iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h3, iconFilePath);
     set(h3, 'Position', [300 200 width height])
 else
     % Display the overlapping genes and their count
@@ -139,6 +145,8 @@ else
    message = {['Number of overlapping genes: ', num2str(num_overlapping_genes)], ...
            ['Overlapping genes: ', overlapping_genes_str]};
    h4 = msgbox(message, 'Overlapping Genes', 'non-modal');
+     iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h4, iconFilePath);
    set(h4, 'Position', [300 200 width height])
 end
 
@@ -152,6 +160,8 @@ if num_overlapping_genes == total_genes
     % All genes overlap, cosine similarity is 1
    h5 = msgbox('All genes in both pathways overlap. Cosine similarity index is 1.', ...
            'Cosine Similarity', 'non-modal');
+     iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h5, iconFilePath);
    set(h5, 'Position', [300 100 width height])
     return
 end
@@ -160,6 +170,8 @@ end
 % no genes overlap, cosine similarity is 1
 if isempty(pathway_genes_1) || isempty(pathway_genes_2)
   h6 =  msgbox('No unique genes found for comparison after excluding overlapping genes.Cosine similarity index is 0');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h6, iconFilePath);
   set(h6, 'Position', [300 200 width height])
     return;
 end
@@ -247,6 +259,8 @@ end
 
  h7 =   msgbox(['Cosine similarity index between two pathways: ', num2str(adjusted_cosine_similarity)], ...
            'Cosine Similarity', 'non-modal');
+   iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h7, iconFilePath);
 %  h7 =   msgbox(['Cosine similarity index between two pathways: ', num2str(cosine_similarity)], ...
 %            'Cosine Similarity', 'non-modal');
     

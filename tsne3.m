@@ -8,7 +8,7 @@ hWaitBar = waitbar(0, 'Initializing...');
 
 global geneNames Y highlightedGenes scatterPlot geneIndices isHighlightedMode ;
 global clusterIdx;
-
+global selectedGene; % Declare the global variable
 
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
@@ -112,33 +112,45 @@ btn = uicontrol('Style', 'pushbutton', 'String', 'Cluster',...
 % Create a push button for clearing clusters
 clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',...
     'Position', [500, 430, 100, 35],... % Adjust position and size as needed
-    'Callback', @clearClustersCallback); % Define the callback function
+    'Callback', @clearClustersCallback,...
+    'Tooltip', 'Clear selected clusters'); 
 
 % Create a push button for selecting a gene list file
 selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Pathway(s)',...
     'Position', [500, 380, 100, 35],... % Adjust position and size as needed
-    'Callback', @selectFileCallback); 
+    'Callback', @selectFileCallback,...
+    'Tooltip', 'Select a single or multiple pathways and visualize them on the cluster map'); 
 
 % Create a push button for clearing highlighted genes
 clearBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Highlights',...
     'Position', [500, 330, 100, 35],... % Adjust position and size as needed
-    'Callback', @clearHighlightsCallback); 
+    'Callback', @clearHighlightsCallback,...
+    'Tooltip', 'Clear all selected genes from the cluster map'); 
 
 % Create an input field for gene name
 searchField = uicontrol('Style', 'edit', ...
     'Position', [500, 280, 100, 35], ... % Adjust position and size as needed
-    'String', 'Enter Gene Name');
+    'String', 'Enter Gene Name',...
+    'Tooltip', 'Enter the name of the gene to visualize on the cluster map and click Visualize Gene button ');
 
 % Create a search button
-searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Search Gene',...
+searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Visualize Gene',...
     'Position', [500, 230, 100, 35],... % Adjust position and size as needed
-    'Callback', @searchGeneCallback); % Define the callback function
+    'Callback', @searchGeneCallback,...
+    'Tooltip', 'Visualize the selected gene from the cluster map'); % Define the callback function
+
+% Create a genes proximity button
+searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Find proximity genes',...
+    'Position', [500, 180, 100, 35],... % Adjust position and size as needed
+    'Callback', @GenesProximity,...
+    'Tooltip', 'Find and visualize closely positioned genes from the cluster map'); % Define the callback function
 
 % Create and API to String button
 
 stringBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
-    'Position', [500, 180, 100, 35],... % Adjust position and size as needed
-    'Callback', @api_to_string_2); % Define the callback function
+    'Position', [500, 130, 100, 35],... % Adjust position and size as needed
+    'Callback', @api_to_string_single,...
+    'Tooltip', 'Selected the gene from the table and visualize the network around using STRING database '); % Define the callback function
 
 % Update and close the waitbar after completing all tasks
 waitbar(1, hWaitBar, 'Completed.');
@@ -153,6 +165,17 @@ uitableTitle = uicontrol('Style', 'text', 'String', 'Brushed Genes', ...
 uitableHandle = uitable('Data', cell(1, 1), ... % Initially empty, with 1 row
     'ColumnName', {'Brushed Genes'}, ...
     'Position', [622,63,150,474]); % Adjust the position and size as needed
+
+set(uitableHandle, 'CellSelectionCallback', @updateSelectedGene);
+
+
+function updateSelectedGene(src, eventData)
+    if ~isempty(eventData.Indices)
+        selectedRow = eventData.Indices(1);
+        selectedGene = src.Data{selectedRow, 1}; % Assuming gene name is in the first column
+        setappdata(0, 'selectedGene', selectedGene); % Correctly storing the selected gene
+    end
+end
 
 % Add data tips
 dcm_obj = datacursormode(gcf);
@@ -257,7 +280,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         tic
         %     global uitableTitle; % Make sure uitableTitle is declared as global
         %      global clusterIdx; % Use the global declaration
-        numClusters = str2double(inputdlg('Enter number of clusters:'));
+        numClusters = str2double(inputdlg_id('Enter number of clusters:','Input', [1 50]));
         if ~isempty(numClusters) && numClusters > 0
             % Update the table title with the number of clusters
             if ~isempty(uitableTitle) && isvalid(uitableTitle)
@@ -299,7 +322,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
 
             % Create a new figure for the clustering results table
             clusterResultsFig = uifigure;
-            set(clusterResultsFig, 'Position', [900, 100, 320, 500], 'Name', 'IVCCA (Berezin Lab)', 'Icon','Corr_iconsorta.png'); % Adjust as needed
+            set(clusterResultsFig, 'Position', [900, 100, 320, 500], 'Name', 'IVCCA: t-SNE clustering', 'Icon','Corr_icon.png'); % Adjust as needed
 
             % Create data for the table
             tableData = [geneNames(:), num2cell(clusterIdx)]; % Pair gene names with cluster index
@@ -338,7 +361,9 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         fclose(fileID);
     end
      % Inform the user that files have been saved and provide the output directory
-    msgbox(sprintf('Clusters have been successfully saved in: %s', outputDir), 'Saving is completed');
+   h = msgbox(sprintf('Clusters have been successfully saved in: %s', outputDir), 'Saving is completed');
+     iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h, iconFilePath);
       end
         toc
     end
@@ -520,7 +545,6 @@ stdDistance = std(distances);
 meanDensity = mean(densityB);
 medianDensity = median(densityB);
 
-
 % Create a table with two columns and six rows
     metricNames = {'Number of Points','Mean Distance', 'Median Distance', 'Standard Deviation', 'Mean Density', 'Median Density'};
     metricValues = [numPoints,meanDistance, medianDistance, stdDistance, meanDensity, medianDensity]; % Keep numPoints as numeric
@@ -570,9 +594,6 @@ function updateScatterPlot()
     legend(legendEntries, 'Location', 'best');
 end
 
-
-
-
 %% Callback function to clear highlighted points
    function clearHighlightsCallback(src, event)
   
@@ -584,8 +605,7 @@ end
     % Update the scatter plot to reflect the changes
     updateScatterPlot();
 
-end
-
+   end
 
 % Resize function
     function resizeFigure(src, ~)
@@ -620,22 +640,72 @@ function searchGeneCallback(src, event)
     % Find the index of the gene
     geneIndex = find(strcmpi(geneNames, geneToFind));
 
-%     if isempty(geneIndex)
-%         msgbox(['Gene ' geneToFind ' not found.']);
-%         return;
-%     end
+    if isempty(geneIndex)
+       h =  msgbox(['Gene ' geneToFind ' not found.']);
+         iconFilePath = fullfile('Corr_icon.png');
+        setIcon(h, iconFilePath);
+        return;
+    end
 
+    % Find the index of the gene
+    geneIndex = find(strcmpi(geneNames, geneToFind));
 
+    if isempty(geneIndex)
+       h = msgbox(['Gene ' geneToFind ' not found.']);
+              iconFilePath = fullfile('Corr_icon.png');
+        setIcon(h, iconFilePath);
+        
+        return;
+    end
 
+    % Highlight the found gene on the scatter plot
+    if ~isempty(highlightedGenes) && isvalid(highlightedGenes)
+        delete(highlightedGenes); % Clear any previous highlights
+    end
+    hold on;
+  %  for 2D
+%     highlighted = scatter(Y(geneIndex, 1), Y(geneIndex, 2), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+ %  for 3D
+    highlightedGenes = scatter3(Y(geneIndex, 1), Y(geneIndex, 2), Y(geneIndex, 3), 25, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'y');
+     
+
+    % Update the legend to show the name of the gene
+    if ~isempty(scatterPlot) && isvalid(scatterPlot)
+        legend([scatterPlot, highlightedGenes], {'All Genes', geneToFind}, 'Location', 'best');
+    else
+        legend(highlightedGenes, geneToFind, 'Location', 'best');
+    end
+    
+    hold off;
+
+end
+
+function GenesProximity(src, event)
+%     global Y geneNames highlighted;
+
+  % Get the gene name from the input field
+    geneToFind = get(searchField, 'String');
 
 
     % Find the index of the gene
     geneIndex = find(strcmpi(geneNames, geneToFind));
 
-%     if isempty(geneIndex)
-%         msgbox(['Gene ' geneToFind ' not found.']);
-%         return;
-%     end
+    if isempty(geneIndex)
+       h  = msgbox(['Gene ' geneToFind ' not found.']);
+              iconFilePath = fullfile('Corr_icon.png');
+        setIcon(h, iconFilePath);
+        return;
+    end
+
+    % Find the index of the gene
+    geneIndex = find(strcmpi(geneNames, geneToFind));
+
+    if isempty(geneIndex)
+       h = msgbox(['Gene ' geneToFind ' not found.']);
+              iconFilePath = fullfile('Corr_icon.png');
+        setIcon(h, iconFilePath);
+        return;
+    end
 
     % Highlight the found gene on the scatter plot
     if ~isempty(highlightedGenes) && isvalid(highlightedGenes)
@@ -658,12 +728,23 @@ function searchGeneCallback(src, event)
     hold off;
         % Calculate distances from this gene to all others
     allDistances = sqrt(sum((Y - Y(geneIndex, :)).^2, 2));
+    
+  % Prompt the user for the number of closest genes
+numGenes = inputdlg_id('Enter the number of closest genes:', ...
+                    'Input', [1 50]);
 
-    % Find indices of 12 closest genes
-    [~, sortedIndices] = sort(allDistances);
-    closestGenesIndices = sortedIndices(2:13); % Excluding the gene itself
+numGenes = str2double(numGenes{:});
 
-    % Retrieve names of the 12 closest genes
+% Ensure the input is valid
+if isnan(numGenes) || numGenes < 1
+    error('Invalid number of genes. Please enter a positive integer.');
+end
+
+% Find indices of closest genes
+[~, sortedIndices] = sort(allDistances);
+closestGenesIndices = sortedIndices(2:numGenes+1); % Excluding the gene itself
+
+    % Retrieve names of the closest genes
     closestGenes = geneNames(closestGenesIndices);
 
     % Convert the list of closest genes to a column cell array
@@ -677,23 +758,15 @@ function searchGeneCallback(src, event)
     hold on;
     scatter3(Y(geneIndex, 1), Y(geneIndex, 2), Y(geneIndex, 3), 50, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'm'); % magenta color
 
-    % Highlight the 10 closest genes
+    % Highlight the  closest genes
     scatter3(Y(closestGenesIndices, 1), Y(closestGenesIndices, 2), Y(closestGenesIndices, 3), 36, 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'c'); % cyan color
 
-    
-    
     hold off;
 
-    % Update the legend to include the searched gene and closest genes
-    % Modify this part as per your existing plot legend configuration
-    legend({'All Genes', 'Searched Gene', '12 Closest Genes'}, 'Location', 'best');
-
-
-
+% Update the legend to include the searched gene and closest genes 
+legend({'All Genes', 'Searched Gene', [num2str(numGenes) ' Closest Genes']}, 'Location', 'best');
+    
 end
-
-
-
 
 end
 

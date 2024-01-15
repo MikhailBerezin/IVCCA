@@ -182,7 +182,7 @@ stringBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
 % close(hWaitBar);
 
 global uitableTitle
-uitableTitle = uicontrol('Style', 'text', 'String', 'Brushed Genes', ...
+uitableTitle = uicontrol('Style', 'text', 'String', 'Selected Genes', ...
     'Position', [622, 537, 150, 20], ... % Position above the uitable
     'HorizontalAlignment', 'center');
 
@@ -294,7 +294,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
         tic
         %     global uitableTitle; % Make sure uitableTitle is declared as global
         %      global clusterIdx; % Use the global declaration
-        numClusters = str2double(inputdlg('Enter number of clusters:'));
+        numClusters = str2double(inputdlg_id('Enter number of clusters:'));
         if ~isempty(numClusters) && numClusters > 0
             % Update the table title with the number of clusters
             if ~isempty(uitableTitle) && isvalid(uitableTitle)

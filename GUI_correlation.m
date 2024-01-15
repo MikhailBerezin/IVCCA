@@ -327,6 +327,7 @@ function calculate_correlations_callback(~, ~, f)
     pca_button.Enable = 'on';
     single_to_group_button.Enable = 'on';
     single_to_path_button.Enable = 'on';
+    single_to_multipath_button.Enable = 'on';
     compare_paths_button.Enable = 'on';
     tsne_button.Enable = 'on';
     venn_button.Enable = 'on';
@@ -672,7 +673,7 @@ array=[];
         sorted_data = uitable(sorted_fig);
          % Display gene correlations in the new uitable
         sorted_data.Data = [top_variable_names', num2cell(average_abs_correlation),array'];  % Add sum of absolute correlations to the table
-        sorted_data.ColumnName = {'Gene', 'PCI_A: Correlation within the Pathway','PCI_B: Correlation Extracted from Global'};  % Update column names
+        sorted_data.ColumnName = {'Gene', 'Q(A): Correlation within the Pathway','Q(B): Correlation Extracted from Global'};  % Update column names
         sorted_data.Position = [20 20 560 360];  
         
         setappdata(0,'cor_variable',top_variable_names2')
@@ -739,7 +740,7 @@ btn = uicontrol('Style', 'pushbutton', 'String', 'Find Gene',...
 function findGeneCallback(~, ~)
     gene_prompt = {'Enter the gene name to find:'};
     gene_title = 'Find Gene';
-    gene_answer = inputdlg(gene_prompt, gene_title, dims);
+    gene_answer = inputdlg_id(gene_prompt, gene_title, dims);
 
     % Process the gene name if provided
     if ~isempty(gene_answer) && ~isempty(gene_answer{1})
@@ -924,7 +925,7 @@ function single_to_group_correlation_callback(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
    % Ask the user for the name of the single gene
-single_gene_name = inputdlg('Enter the name of the single gene:');
+single_gene_name = inputdlg_id('Enter the name of the single gene:');
 if isempty(single_gene_name)
     errordlg('No gene name was provided.');
     return;
@@ -1004,7 +1005,7 @@ function single_to_pathway_correlation_callback(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg('Enter the name of the single gene:');
+    single_gene_name = inputdlg_id('Enter the name of the single gene:');
     if isempty(single_gene_name)
         errordlg('No gene name was provided.');
         return;
@@ -1249,7 +1250,7 @@ dims = [1 45];
 definput = {'5'};  % default value set to 5
 
 % Create the input dialog box
-answer = inputdlg(prompt, dlgtitle, dims, definput);
+answer = inputdlg_id(prompt, dlgtitle, dims, definput);
 
 % Check if a value was entered and if so, use it; otherwise, use the default value
 if ~isempty(answer)
@@ -1265,7 +1266,9 @@ if ~isempty(answer)
         genesThreshold = tempValue;
     else
         % Optionally, you can display a message if the input is invalid
-        msgbox('Invalid input. Using default value of 4.', 'Error', 'error');
+      h =  msgbox('Invalid input. Using default value of 4.', 'Error', 'error');
+          iconFilePath = fullfile('Corr_icon.png');
+    setIcon(h, iconFilePath);
     end
 end
 
@@ -1279,7 +1282,7 @@ name2=name2(rowsWithMoreThanThresholdGenes, :);
 resultTable = cell2table(filteredTableData, 'VariableNames', {'File_Name', 'GO_Description','Genes in Pathway', 'Genes_Found', 'PAI', 'PCI_B','PCI_A','CECI', 'Z-score' });
 
 % Create a uifigure with a dynamic title that includes the threshold
-figTitle = sprintf('Multiple Pathway Analysis - Showing Genes with More than %d Found in Set', genesThreshold);
+figTitle = sprintf('Multiple Pathway Analysis - Showing Pathways with more than %d Found in Set', genesThreshold);
 fig = uifigure('Position', [50, 200, 1100, 400], 'Name', figTitle, 'Icon','Corr_icon.png');
 
 % Create a uitable in the uifigure with the sorted data
@@ -1336,7 +1339,7 @@ dlgtitle = 'Input';
 dims = [1 45];
 definput = {'25'}; % default value
 % answer = inputdlg(prompt, dlgtitle, dims, definput);
-answer = inputdlg(prompt, dlgtitle, dims, definput);
+answer = inputdlg_id(prompt, dlgtitle, dims, definput);
 
 numEntries = str2double(answer{1});
 totalRows = size(filteredTableData, 1);
@@ -1348,7 +1351,7 @@ topStrengthIndices = sortedStrengthIndices(1:min(numEntries, end));
 topZscores = sortedZscores(1:min(numEntries, end));
 
 % Create the horizontal bar plot
-fig = figure;
+fig = figure ( 'Name', 'IVCCA: Correlation-Expression Composite Index (CECI)', 'NumberTitle', 'off');
  iconFilePath = fullfile('Corr_icon.png');
     setIcon(fig, iconFilePath);
 barh(topStrengthIndices, 'blue');
@@ -1375,7 +1378,7 @@ filteredData = filteredTableData(filteredByZscore, :);
 sortedGoDescriptions = filteredData(sortIndex, 2);  % Assuming descriptions are in column 2
 
 % Create the horizontal bar plot for Z-score vs descriptions
-fig_z = figure;
+fig_z = figure ( 'Name', 'IVCCA: Z-score', 'NumberTitle', 'off');
  iconFilePath = fullfile('Corr_icon.png');
  setIcon(fig_z, iconFilePath);
 
@@ -1450,7 +1453,7 @@ function single_to_pathway_correlation_callback2(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg('Enter the name of the single gene:');
+    single_gene_name = inputdlg_id('Enter the name of the single gene:');
     if isempty(single_gene_name)
         errordlg('No gene name was provided.');
         return;
@@ -1551,7 +1554,7 @@ function single_to_pathway_correlation_callback_multi_table(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg('Enter the name of the single gene:');
+    single_gene_name = inputdlg_id('Enter the name of the single gene:');
     if isempty(single_gene_name)
         errordlg('No gene name was provided.');
         return;
