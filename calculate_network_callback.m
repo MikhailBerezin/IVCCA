@@ -87,7 +87,9 @@ numNodes = numnodes(G);
 
 if strcmp(plotChoice, '2D')
             % Plot the network in 2D with nodes on a circle
-            figure; % Open a new figure
+               fig_2d =  figure ('Name','3D Network plot','NumberTitle','off'); % Open a new figure
+               iconFilePath = fullfile('Corr_icon.png');
+            setIcon(fig_2d, iconFilePath);
             [x, y] = circlePoints(numNodes);
             p = plot(G, 'XData', x, 'YData', y,...
                 'EdgeColor',[0.0745098039215686 0.623529411764706 1],...
@@ -98,14 +100,16 @@ if strcmp(plotChoice, '2D')
             box off;
             
             % Remove ticks
-            % set(gca, 'XTick', [], 'YTick', []);
+            set(gca, 'XTick', [], 'YTick', []);
             
             %  to remove the axis lines entirely:
              axis off;
     elseif strcmp(plotChoice, '3D')
             % Plot the network in 3D with nodes on a sphere
 
-            figure; % Open a new figure
+           fig_3d =  figure ('Name','3D Network plot','NumberTitle','off'); % Open a new figure
+               iconFilePath = fullfile('Corr_icon.png');
+            setIcon(fig_3d, iconFilePath);
                
             % Generate spherical coordinates for each node
             [x, y, z] = spherePoints(numNodes);            
@@ -114,6 +118,7 @@ if strcmp(plotChoice, '2D')
                 'EdgeColor',[0.0745098039215686 0.623529411764706 1],...
                 'NodeColor',[1 0.0745098039215686 0.650980392156863],...
                 'NodeFontSize',16);
+         
 
              % Remove box around the plot
             box on;
@@ -122,7 +127,7 @@ if strcmp(plotChoice, '2D')
             % set(gca, 'XTick', [], 'YTick', []);
             
             %  to remove the axis lines entirely:
-             axis off;
+%              axis off;
     else
         % If the user closes the dialog or an unexpected value is returned
         disp('Plotting cancelled or invalid selection made.');

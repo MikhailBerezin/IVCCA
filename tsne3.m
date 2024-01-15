@@ -107,7 +107,8 @@ zlabel('Dimension 3'); % New label for the third dimension
 % Create a push button for K-means clustering
 btn = uicontrol('Style', 'pushbutton', 'String', 'Cluster',...
     'Position', [500,480,100,35],... % Adjust position and size as needed
-    'Callback', {@clusterCallback, data, Y, geneNames}); % Pass data, Y, and geneNames to the callback
+    'Callback', {@clusterCallback, data, Y, geneNames},...
+    'Tooltip', 'Perform K-Means clustering. You will be asked to provide the number of clusters. A separate table with genes in clusters will be generated'); % Pass data, Y, and geneNames to the callback
 
 % Create a push button for clearing clusters
 clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',...
