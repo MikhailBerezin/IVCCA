@@ -106,50 +106,50 @@ zlabel('Dimension 3'); % New label for the third dimension
 
 % Create a push button for K-means clustering
 btn = uicontrol('Style', 'pushbutton', 'String', 'Cluster',...
-    'Position', [500,480,100,35],... % Adjust position and size as needed
+    'Position', [500,480,110,35],... % Adjust position and size as needed
     'Callback', {@clusterCallback, data, Y, geneNames},...
     'Tooltip', 'Perform K-Means clustering. You will be asked to provide the number of clusters. A separate table with genes in clusters will be generated'); % Pass data, Y, and geneNames to the callback
 
 % Create a push button for clearing clusters
 clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',...
-    'Position', [500, 430, 100, 35],... % Adjust position and size as needed
+    'Position', [500, 440, 110, 35],... % Adjust position and size as needed
     'Callback', @clearClustersCallback,...
     'Tooltip', 'Clear selected clusters'); 
 
 % Create a push button for selecting a gene list file
 selectFileBtn = uicontrol('Style', 'pushbutton', 'String', 'Select Pathway(s)',...
-    'Position', [500, 380, 100, 35],... % Adjust position and size as needed
+    'Position', [500, 400, 110, 35],... % Adjust position and size as needed
     'Callback', @selectFileCallback,...
     'Tooltip', 'Select a single or multiple pathways and visualize them on the cluster map'); 
 
 % Create a push button for clearing highlighted genes
 clearBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Highlights',...
-    'Position', [500, 330, 100, 35],... % Adjust position and size as needed
+    'Position', [500, 360, 110, 35],... % Adjust position and size as needed
     'Callback', @clearHighlightsCallback,...
     'Tooltip', 'Clear all selected genes from the cluster map'); 
 
 % Create an input field for gene name
 searchField = uicontrol('Style', 'edit', ...
-    'Position', [500, 280, 100, 35], ... % Adjust position and size as needed
+    'Position', [500, 320, 110, 35], ... % Adjust position and size as needed
     'String', 'Enter Gene Name',...
     'Tooltip', 'Enter the name of the gene to visualize on the cluster map and click Visualize Gene button ');
 
 % Create a search button
 searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Visualize Gene',...
-    'Position', [500, 230, 100, 35],... % Adjust position and size as needed
+    'Position', [500, 280, 110, 35],... % Adjust position and size as needed
     'Callback', @searchGeneCallback,...
     'Tooltip', 'Visualize the selected gene from the cluster map'); % Define the callback function
 
 % Create a genes proximity button
-searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Find proximity genes',...
-    'Position', [500, 180, 100, 35],... % Adjust position and size as needed
+proximityBtn = uicontrol('Style', 'pushbutton', 'String', 'Find proximity genes',...
+    'Position', [500, 240, 110, 35],... % Adjust position and size as needed
     'Callback', @GenesProximity,...
     'Tooltip', 'Find and visualize closely positioned genes from the cluster map'); % Define the callback function
 
 % Create and API to String button
 
 stringBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
-    'Position', [500, 130, 100, 35],... % Adjust position and size as needed
+    'Position', [500, 200, 110, 35],... % Adjust position and size as needed
     'Callback', @api_to_string_single,...
     'Tooltip', 'Selected the gene from the table and visualize the network around using STRING database '); % Define the callback function
 
@@ -613,13 +613,14 @@ end
         figPos = get(src, 'Position');
 
         % Adjust button positions based on figure size
-        set(btn, 'Position', [figPos(3)-300, figPos(4)-120, 100, 35]);
-        set(clearClusterBtn, 'Position', [figPos(3)-300, figPos(4)-160, 100, 35]);
-        set(selectFileBtn, 'Position', [figPos(3)-300, figPos(4)-200, 100, 35]);
-        set(clearBtn, 'Position', [figPos(3)-300, figPos(4)-240, 100, 35]);
-        set(searchField, 'Position', [figPos(3)-300, figPos(4)-280, 100, 35]);
-        set(searchBtn, 'Position', [figPos(3)-300, figPos(4)-320, 100, 35]);
-        set(stringBtn, 'Position', [figPos(3)-300, figPos(4)-370, 100, 35]);
+        set(btn, 'Position',                [figPos(3)-300, figPos(4)-120, 110, 35]);
+        set(clearClusterBtn, 'Position',    [figPos(3)-300, figPos(4)-160, 110, 35]);
+        set(selectFileBtn, 'Position',      [figPos(3)-300, figPos(4)-200, 110, 35]);
+        set(clearBtn, 'Position',           [figPos(3)-300, figPos(4)-240, 110, 35]);
+        set(searchField, 'Position',        [figPos(3)-300, figPos(4)-280, 110, 35]);
+        set(searchBtn, 'Position',          [figPos(3)-300, figPos(4)-320, 110, 35]);        
+        set(proximityBtn, 'Position',       [figPos(3)-300, figPos(4)-360, 110, 35]);
+        set(stringBtn, 'Position',          [figPos(3)-300, figPos(4)-400, 110, 35]);
 
         % Adjust uitable position
         set(uitableHandle, 'Position', [figPos(3)-178, 63, 150, figPos(4)-140]);
