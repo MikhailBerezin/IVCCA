@@ -202,7 +202,9 @@ function load_data_callback(~, ~, f)
             data_table = readtable(fullfile(path, file), 'VariableNamingRule', 'preserve');
         end
     catch
-        errordlg('Error reading data. Please check the format of the data file.');
+        c =errordlg('Error reading data. Please check the format of the data file.');
+        iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
 %         delete(wb) % Close the waitbar if an error occurs
         return
     end
@@ -927,7 +929,9 @@ function single_to_group_correlation_callback(~, ~, f)
    % Ask the user for the name of the single gene
 single_gene_name = inputdlg_id('Enter the name of the single gene:');
 if isempty(single_gene_name)
-    errordlg('No gene name was provided.');
+    c = errordlg('No gene name was provided.');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
     return;
 end
 single_gene_name = single_gene_name{1};
@@ -939,7 +943,9 @@ data_table_variable_names_lower = data_table.Properties.VariableNames;
 % Validate if the single gene name exists in the data, ignoring case
 single_gene_index = find(strcmpi(data_table_variable_names_lower, single_gene_name_lower));
 if isempty(single_gene_index)
-    errordlg('The specified gene was not found in the data.');
+    c = errordlg('The specified gene was not found in the data.');
+    iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
     return;
 end
 
@@ -956,7 +962,9 @@ end
 disp(group_gene_names);  % This should print the selected gene names in the Command Window
 
     if isempty(group_gene_indices)
-        errordlg('No genes were selected.');
+       c = errordlg('No genes were selected.');
+        iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
         return;
     end
 
@@ -1007,7 +1015,9 @@ function single_to_pathway_correlation_callback(~, ~, f)
     % Ask the user for the name of the single gene
     single_gene_name = inputdlg_id('Enter the name of the single gene:');
     if isempty(single_gene_name)
-        errordlg('No gene name was provided.');
+        c = errordlg('No gene name was provided.');
+        iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
         return;
     end
     single_gene_name = single_gene_name{1};
@@ -1019,7 +1029,9 @@ function single_to_pathway_correlation_callback(~, ~, f)
     % Validate if the single gene name exists in the data, ignoring case
     single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
     if isempty(single_gene_index)
-        errordlg('The specified gene was not found in the data.');
+        c = errordlg('The specified gene was not found in the data.');
+        iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
         return;
     end
 
@@ -1455,7 +1467,9 @@ function single_to_pathway_correlation_callback2(~, ~, f)
     % Ask the user for the name of the single gene
     single_gene_name = inputdlg_id('Enter the name of the single gene:');
     if isempty(single_gene_name)
-        errordlg('No gene name was provided.');
+       c = errordlg('No gene name was provided.');
+       iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
         return;
     end
     single_gene_name = single_gene_name{1};
@@ -1467,7 +1481,9 @@ function single_to_pathway_correlation_callback2(~, ~, f)
     % Validate if the single gene name exists in the data, ignoring case
     single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
     if isempty(single_gene_index)
-        errordlg('The specified gene was not found in the data.');
+        c =errordlg('The specified gene was not found in the data.');
+        iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
         return;
     end
 
@@ -1564,7 +1580,9 @@ function single_to_pathway_correlation_callback_multi_table(~, ~, f)
     % Validate if the single gene name exists in the data, ignoring case
     single_gene_index = find(strcmpi(data_table.Properties.VariableNames, single_gene_name));
     if isempty(single_gene_index)
-        errordlg('The specified gene was not found in the data.');
+      c =  errordlg('The specified gene was not found in the data.');
+        iconFilePath = fullfile('Corr_icon.png');
+    setIcon(c, iconFilePath);
         return;
     end
 
@@ -1601,18 +1619,24 @@ function single_to_pathway_correlation_callback_multi_table(~, ~, f)
         % Calculate the correlation between the single gene and each gene in the pathway
         single_to_pathway_correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
 
-        % Calculate the average of the absolute values of the correlation coefficients
-        avg_abs_correlation = mean(abs(single_to_pathway_correlations));
+  % Check if any correlation value is NaN
+        if any(isnan(single_to_pathway_correlations))
+            % Add an entry to the table indicating no valid correlations
+            correlationResults = [correlationResults; {i, file_name2{i}, 'No valid correlations'}];
+        else
+            % Calculate the average of the absolute values of the correlation coefficients
+            avg_abs_correlation = mean(abs(single_to_pathway_correlations));
 
-       % Add the results to the table with an index
-        correlationResults = [correlationResults; {i, file_name2{i}, avg_abs_correlation}];
+            % Add the results to the table
+            correlationResults = [correlationResults; {i, file_name2{i}, avg_abs_correlation}];
+        end
     end
 
     % Create a new uifigure for the uitable
-    tableFig = uifigure('Name', 'Gene to Pathways: Correlation Results', 'Position', [100, 100, 500, 300], 'Icon','Corr_icon.png');
+   tableFig = uifigure('Name', ['Gene ' single_gene_name ' to Pathways: Correlation Results'], 'Position', [100, 100, 500, 300], 'Icon','Corr_icon.png');
 
     % Create a uitable in the uifigure and display the correlationResults table
-    uitable(tableFig, 'Data', correlationResults, 'ColumnName', correlationResults.Properties.VariableNames, 'RowName', [], 'Position', [0, 0, 500, 300], 'ColumnSortable', true, 'ColumnWidth', {50, 200, 200});
+    uitable(tableFig, 'Data', correlationResults, 'ColumnName', correlationResults.Properties.VariableNames, 'RowName', [], 'Position', [0, 0, 500, 300], 'ColumnSortable', true, 'ColumnWidth', {50, 'auto', 'auto'});
 end
 
 
