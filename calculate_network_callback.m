@@ -1,23 +1,32 @@
 function calculate_network_callback(~, ~, f)
     f.WindowStyle = 'normal';
    
-
     % Retrieve correlation data and variable names (gene names)
     cor_data = abs(getappdata(0, 'correlations'));
     geneNames = getappdata(0, 'variable_names');
 
+    % Define a persistent variable to remember the last folder path
+    persistent lastPath;
+    
     % Ask the user if they want to filter the gene set
     choice = uiconfirm(f, 'Would you like to filter for the gene set (optional)?', 'Open Gene List', ...
                        'Options', {'Yes', 'No'}, 'DefaultOption', 1, 'CancelOption', 2);
 
     if strcmp(choice, 'Yes')
         % User chooses to filter for the gene set
-        [file, path] = uigetfile('*.txt', 'Select the file with the gene list');
+        if isempty(lastPath) || ~exist(lastPath, 'dir')
+            % If lastPath is empty or does not exist, start in the current directory
+            lastPath = pwd;
+        end
+        [file, path] = uigetfile(fullfile(lastPath, '*.txt'), 'Select the file with the gene list');
         if isequal(file, 0)
             disp('User selected Cancel');
             return;
         else
             disp(['User selected ', fullfile(path, file)]);
+            % Update lastPath with the current path
+            lastPath = path;
+            
             % Read the list of genes from the file
             fileID = fopen(fullfile(path, file), 'r');
             filterGeneNames = textscan(fileID, '%s');
@@ -33,6 +42,8 @@ function calculate_network_callback(~, ~, f)
         % If the user chooses 'No', or closes the dialog, proceed without filtering
         disp('Proceeding without gene set filtering.');
     end
+
+
 
     % Define the prompt, title, and default value for the input dialog
     prompt = {'Enter the correlation threshold:'};
@@ -134,11 +145,36 @@ if strcmp(plotChoice, '2D')
         return;
     end
 
-% Adjust line thickness based on correlation value
+% Parameters
+threshold = 50.0; % Define a threshold for edge weights
 maxWeight = max(G.Edges.Weight); % Find maximum edge weight
-minLineWidth = 0.5; % Minimum line width
-maxLineWidth = 4; % Maximum line width
-p.LineWidth = minLineWidth + ((G.Edges.Weight / maxWeight) * 0.32*(maxLineWidth - minLineWidth)).^12;
+minLineWidth = 0.5; % Minimum line width for any edge above the threshold
+maxLineWidth = 10; % Maximum line width
+
+% Filter out edges below the threshold
+filteredEdges = G.Edges.Weight >= threshold;
+
+% Initialize LineWidth with zeros
+lineWidths = zeros(size(G.Edges.Weight)); 
+
+% Apply line width scaling only to edges above the threshold
+for i = 1:length(filteredEdges)
+    if filteredEdges(i)
+        normalizedWeight = (G.Edges.Weight(i) / maxWeight);
+        calculatedWidth = minLineWidth + (normalizedWeight * (maxLineWidth - minLineWidth)).^10;
+        lineWidths(i) = max(calculatedWidth, minLineWidth); % Ensure at least minLineWidth
+    end
+end
+
+% Debugging: Check if any lineWidths are non-positive
+if any(lineWidths <= 0)
+    disp('Non-positive line widths found. Adjusting to minimum line width.');
+    lineWidths(lineWidths <= 0) = minLineWidth;
+end
+
+% Assign the calculated line widths to the plot
+p.LineWidth = lineWidths;
+
 
 % Adjust node size based on degree
 p.MarkerSize = 10 + (1.5 * (nodeDegree / max(nodeDegree))).^10;
