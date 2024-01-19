@@ -71,14 +71,14 @@ tsne_button.Enable = 'off';
 sort_path_button = uibutton(grid, 'push', 'Text', 'Single Pathway', 'ButtonPushedFcn', {@sort_path_callback, f});
 sort_path_button.Layout.Row = 9; % Position for "SinglePathway" button
 sort_path_button.Layout.Column = 2;
-sort_path_button.Tooltip = 'Sort genes based on their average correlation values for a selected pathway';  % Adding tooltip
+sort_path_button.Tooltip = 'Select a single pathway and sort genes based on their average correlation values ';  % Adding tooltip
 sort_path_button.Enable = 'off'; % Initially disabled
 
 % Create the "Multiple Pathways" button
 sort_mpath_button = uibutton(grid, 'push', 'Text', 'Multi Pathways', 'ButtonPushedFcn', {@sort_mpath_callback, f});
 sort_mpath_button.Layout.Row = 10; % Position for "Mutliple Pathways" button
 sort_mpath_button.Layout.Column = 2;
-sort_mpath_button.Tooltip = 'Sort multiple pathways based on the correlation values of the genes';  % Adding tooltip
+sort_mpath_button.Tooltip = 'Select multiple pathways and sort them based on the CICI and Z-score';  % Adding tooltip
 sort_mpath_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single Gene to Group Correlation" button
@@ -86,7 +86,7 @@ single_to_group_button = uibutton(grid, 'push', 'Text', 'Gene to Genes', ...
                                   'ButtonPushedFcn', {@single_to_group_correlation_callback, f});
 single_to_group_button.Layout.Row = 11; % Choose an appropriate row
 single_to_group_button.Layout.Column = 2;
-single_to_group_button.Tooltip = 'Calculate correlation of a single gene to a one group of genes';
+single_to_group_button.Tooltip = 'Select a gene and calculate its correlation to a one gene or group of genes';
 single_to_group_button.Enable = 'off'; % Initially disabled
 
 % Create the "Single to Pathway Correlation" button
@@ -95,16 +95,16 @@ single_to_path_button = uibutton(grid, 'push', 'Text', 'Gene to Pathway', ...
                                   'ButtonPushedFcn', {@single_to_pathway_correlation_callback, f});
 single_to_path_button.Layout.Row = 12; 
 single_to_path_button.Layout.Column = 2;
-single_to_path_button.Tooltip = 'Calculate the correlation of a single gene to genes in a single pathway';
+single_to_path_button.Tooltip = 'Select a gene and a single pathway calculate the correlation of this single gene to genes in a single pathway';
 single_to_path_button.Enable = 'off'; 
 
-% Create the "Single to Pathway Correlation" button
+% Create the "Single to Multiple Pathway Correlation" button
 
 single_to_multipath_button = uibutton(grid, 'push', 'Text', 'Gene to Pathways', ...
                                   'ButtonPushedFcn', {@single_to_pathway_correlation_callback_multi_table, f});
 single_to_multipath_button.Layout.Row = 13; 
 single_to_multipath_button.Layout.Column = 2;
-single_to_multipath_button.Tooltip = 'Calculate the correlation of a single gene to multiple pathways';
+single_to_multipath_button.Tooltip = 'Select a gene and multiple pathways and alculate the correlation of a single gene to multiple pathways';
 single_to_multipath_button.Enable = 'off'; 
 
 % Create the "Compare pathways" button
@@ -114,21 +114,21 @@ compare_paths_button = uibutton(grid, 'push', ...
 
 compare_paths_button.Layout.Row = 14; % Position for "Compare pathways" button
 compare_paths_button.Layout.Column = 2;
-compare_paths_button.Tooltip = 'Calculate the correlation between two or multiple pathways';  % Adding tooltip
+compare_paths_button.Tooltip = 'Select two or multiple pathways and calculate a cosine similarity between two or multiple pathways';  % Adding tooltip
 compare_paths_button.Enable = 'off';  % You might want to enable this once it's ready to be used
 
 % Create the "Venn diagram" button
 venn_button = uibutton(grid, 'push', 'Text', 'Venn diagram', 'ButtonPushedFcn', {@venn_new_Gui_2, f});
 venn_button.Layout.Row = 15; % Position for "Network" button
 venn_button.Layout.Column = 2;
-venn_button.Tooltip = 'Generate Venn diagram';  % Adding tooltip
+venn_button.Tooltip = 'Select two pathways to generate Venn diagram';  % Adding tooltip
 venn_button.Enable = 'on';
 
 % Create the "Network analysis" button
 network_button = uibutton(grid, 'push', 'Text', 'Network analysis', 'ButtonPushedFcn', {@calculate_network_callback, f});
 network_button.Layout.Row = 16; % Position for "Network" button
 network_button.Layout.Column = 2;
-network_button.Tooltip = 'Generate network graph';  % Adding tooltip
+network_button.Tooltip = 'Select a sgingle pathway to generate either a 2D ot 3D network graph';  % Adding tooltip
 network_button.Enable = 'off';
 %%
 

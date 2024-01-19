@@ -745,9 +745,9 @@ end
 % Find indices of closest genes
 [~, sortedIndices] = sort(allDistances);
 closestGenesIndices = sortedIndices(2:numGenes+1); % Excluding the gene itself
-
+closestGenesIndices2 = sortedIndices(1:numGenes+1);
     % Retrieve names of the closest genes
-    closestGenes = geneNames(closestGenesIndices);
+    closestGenes = geneNames(closestGenesIndices2); % Adding the search gene itself
 
     % Convert the list of closest genes to a column cell array
     closestGenesColumn = closestGenes(:); % Convert to column cell array
@@ -766,7 +766,7 @@ closestGenesIndices = sortedIndices(2:numGenes+1); % Excluding the gene itself
     hold off;
 
 % Update the legend to include the searched gene and closest genes 
-legend({'All Genes', 'Searched Gene', [num2str(numGenes) ' Closest Genes']}, 'Location', 'best');
+legend({'All Genes', geneToFind, [num2str(numGenes) ' Closest Genes']}, 'Location', 'best');
     
 end
 
