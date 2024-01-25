@@ -873,6 +873,27 @@ function cellSelectedCallback(src, event)
 end
 %% Define the "Elbow Curve" and Silhouette callback functions
 function elbow_curve_callback(~, ~, f)
+    % Prompt for the number of runs
+    prompt = {'Enter the number of runs:'};
+    dlgtitle = 'Input';
+    dims = [1 35];
+    definput = {'3'};  % default value
+    answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+    
+    % Check if the user provided an answer
+    if isempty(answer)
+        return;  % Exit the function if no answer is given (e.g., user pressed cancel)
+    end
+    
+    % Convert answer to integer
+    numRuns = str2double(answer{1});
+    
+    % Validate that the input is a positive integer
+    if isnan(numRuns) || fix(numRuns) ~= numRuns || numRuns <= 0
+        errordlg('Please enter a valid positive integer for the number of runs.', 'Invalid Input');
+        return;
+    end
+    
     % Initialize the waitbar
     hWaitBar = waitbar(0, 'Initializing...');
     iconFilePath = fullfile('Corr_icon.png');
@@ -880,46 +901,57 @@ function elbow_curve_callback(~, ~, f)
 
     correlations = getappdata(0, 'correlations');  % Get correlations from app data
     correlations = abs(correlations);
-    % Initialize the waitbar
-    waitbar(0.2, hWaitBar, 'Performing Elbow computation...');
 
     maxK = 30;  % Maximum number of clusters to check
 
-    sum_of_squared_distances = zeros(maxK, 1);
-    silhouette_vals = zeros(maxK-1, 1);  % No silhouette for K = 1
-    
-    for k = 1:maxK
-        [idx, ~, sumD] = kmeans(correlations, k);
-        sum_of_squared_distances(k) = sum(sumD);
-    end    
-   waitbar(0.4, hWaitBar, 'Performing Silhouette computation...');
-    for k = 2:maxK  % Start from 2 clusters
-        [idx, ~] = kmedoids(correlations, k);
+    sum_of_squared_distances_runs = zeros(maxK, numRuns);
+    silhouette_vals_runs = zeros(maxK-1, numRuns);  % No silhouette for K = 1
+
+    for run = 1:numRuns
+        % Update waitbar for each run
+        waitbar((run - 1) / numRuns, hWaitBar, sprintf('Run %d: Performing Elbow and Silhouette computations...', run));
         
-        % Compute silhouette values for this cluster count
-        s = silhouette(correlations, idx, 'sqEuclidean');
-        silhouette_vals(k-1) = mean(s);
+        for k = 1:maxK
+            [idx, ~, sumD] = kmeans(correlations, k, 'Replicates', 5); % 'Replicates' for more stable results
+            sum_of_squared_distances_runs(k, run) = sum(sumD);
+        end
+
+        for k = 2:maxK  % Start from 2 clusters
+            [idx, ~] = kmedoids(correlations, k, 'Replicates', 5); % 'Replicates' for more stable results
+            
+            % Compute silhouette values for this cluster count
+            s = silhouette(correlations, idx, 'sqEuclidean');
+            silhouette_vals_runs(k-1, run) = mean(s);
+        end
     end
 
-waitbar(0.8, hWaitBar, 'Plotting...');
-% Create a subplot to show both elbow and silhouette plots side by side
-    fig_elbow = figure ('Name', 'IVCCA: Number of clusters', 'NumberTitle', 'off');
+    % Calculate the average over the runs
+    avg_sum_of_squared_distances = mean(sum_of_squared_distances_runs, 2);
+    avg_silhouette_vals = mean(silhouette_vals_runs, 2);
+
+    waitbar(0.9, hWaitBar, 'Plotting...');
+    
+    % Create a subplot to show both elbow and silhouette plots side by side
+    fig_elbow = figure('Name', 'IVCCA: Number of clusters', 'NumberTitle', 'off');
     iconFilePath = fullfile('Corr_icon.png');
     setIcon(fig_elbow, iconFilePath);
+
     subplot(1, 2, 1);
-    plot(1:maxK, log(sum_of_squared_distances), 'bo-');
+    plot(1:maxK, log(avg_sum_of_squared_distances), 'bo-');
     title('Elbow Curve');
     xlabel('Number of clusters (K)');
-    ylabel('log(Sum of Squared Distances)');
+    ylabel('log(Average Sum of Squared Distances)');
     
     subplot(1, 2, 2);
-    plot(2:maxK, silhouette_vals, 'r*-');
-    title('Silhouette Analysis ');
+    plot(2:maxK, avg_silhouette_vals, 'r*-');
+    title('Silhouette Analysis');
     xlabel('Number of clusters (K)');
     ylabel('Average Silhouette Value');
+    
     waitbar(1, hWaitBar, 'Complete...');
     close(hWaitBar);
 end
+
 
 %% Define a callback function for calculating single gene-to-group correlations
 function single_to_group_correlation_callback(~, ~, f)
