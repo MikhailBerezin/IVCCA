@@ -30,11 +30,13 @@ end
 data.biomarkers=cell(1,len);
 %% Assign name into data
 for j=1:len
+    gene='';
     m= T.Members(j);
     for k=1:m
         data.biomarkers{k,j}=T(j,5+k);
+        gene=strcat(gene,table2array(T(j,5+k)),',');
     end
-        
+    data.gene{1,j}=gene;   
 %     data.members(i)=cell(1,m);
 %     data.members{1,i}=split(T.Name(i),',');
     

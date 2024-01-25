@@ -1,0 +1,25 @@
+% Example cell array with 1000 cells
+geneCell = cell(1000, 1);
+% for i = 1:1000
+%     geneCell{i} = sprintf('Ans=%d,Bgh=%d,C=%d', randi([1, 10]), randi([1, 10]), randi([1, 10]));
+% end
+data=load('house4.mat');
+% Variables to check
+desiredVariables = {'And','Bgh'};
+for i = 1:numel(data.gene)
+    fprintf('In row %d, variables %s exist.\n', i, strjoin(desiredVariables(variableExists(i,:)), ', '));
+end
+% Convert cell array to a string array
+geneStrings = string(geneCell);
+
+% Check if each desired variable exists in each string
+% variableExists = contains(geneStrings, desiredVariables);
+variableExists = all(contains(geneStrings, desiredVariables), 2);
+% Find the index of the first occurrence
+firstOccurrenceIndex = find(variableExists, 1);
+variableExists = all(contains(split(geneStrings, ','), desiredVariables), 2);
+
+% Display the results
+for i = 1:numel(geneCell)
+    fprintf('In row %d, variables %s exist.\n', i, strjoin(desiredVariables(variableExists(i,:)), ', '));
+end

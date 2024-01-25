@@ -241,3 +241,52 @@ function highlightHouses(~, ~)
         msgbox(msg, 'House Search Result');
     end
 end
+function highlightHouses2(~, ~)
+    global numHouses
+    global people
+    global houseLat
+    global houseLon
+    global housePlots
+    global ax
+    
+    % Ask the user for a name
+    prompt = {'Enter a name:'};
+    title = 'Input';
+    dims = [1 35];
+    answer = inputdlg(prompt, title, dims);
+    
+    if ~isempty(answer)
+        % Extract the name
+        name = answer{1};
+        
+        % Variables to store the found house number(s)
+        foundHouses = [];
+        
+        % Loop over each house
+        for i = 1:length(people)
+            % Check if the name is in the list of people for the house
+            if any(strcmp(people{i}, name))
+                % If the name is found, highlight the house
+                housePlots(i) = geoplot(ax, houseLat(i), houseLon(i), 'o',  'MarkerSize', 30, 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black');
+                foundHouses = [foundHouses i]; % Store the found house number
+
+                houseNames{i} = ['House ' num2str(i)];
+            else
+              % housePlots{i}.MarkerFaceColor = [0 0 1]; % Reset color
+                housePlots(i) = geoplot(ax, houseLat(i), houseLon(i), 'o',  'MarkerSize', 10, 'MarkerFaceColor', [0.5 0.5 0.5], 'MarkerEdgeColor', 'black');
+            end
+        end
+        
+        % Display message boxes based on the foundHouses array
+        if ~isempty(foundHouses)
+            % Convert the array of found house numbers to a string
+            houseNumbers = num2str(foundHouses);
+            msg = sprintf('The house(s) with the name "%s" is found.\nHouse Number(s): %s', name, houseNumbers);
+        else
+            msg = sprintf('The house with the name "%s" is not found.', name);
+        end
+        
+        msgbox(msg, 'House Search Result');
+    end
+end
+
