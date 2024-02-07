@@ -54,9 +54,9 @@ componentsToDisplay = min(length(cumulativeVariance), 25); % In case there are f
 cumulativeVariance25 = cumulativeVariance(1:componentsToDisplay);
 
 % Plotting cumulative variability for the first 25 components
-spree_fig = figure ('Name', 'IVCCA: Spree graph', 'NumberTitle', 'off');
+scree_fig = figure ('Name', 'IVCCA: Scree plot', 'NumberTitle', 'off');
   iconFilePath = fullfile('Corr_icon.png');
-    setIcon(spree_fig, iconFilePath);
+    setIcon(scree_fig, iconFilePath);
 plot(1:componentsToDisplay, cumulativeVariance25, '-o');
 title('Cumulative Variance Explained by the First 25 Principal Components');
 xlabel('Number of Principal Components');
@@ -175,7 +175,7 @@ searchBtn = uicontrol('Style', 'pushbutton', 'String', 'Search Gene',...
 
 stringBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
     'Position', [500, 180, 100, 35],... % Adjust position and size as needed
-    'Callback', @api_to_string_2); % Define the callback function
+    'Callback', @api_to_string_single); % Define the callback function
 
 % Update and close the waitbar after completing all tasks
 % waitbar(1, hWaitBar, 'Completed.');

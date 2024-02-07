@@ -1,0 +1,216 @@
+function calculate_network_callback_average(~, ~, f)
+f.WindowStyle = 'normal';
+
+
+% Retrieve correlation data and variable names (gene names)
+cor_data = abs(getappdata(0, 'correlations'));
+geneNames = getappdata(0, 'variable_names');
+
+% Ask the user if they want to filter the gene set
+choice = uiconfirm(f, 'Would you like to filter for the gene set (optional)?', 'Open Gene List', ...
+    'Options', {'Yes', 'No'}, 'DefaultOption', 1, 'CancelOption', 2);
+
+if strcmp(choice, 'Yes')
+    % User chooses to filter for the gene set
+    [file, path] = uigetfile('*.txt', 'Select the file with the gene list');
+    if isequal(file, 0)
+        disp('User selected Cancel');
+        return;
+    else
+        disp(['User selected ', fullfile(path, file)]);
+        % Read the list of genes from the file
+        fileID = fopen(fullfile(path, file), 'r');
+        filterGeneNames = textscan(fileID, '%s');
+        filterGeneNames = filterGeneNames{1}; % Convert cell array to a regular array of strings
+        fclose(fileID);
+
+        % Filter the correlation data and gene names
+        [isValidGene, loc] = ismember(geneNames, filterGeneNames);
+        cor_data = cor_data(isValidGene, isValidGene);
+        geneNames = geneNames(isValidGene);
+    end
+else
+    % If the user chooses 'No', or closes the dialog, proceed without filtering
+    disp('Proceeding without gene set filtering.');
+end
+
+% Define the prompt, title, and default value for the input dialog
+prompt = {'Enter the correlation threshold:'};
+dlgtitle = 'Input';
+dims = [1 35];
+definput = {'0.75'}; % default value set to 0.75
+
+% Create the input dialog box
+answer = inputdlg(prompt, dlgtitle, dims, definput);
+
+% Validate and parse the input
+% Instead of a single threshold, loop from the user-defined threshold to 0.95, incrementing by 0.05
+correlationThreshold = 0.75; % Default threshold
+if ~isempty(answer)
+    tempValue = str2double(answer{1});
+    if ~isnan(tempValue) && tempValue >= 0 && tempValue <= 1
+        correlationThreshold = tempValue;
+    else
+        % Display a message if the input is invalid
+        msgbox('Invalid input. Using default value of 0.75.', 'Error', 'error');
+    end
+end
+
+% Initialize variables to calculate average degrees
+totalDegrees = zeros(length(geneNames), 1);
+countThresholds = 0;
+
+for threshold = correlationThreshold:0.05:0.95
+    % Filter the correlation matrix for the current threshold
+    filteredCorData = cor_data;
+    filteredCorData(abs(filteredCorData) < threshold) = 0;
+
+    % Create a graph object from the filtered correlation matrix
+    G = graph(filteredCorData, geneNames, 'OmitSelfLoops');
+    G = rmedge(G, find(G.Edges.Weight < threshold)); % Remove edges below the threshold
+
+    % Calculate the degree for each node
+    nodeDegree = degree(G);
+
+    % Accumulate the degree counts
+    totalDegrees = totalDegrees + nodeDegree;
+    countThresholds = countThresholds + 1;
+
+
+end
+
+
+% Calculate the average degree
+avgDegree = totalDegrees / countThresholds;
+
+% Create a graph from the final filtered correlation matrix
+% Note: You might want to use the average or another representation of the correlation matrix here
+G = graph(filteredCorData, geneNames, 'OmitSelfLoops');
+G = rmedge(G, find(G.Edges.Weight < correlationThreshold)); % remove edges below the final threshold
+
+% Set edge weights based on correlation values (if necessary)
+G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
+% Assign 'avgDegree' as a node property
+G.Nodes.AvgDegree = avgDegree;
+
+% % Number of nodes
+numNodes = numnodes(G);
+
+% Generate coordinates for plotting
+[x, y] = circlePoints(numNodes);
+
+% Plot the network
+figure; % Open a new figure
+p = plot(G, 'XData', x, 'YData', y, 'EdgeColor',  [91, 207, 244] / 255, 'NodeFontSize',14);
+
+% Adjust node size based on degree
+p.MarkerSize = 5 + (1.3 * (avgDegree / max(avgDegree))).^12;
+
+% set(gca, 'XTick', [], 'YTick', []);
+
+%  to remove the axis lines entirely:
+axis off;
+
+% Customizing Data Tips
+dtt = datacursormode;  % Get the data cursor mode object for the figure
+set(dtt, 'UpdateFcn', @(obj,event_obj) customDataTip(obj, event_obj, G, geneNames, avgDegree));
+
+% Function to create custom data tips
+function output_txt = customDataTip(~, event_obj, G, geneNames, avgDegree)
+    % Get the index of the selected node
+    pos = event_obj.Position;
+    node = findobj(event_obj.Target, 'Type', 'scatter', 'XData', pos(1), 'YData', pos(2));
+    nodeIndex = find(G.Nodes.XData == node.XData & G.Nodes.YData == node.YData);
+
+    if isempty(nodeIndex)
+        output_txt = {'No data available'};
+    else
+        % Get the gene name and avgDegree for the node
+        nodeName = geneNames{nodeIndex};  % Assuming geneNames is a cell array of names
+        nodeDegree = avgDegree(nodeIndex);
+
+        % Set the custom text for the data tip
+        output_txt = {['Gene: ', nodeName], ...
+                      ['Avg. Degree: ', num2str(nodeDegree, '%.2f')]};
+    end
+end
+
+% Adjust line thickness based on correlation value
+maxWeight = max(G.Edges.Weight); % Find maximum edge weight
+minLineWidth = 0.6; % Minimum line width
+maxLineWidth = 4; % Maximum line width
+
+p.LineWidth = minLineWidth + ((G.Edges.Weight / maxWeight) * 0.32*(maxLineWidth - minLineWidth)).^12;
+
+% disp(size(geneNames));  % Display size of geneNames
+% disp(size(avgDegree));  % Display size of avgDegree
+%
+%
+% % Create labels for each node with gene name and its average degree
+% nodeLabels = arrayfun(@(name, degree) sprintf('%s (Avg. Degree: %.2f)', name, degree), geneNames, avgDegree, 'UniformOutput', false);
+
+% % Set the NodeLabel property of the plot to these labels
+% p.NodeLabel = nodeLabels;
+
+% Update the results table with the average degree
+resultsTable = table(geneNames', avgDegree, 'VariableNames', {'GeneName', 'AvgDegree'});
+
+
+
+
+%
+%
+% % Set point color to yellow with transparency
+% pointColor = [0, 1, 0]; % Yellow color with
+% p.NodeColor = pointColor;
+% p.EdgeAlpha = 0.5;
+
+
+
+
+%% ------------3D-------
+% % Plot the network in 3D with nodes on a sphere
+% figure; % Open a new figure
+% p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
+% [x, y] = spherePoints(numNodes);
+%
+% % Plot the network in 3D with nodes on a sphere
+% figure; % Open a new figure
+% p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
+%
+% % Generate spherical coordinates for each node
+% [x, y, z] = spherePoints(numNodes);
+
+% Plot the network in 3D with nodes on a sphere
+% figure; % Open a new figure
+% p = plot(G, 'XData', x, 'YData', y, 'ZData', z, 'EdgeColor', 'b');
+%% --------------
+
+
+
+% Create a UI figure to display the table
+figureTitle = sprintf('Degree of Connection (Threshold: %.2f)', correlationThreshold);
+f = uifigure('Name', figureTitle, 'Position', [100 100 300 250]);
+t = uitable('Parent', f, 'Data', resultsTable, 'Position', [20 20 260 200]);
+t.ColumnSortable(1) = true;
+t.ColumnSortable(2) = true;
+
+end
+function [x, y, z] = spherePoints(n)
+% Generate n points distributed on the surface of a sphere
+theta = linspace(0, 2*pi, n);
+phi = acos(2 * linspace(0, 1, n) - 1);
+x = sin(phi) .* cos(theta);
+y = sin(phi) .* sin(theta);
+z = cos(phi);
+end
+
+function [x, y] = circlePoints(n)
+% Generate n points distributed on the circumference of a circle
+theta = linspace(0, 2*pi, n);  % n points evenly spaced around the circle
+
+% The radius of the circle is assumed to be 1 for simplicity
+% If you want a different radius, multiply x and y by the radius
+x = cos(theta);  % x coordinate
+y = sin(theta);  % y coordinate
+end

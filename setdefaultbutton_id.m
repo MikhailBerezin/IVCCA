@@ -1,4 +1,4 @@
-function setdefaultbutton(figHandle, btnHandle)
+function setdefaultbutton_id(figHandle, btnHandle)
 % WARNING: This feature is not supported in MATLAB and the API and
 % functionality may change in a future release.
 
