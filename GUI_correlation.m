@@ -48,7 +48,7 @@ elbow_button.Tooltip = 'Determine optimal number of clusters';  % Adding tooltip
 elbow_button.Enable = 'off'; % Initially disabled
 
 % Create the "Dendrogram" button
-cluster_button = uibutton(grid, 'push', 'Text', 'Dendrogram', 'ButtonPushedFcn', {@cluster_callback, f});
+cluster_button = uibutton(grid, 'push', 'Text', 'Dendrogram', 'ButtonPushedFcn', {@dendro_cluster_callback, f});
 cluster_button.Layout.Row = 6; % Position for "Cluster" button
 cluster_button.Layout.Column = 2;
 cluster_button.Tooltip = 'Cluster the correlation matrix with a dendrogram';  % Adding tooltip
@@ -271,7 +271,7 @@ function calculate_correlations_callback(~, ~, f)
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
 %    correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
-    [correlations, p_values] = corr(table2array(data_table), 'Type', 'Pearson');
+    [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson');
 
     % Can be used with Spearman and Kendall
 %   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
@@ -680,7 +680,7 @@ array=[];
   end
 
 %% Perform clustering
-function cluster_callback(~, ~, f)
+function dendro_cluster_callback(~, ~, f)
     % Get the correlations and variable names from the app data
     correlations = getappdata(0, 'correlations');
     correlations = abs(correlations);
