@@ -129,7 +129,7 @@ venn_button.Enable = 'on';
 network_button = uibutton(grid, 'push', 'Text', 'Network analysis', 'ButtonPushedFcn', {@calculate_network_callback, f});
 network_button.Layout.Row = 16; % Position for "Network" button
 network_button.Layout.Column = 2;
-network_button.Tooltip = 'Select a sgingle pathway to generate either a 2D ot 3D network graph';  
+network_button.Tooltip = 'Select a single pathway to generate either a 2D ot 3D network graph';  
 network_button.Enable = 'off';
 %%
 

@@ -5,7 +5,7 @@ compare genes and pathways and perform network analysis. Here is a summary of wh
 
 1. The function creates a GUI window with buttons, a table, and graphs.
 2. The "Load Data" button allows you to select an Excel or CSV file containing the data.
-3. After loading the data, the "Calculate Correlations" button becomes enabled, allowing you to compute the correlation matrix.
+3. After loading the data, the "Correlation" button becomes enabled, allowing you to compute the correlation matrix.
 4. The correlation matrix is displayed in a table within the GUI, and the table is editable.
 5. Once calculated, you can enable the 'Sort' button to sort the correlation matrix based on the magnitudes of the correlations.
 6. The "Sorted Graph" button enables you to visualize the correlation matrix as a heatmap.
@@ -24,10 +24,11 @@ compare genes and pathways and perform network analysis. Here is a summary of wh
 To use the software, you can follow these steps:
 1. Start the GUI_correlation.
 2. The GUI window will appear.
-4. Click the "Load Data" button and select an Excel, CSV or TSV file containing your data. The first raw should have the header (i.e. gene name), the first column should be the names of the sample.
-5. Once the data is loaded, click the "Calculate" button to compute the correlation matrix.
+4. Click the "Load Data" button and select an Excel, CSV or TSV file containing your data. 
+The first raw should have the header (i.e. gene names), the first column should be the names of the sample. All other fields should be numerical 
+5. Once the data is loaded, click the "Correlation" button to compute the correlation matrix.
 6. Other buttons will be activated. 
 
 Detailed manual will be uploaded in Spring 2024.
 
-Cite: 
+Cite: Junwei Du; Leland C. Sudlow; Hridoy Biswas; Joshua D. Mitchell; Shamim Mollah; Mikhail Y. Berezin, Identification Drug Targets for Oxaliplatin-Induced Cardiotoxicity without affecting cancer treatment through Inter Variability Cross-Correlation Analysis (IVCCA), BIORXIV/2024/579390 
