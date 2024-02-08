@@ -6,8 +6,9 @@ The `InterCorrelation` function in MATLAB creates a graphical user interface (GU
 4. The correlation matrix is displayed in a table within the GUI, and the table is editable.
 5. Once calculated, you can enable the "Sort" button to sort the correlation matrix based on the magnitudes of the correlations.
 6. The "Graph" button enables you to visualize the correlation matrix as a heatmap.
-7. The "Cluster" button performs hierarchical clustering after selection a threshold on the correlation matrix and displays a dendrogram.
-8. One hundred highest data with their average absolute correlation values will be displayed in a table.
+7. The "Dendrogram" button performs hierarchical clustering after selection a threshold on the correlation matrix and displays a dendrogram.
+8. 
+
 8. The software provides tooltips for each button, giving additional information.
 9. The GUI includes error handling for incorrect data formats or insufficient columns in the loaded file.
 

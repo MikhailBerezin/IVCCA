@@ -105,7 +105,7 @@ single_to_multipath_button = uibutton(grid, 'push', 'Text', 'Gene to Pathways', 
                                   'ButtonPushedFcn', {@single_to_pathway_correlation_callback_multi_table, f});
 single_to_multipath_button.Layout.Row = 13; 
 single_to_multipath_button.Layout.Column = 2;
-single_to_multipath_button.Tooltip = 'Select a gene and multiple pathways and alculate the correlation of a single gene to multiple pathways';
+single_to_multipath_button.Tooltip = 'Select a gene and multiple pathways and calculate the correlation of a single gene to multiple pathways';
 single_to_multipath_button.Enable = 'off'; 
 
 % Create the "Compare pathways" button
@@ -1134,7 +1134,7 @@ end
     excelFilePath = 'GO terms.xlsx'; 
 
    % Define the Excel file options
-    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx','Kegg terms 340', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
+    excelFileOptions = {'GO terms.xlsx', 'Kegg terms.xlsx', 'Custom_1.xlsx', 'Custom_2.xlsx', 'Custom_3.xlsx'};
     [indx, tf] = listdlg('PromptString', 'Select an Excel file:', ...
                          'SelectionMode', 'single', ...
                          'ListString', excelFileOptions);
@@ -1166,7 +1166,8 @@ end
 
     % Modify the uigetfile call to allow multiple file selection
     [file_names, path_name] = uigetfile(fullfile(lastUsedPath_p, '*.txt'), 'Select one or more text files containing gene names', 'MultiSelect', 'on');
-
+  
+    
     if isequal(file_names, 0)
         disp('User selected Cancel');
         return;
