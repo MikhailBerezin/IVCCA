@@ -16,9 +16,6 @@ nn = 1;
 mm = 2;
 ll = 3;
 
-
-
-
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
     % Retrieve the correlation matrix and gene names from the application data
