@@ -1,4 +1,5 @@
 function pca3(varargin)
+% Berezin Lab 2024
     tic
     
     % Initialize the waitbar
@@ -103,8 +104,7 @@ resultsTable = table(sigma, klValue, 'VariableNames', {'Sigma', 'KL_Divergence'}
 
 % Displaying the table
 disp(resultsTable);
-
-   
+  
     % Use scatter3 for 3D scatter plot of the first three PCA components
     scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25);
     % Adjust the scatter plot position
@@ -121,10 +121,8 @@ disp(resultsTable);
     % Close the waitbar after completing all tasks
     waitbar(1, hWaitBar, 'Completed.');
     close(hWaitBar);
-
-    
+   
     toc
-
 
 % Custom update function for data cursor to show gene names
 function txt = updateDataCursor(~, event_obj, geneNames, score)
@@ -175,10 +173,6 @@ stringBtn = uicontrol('Style', 'pushbutton', 'String', 'Connect to STRING',...
     'Position', [500, 180, 100, 35],... % Adjust position and size as needed
     'Callback', @api_to_string_single); % Define the callback function
 
-% Update and close the waitbar after completing all tasks
-% waitbar(1, hWaitBar, 'Completed.');
-% close(hWaitBar);
-
 global uitableTitle
 uitableTitle = uicontrol('Style', 'text', 'String', 'Selected Genes', ...
     'Position', [622, 537, 150, 20], ... % Position above the uitable
@@ -202,7 +196,6 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score});
 
 % Modify the set command for the brush to include uitableHandle
 set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHandle});
-
 
 % Assuming you have a variable `isHighlightedMode` that is true when in highlighted mode
     function brushedCallback(~, event, geneNames, score, uitableHandle, isHighlightedMode)
@@ -315,14 +308,7 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
 
             % Update the waitbar
             waitbar(1, hWaitBar, 'Updating plot...');
-            close (hWaitBar);
-         
-%             % Update the scatter plot
-%             cla; % Clear the current axes
-%             gscatter(score(:,1), score(:,2), clusterIdx); % Use gscatter for coloring based on clusters
-%             title('PCA visualization with K-means Clustering');
-%             xlabel('Principal component');
-%             ylabel('Principal component 2');
+            close (hWaitBar);         
 
         % Update the scatter plot for 3D
         cla; % Clear the current axes
@@ -331,7 +317,6 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
         xlabel('Principal component 1');
         ylabel('Principal component 2');
         zlabel('Principal component 3'); 
-
 
             % Create a new figure for the clustering results table
             clusterResultsFig = uifigure;
@@ -389,10 +374,10 @@ end
         end
         toc
     end
+
 global nn mm ll
 %% Callback function to clear clusters from the PCA plot
-    function clearClustersCallback(src, event)
-    
+    function clearClustersCallback(src, event)    
 
 % Check if the original scatter plot handle is valid
     if ~isempty(scatterPlot) && isvalid(scatterPlot)
@@ -409,23 +394,14 @@ global nn mm ll
     % Clear the global clusterIdx variable
     clusterIdx = [];
 
-%     % Redraw the original 2D scatter plot
-%     scatterPlot = scatter(score(:,1), score(:,2), sz);
-%     title('PCA visualization');
-%     xlabel('Principal component 1');
-%     ylabel('Principal component 2');
-
-
     % Redraw the scatter plot for 3D
 
- 
         scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25); % Use scatter3 for 3D plot
         title('3D PCA visualization ');
         xlabel('Principal component 1');
         ylabel('Principal component 2');
         zlabel('Principal component 3'); 
-    
-
+   
     % Restore the brush data
     scatterPlot.BrushData = brushData;
 
@@ -450,7 +426,6 @@ global highlightedGenes;
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
 function selectFileCallback(src, event)
-
 
    persistent lastPath; % Declare a persistent variable to store the last used path
     setappdata(0,'cluster',0)
@@ -561,7 +536,6 @@ stdDistance = std(distances);
 meanDensity = mean(densityB);
 medianDensity = median(densityB);
 
-
 % Create a table with two columns and six rows
     metricNames = {'Number of Points','Mean Distance', 'Median Distance', 'Standard Deviation', 'Mean Density', 'Median Density'};
     metricValues = [numPoints,meanDistance, medianDistance, stdDistance, meanDensity, medianDensity]; % Keep numPoints as numeric
@@ -575,8 +549,6 @@ f = uifigure('Name', 'Distribution Summary', 'Position', [100 100 300 250], 'Ico
 disp('Summary of distribution for highlighted genes:');
 t = uitable(f, 'Data', distributionSummary, 'Position', [20 20 260 210]); % Adjust height for additional row
 end
-
-
 
 function updateScatterPlot()
 %     global score highlightedGenes scatterPlot;
@@ -610,9 +582,6 @@ function updateScatterPlot()
     legend(legendEntries, 'Location', 'best');
 end
 
-
-
-
 %% Callback function to clear highlighted points
    function clearHighlightsCallback(src, event)
   
@@ -625,7 +594,6 @@ end
     updateScatterPlot();
 
 end
-
 
 % Resize function
     function resizeFigure(src, ~)
