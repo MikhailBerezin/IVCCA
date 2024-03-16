@@ -1,5 +1,5 @@
 function calculate_pathways_correlation_callback(~, ~, f)
-
+% Berezin Lab 2023
  % Find all open message boxes and close them
     msgBoxes = findall(0, 'Type', 'figure', 'Tag', 'msgbox');
     delete(msgBoxes);
@@ -36,23 +36,10 @@ end
 
 
   % Read data from the selected text files
-%     pathway1_data = textread(fullfile(pathname1, filename1), '%f');
+
     file_path = fullfile(pathname1, filename1);
     pathway1_genes = textread(file_path, '%s');
-%     pathway2_data = textread(fullfile(pathname2, filename2), '%f');
-%     file_path2 = fullfile(pathname2, filename2);
-%     pathway2_genes = textread(file_path2, '%s');
 
-
-% Get all file and concetanate
-
-%%
-%     for i = 1:length(file_name2)
-%     
-%     all_selected_genes{i} = selected_genes;
-%   
-%     end
-%     pathway2_genes = vertcat(all_selected_genes{:});
     
     %%
     % Initialize an empty array to store absolute correlation coefficients
@@ -102,8 +89,7 @@ for i = 1:length(file_name2)
         m=1;
 % Check if either pathway_genes_1 or pathway_genes_2 is empty
         if isempty(pathway_genes_1) || isempty(pathway_genes_2)
-%             h1 = msgbox('One or more of the selected pathways have no genes found in the data. Stopping further calculations.');
-%             set(h1, 'Position', [200 300 width*1.3 height])
+
             tableData{i, 1} = file_name2{i};
             tableData{i, 2} = uint16(num_genes_in_file);
             tableData{i, 3} = 0;  %  num over genes
@@ -179,8 +165,7 @@ for i = 1:length(file_name2)
             tableData{i, 4} = 'N/A'; % overlapping       
             tableData{i, 5} = 0; % cos            
 %             continue
-%             h3 = msgbox('No overlapping genes found between the two pathways.', 'Genes overlap', 'modal');
-%             set(h3, 'Position', [300 200 width height])
+
         else
             % Display the overlapping genes and their count
             overlapping_genes_str = strjoin(overlapping_genes, ', ');%            
@@ -280,7 +265,7 @@ for i = 1:length(file_name2)
             tableData{i, 5} = adjusted_cosine_similarity; % cosine             
 
             pathway_genes_2 = {};
-            pathway_genes_1={};
+            pathway_genes_1 = {};
 end
 % figTitle = 'Compare pathways to ';
  figTitle = ['Compare ' filename1 ' to other pathways' ];
@@ -290,7 +275,7 @@ end
 fig = uifigure('Position', [50, 200, 1000, 400], 'Name', figTitle, 'Icon','Corr_icon.png');
 
 % Create a uitable in the uifigure with the sorted data
-uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number of operlapping genes','Names of the operlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 950, 360]);
+uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes in a pathway','Number of overlapping genes','Names of the overlapping genes', 'Cosine similarity' }, 'Position', [20, 20, 950, 360]);
 
 % Set column width to auto
 % uit.ColumnWidth = {'auto', 'auto', 'auto', 'auto'};
@@ -298,8 +283,5 @@ uit = uitable(fig, 'Data', tableData, 'ColumnName', {'Pathway', 'Number of genes
 
 % Adding sorting functionality
 uit.ColumnSortable = [true, true, true, true, true];
-
-
-
 
 end

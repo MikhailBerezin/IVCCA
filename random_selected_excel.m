@@ -1,10 +1,15 @@
+
+% Berezin Lab 2023
+
+% Generating random set of genes from an excel file
+
 % Load the Excel file
-filename = 'C:\Users\berezinm\Dropbox\Papers\2023 Correlation paper\Heart\Heart 13795 no FDR.xlsx'; % Replace with your file name
+filename = 'your path to excel file.xlsx'; % Replace with your file name
 opts = detectImportOptions(filename);
 data = readtable(filename, opts);
 
-% Ensure there are enough columns to select 1744
-if width(data) < 1744
+% Ensure there are enough columns to select 1744 as an example
+if width(data) < 1744 % replace with your number
     error('The file does not have enough columns.');
 end
 

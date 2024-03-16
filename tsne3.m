@@ -12,7 +12,7 @@ global selectedGene; % Declare the global variable
 
 highlightedGenes = struct('indices', {}, 'colors', {}, 'fileName', {});
 
-outputDir = 'C:\Users\berezinm\Dropbox\Papers\2023 Correlation paper\Heart\Pearson folder'; % Modify with the desired path
+
 
 
 data=  getappdata(0, 'correlations');
@@ -341,6 +341,16 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
             kmeans_table.ColumnSortable(2) = true;
             kmeans_table.ColumnSortable(1) = true;
   % Define a directory to save the cluster files
+  % Open a dialog box for the user to select a folder
+outputDir = uigetdir('C:\', 'Select the Output Directory to Save Clusters');
+
+% Check if the user selected a folder or pressed cancel
+if outputDir == 0
+    error('No folder was selected. Please select a folder.');
+else
+    fprintf('Selected output directory: %s\n', outputDir);
+    % Proceed with your operations using the selected folder
+end
    
     if ~exist(outputDir, 'dir')
        mkdir(outputDir);

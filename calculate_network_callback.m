@@ -1,4 +1,6 @@
+% Berezin Lab
 function calculate_network_callback(~, ~, f)
+
     f.WindowStyle = 'normal';
    
     % Retrieve correlation data and variable names (gene names)
@@ -8,7 +10,8 @@ function calculate_network_callback(~, ~, f)
     % Define a persistent variable to remember the last folder path
     persistent lastPath;
     
-    % Ask the user if they want to filter the gene set
+    % Ask the user if they want to filter the gene set for a specific
+    % pathway
     choice = uiconfirm(f, 'Would you like to filter for the gene set (optional)?', 'Open Gene List', ...
                        'Options', {'Yes', 'No'}, 'DefaultOption', 1, 'CancelOption', 2);
 
@@ -42,8 +45,6 @@ function calculate_network_callback(~, ~, f)
         % If the user chooses 'No', or closes the dialog, proceed without filtering
         disp('Proceeding without gene set filtering.');
     end
-
-
 
     % Define the prompt, title, and default value for the input dialog
     prompt = {'Enter the correlation threshold:'};
@@ -82,8 +83,6 @@ function calculate_network_callback(~, ~, f)
     % Create a table with gene names and their degrees
     resultsTable = table(geneNames', nodeDegree, 'VariableNames', {'GeneName', 'Degree'});
 
-
-
 % Set edge weights based on correlation values
 G.Edges.Weight = abs(G.Edges.Weight); % Using absolute values of correlation
 
@@ -98,7 +97,7 @@ numNodes = numnodes(G);
 
 if strcmp(plotChoice, '2D')
             % Plot the network in 2D with nodes on a circle
-               fig_2d =  figure ('Name','3D Network plot','NumberTitle','off'); % Open a new figure
+               fig_2d =  figure ('Name','2D Network plot','NumberTitle','off'); % Open a new figure
                iconFilePath = fullfile('Corr_icon.png');
             setIcon(fig_2d, iconFilePath);
             [x, y] = circlePoints(numNodes);
