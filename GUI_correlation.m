@@ -195,8 +195,14 @@ function load_data_callback(~, ~, f)
 %             data_table = rows2vars(data_table);
 
             data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t','ReadVariableNames', true);
-            data_table=data_table(1:100, :);
-%             data_table = rows2vars(d);
+            data_table=data_table(1:100,:);
+            data_table =  table2cell(data_table);
+            data_table = cell2table(data_table','VariableNames',data_table(:,1));
+            data_table=data_table(2:end,2:end);
+            %             data_table = array2table(data_table.');
+%             data_table=data_table';
+%             data_table=data_table(1:100,2:100);
+%             data_table = rows2vars(data_table);
 
         else
             data_table = readtable(fullfile(path, file), 'VariableNamingRule', 'preserve');
@@ -204,7 +210,7 @@ function load_data_callback(~, ~, f)
     catch
         c =errordlg('Error reading data. Please check the format of the data file.');
         iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
+        setIcon(c, iconFilePath);
 %         delete(wb) % Close the waitbar if an error occurs
         return
     end
