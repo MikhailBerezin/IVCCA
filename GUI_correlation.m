@@ -189,7 +189,8 @@ function load_data_callback(~, ~, f)
     end
 
     waitbar(0.2, wb, 'Reading data...');
-
+    global Tsv
+    Tsv=0;
     % Read the data from the file
     try
         [fPath, fName, fExt] = fileparts(file);
@@ -201,6 +202,14 @@ function load_data_callback(~, ~, f)
             data_table =  table2cell(data_table);
             data_table = cell2table(data_table','VariableNames',data_table(:,1));
             data_table=data_table(2:end,2:end);
+%              Convert table to array
+%              integerArray = table2array(data_table);
+             
+             % Convert array to integers
+%              integerArray = str2double(integerArray); % You can use other integer types as well, such as int32, int16, etc. if desired
+             
+             % Create a new table from the integer array
+%              data_table = array2table(integerArray, 'VariableNames', data_table.Properties.VariableNames);
             %             data_table = array2table(data_table.');
 %             data_table=data_table';
 %             data_table=data_table(1:100,2:100);
@@ -208,6 +217,7 @@ function load_data_callback(~, ~, f)
 
 
 %             data_table = data_table(1:100, :);
+               Tsv=1;
 
         else
             data_table = readtable(fullfile(path, file), 'VariableNamingRule', 'preserve');
@@ -269,6 +279,7 @@ end
 
 %% Define the "Calculate Correlations" callback function
 function calculate_correlations_callback(~, ~, f)
+    global Tsv
     f.WindowStyle = 'normal';
     uifigureOnTop (f, false)
 
@@ -286,8 +297,11 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-%    correlations = corrcoef(table2array(data_table)).^1; % Pearson correlation
-    [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson');
+    if Tsv~=1
+    [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson'); % Pearson correlation
+    else
+    [correlations, p_values] = corr((cell2mat(table2array(data_table))).^1, 'Type', 'Pearson');
+    end
 
     % Can be used with Spearman and Kendall
 %   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
