@@ -161,6 +161,7 @@ f.CloseRequestFcn = @customCloseRequest;
 
 %% This function removes the rows with missing numbers
 function load_data_callback(~, ~, f)
+    tic
     % Define a persistent variable to store the last used path
     persistent lastUsedPath
 
@@ -177,7 +178,7 @@ function load_data_callback(~, ~, f)
     waitbar(0.1, wb, 'Selecting file...');
 
     % Modify the uigetfile call to start in the last used directory
-    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx;*.tsv'), 'Select a data file');
+    [file, path] = uigetfile(fullfile(lastUsedPath, '*.xlsx;*.tsv'), 'Select data file');
 
     % Check if the user canceled the file selection
     if isequal(file, 0)
@@ -198,26 +199,59 @@ function load_data_callback(~, ~, f)
         if strcmp(fExt, '.tsv')
             data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t','ReadVariableNames', true);
 
-            data_table=data_table(1:100,:);
+            data_table=data_table(1695:end,:); % filter number of genes data_table=data_table(1:500,1:50) equiv to 500 genes for 50 people
             data_table =  table2cell(data_table);
             data_table = cell2table(data_table','VariableNames',data_table(:,1));
-            data_table=data_table(2:end,2:end);
-%              Convert table to array
-%              integerArray = table2array(data_table);
-             
-             % Convert array to integers
-%              integerArray = str2double(integerArray); % You can use other integer types as well, such as int32, int16, etc. if desired
-             
-             % Create a new table from the integer array
-%              data_table = array2table(integerArray, 'VariableNames', data_table.Properties.VariableNames);
-            %             data_table = array2table(data_table.');
-%             data_table=data_table';
-%             data_table=data_table(1:100,2:100);
-%             data_table = rows2vars(data_table);
+%           data_table=data_table(2:end,2:end);
 
+    % Check if conversion from ENSG ID to gene name is needed
 
-%             data_table = data_table(1:100, :);
-               Tsv=1;
+            % Assuming data_table is a table and you want to work with its first row
+            numColumns = width(data_table); % Get the number of columns in the table
+            
+            % If the genes are in the first row of your data table, convert the table to a cell array first
+            data_table_cell = table2cell(data_table);
+            
+            % Assuming data_table_cell contains the first row with ENSG IDs and the conversion loop is set up
+            numColumns = size(data_table_cell, 2); % Get the number of columns
+            
+            % Initialize an empty cell array to store conversion records
+            conversionTable = {};
+            
+            for i = 1:numColumns
+                cellContent = data_table_cell{1, i}; % Get cell content from the first row
+                cellContentStr = string(cellContent); % Ensure it's treated as a string
+%                 fprintf('Processing %s\n', cellContentStr);
+                if startsWith(cellContentStr, 'ENSG')
+                    % If it's an ENSG ID, attempt to convert it
+                    convertedName = getGeneNameFromENSG(cellContentStr);
+                    if ~strcmp(convertedName, 'Not found')
+                        data_table_cell{1, i} = convertedName; % Update with converted name
+                        
+                        % Append the conversion record to the conversionTable
+                        conversionTable(end+1, :) = {cellContentStr, convertedName};
+                    else
+                        % Even if not found, log the attempt
+                        conversionTable(end+1, :) = {cellContentStr, 'Conversion failed'};
+                    end
+                end
+            end
+            
+            % After all conversions, print the conversion table
+            fprintf('\nConversion Table:\n');
+            fprintf('--------------------------------------\n');
+            fprintf('%-20s | %-20s\n', 'ENSG ID', 'Gene Name');
+            fprintf('--------------------------------------\n');
+            for j = 1:size(conversionTable, 1)
+                fprintf('%-20s | %-20s\n', conversionTable{j, 1}, conversionTable{j, 2});
+            end
+            fprintf('--------------------------------------\n');
+            
+            % After conversion, recreate the table with updated column names
+            data_table = cell2table(data_table_cell(2:end,:), 'VariableNames',data_table_cell(1,:));
+            % data_table=data_table(2:end,2:end);
+            Tsv=1;   
+               
 
         else
             data_table = readtable(fullfile(path, file), 'VariableNamingRule', 'preserve');
@@ -227,14 +261,16 @@ function load_data_callback(~, ~, f)
         iconFilePath = fullfile('Corr_icon.png');
         setIcon(c, iconFilePath);
 
-%         delete(wb) % Close the waitbar if an error occurs
-
         delete(wb); % Close the waitbar if an error occurs
 
         return
     end
 
     waitbar(0.5, wb, 'Handling gene list...');
+    
+
+
+
 
     % Ask the user to open a new file for the gene list
     choice = uiconfirm(f, 'Would you like to filter for the gene set (Optional)?', 'Open Gene List', ...
@@ -274,11 +310,13 @@ function load_data_callback(~, ~, f)
 
     % Close the waitbar
     delete(wb);
+    toc
 end
 
 
 %% Define the "Calculate Correlations" callback function
 function calculate_correlations_callback(~, ~, f)
+    tic
     global Tsv
     f.WindowStyle = 'normal';
     uifigureOnTop (f, false)
@@ -297,11 +335,12 @@ function calculate_correlations_callback(~, ~, f)
     
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-    if Tsv~=1
-    [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson'); % Pearson correlation
-    else
-    [correlations, p_values] = corr((cell2mat(table2array(data_table))).^1, 'Type', 'Pearson');
-    end
+%     if Tsv==1
+%     [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson'); % Pearson correlation
+%     else
+    [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson'); % Pearson correlation    
+%     [correlations, p_values] = corr((cell2mat(table2array(data_table))).^1, 'Type', 'Pearson');
+%     end
 
     % Can be used with Spearman and Kendall
 %   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
@@ -385,7 +424,7 @@ function calculate_correlations_callback(~, ~, f)
     yticks(1:length(data_table.Properties.VariableNames));
     xticklabels(data_table.Properties.VariableNames);
     yticklabels(data_table.Properties.VariableNames);
-    
+  toc  
 end
 
 %% Define the "Graph" callback function
@@ -440,6 +479,7 @@ end
 
 %% Define the "Sort" callback function
 function sort_callback(~, ~, f)
+    tic
     f.WindowStyle = 'normal';
         % Initialize the waitbar
     hWaitBar = waitbar(0, 'Initializing...');
@@ -564,7 +604,7 @@ sorted_data.ColumnSortable(1) = true;
 sorted_data.ColumnSortable(2) = true;
 
 graph_button.Enable = 'on'; 
-    
+ toc   
 end
 
     function sort_path_callback(~, ~, f)
