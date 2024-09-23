@@ -199,60 +199,14 @@ function load_data_callback(~, ~, f)
         if strcmp(fExt, '.tsv')
             data_table = readtable(fullfile(path, file), "FileType", "text", 'Delimiter', '\t','ReadVariableNames', true);
 
-            data_table=data_table(1695:end,:); % filter number of genes data_table=data_table(1:500,1:50) equiv to 500 genes for 50 people
-            data_table =  table2cell(data_table);
+            data_table = data_table(1695:end,:); % filter number of genes
+            data_table = table2cell(data_table);
             data_table = cell2table(data_table','VariableNames',data_table(:,1));
-%           data_table=data_table(2:end,2:end);
-
-    % Check if conversion from ENSG ID to gene name is needed
-
-            % Assuming data_table is a table and you want to work with its first row
-            numColumns = width(data_table); % Get the number of columns in the table
-            
-            % If the genes are in the first row of your data table, convert the table to a cell array first
-            data_table_cell = table2cell(data_table);
-            
-            % Assuming data_table_cell contains the first row with ENSG IDs and the conversion loop is set up
-            numColumns = size(data_table_cell, 2); % Get the number of columns
-            
-            % Initialize an empty cell array to store conversion records
-            conversionTable = {};
-            
-            for i = 1:numColumns
-                cellContent = data_table_cell{1, i}; % Get cell content from the first row
-                cellContentStr = string(cellContent); % Ensure it's treated as a string
-%                 fprintf('Processing %s\n', cellContentStr);
-                if startsWith(cellContentStr, 'ENSG')
-                    % If it's an ENSG ID, attempt to convert it
-                    convertedName = getGeneNameFromENSG(cellContentStr);
-                    if ~strcmp(convertedName, 'Not found')
-                        data_table_cell{1, i} = convertedName; % Update with converted name
-                        
-                        % Append the conversion record to the conversionTable
-                        conversionTable(end+1, :) = {cellContentStr, convertedName};
-                    else
-                        % Even if not found, log the attempt
-                        conversionTable(end+1, :) = {cellContentStr, 'Conversion failed'};
-                    end
-                end
-            end
-            
-            % After all conversions, print the conversion table
-            fprintf('\nConversion Table:\n');
-            fprintf('--------------------------------------\n');
-            fprintf('%-20s | %-20s\n', 'ENSG ID', 'Gene Name');
-            fprintf('--------------------------------------\n');
-            for j = 1:size(conversionTable, 1)
-                fprintf('%-20s | %-20s\n', conversionTable{j, 1}, conversionTable{j, 2});
-            end
-            fprintf('--------------------------------------\n');
-            
+            data_table_cell = data_table;
+            % Gene name conversion code here...
             % After conversion, recreate the table with updated column names
             data_table = cell2table(data_table_cell(2:end,:), 'VariableNames',data_table_cell(1,:));
-            % data_table=data_table(2:end,2:end);
-            Tsv=1;   
-               
-
+            Tsv = 1;
         else
             data_table = readtable(fullfile(path, file), 'VariableNamingRule', 'preserve');
         end
@@ -260,17 +214,15 @@ function load_data_callback(~, ~, f)
         c = errordlg('Error reading data. Please check the format of the data file.');
         iconFilePath = fullfile('Corr_icon.png');
         setIcon(c, iconFilePath);
-
         delete(wb); % Close the waitbar if an error occurs
-
         return
     end
 
     waitbar(0.5, wb, 'Handling gene list...');
-    
 
-
-
+        % Store the file name and extension in the app data for later use
+    setappdata(f, 'fileName', fName);
+    setappdata(f, 'fileExt', fExt);
 
     % Ask the user to open a new file for the gene list
     choice = uiconfirm(f, 'Would you like to filter for the gene set (Optional)?', 'Open Gene List', ...
@@ -279,8 +231,8 @@ function load_data_callback(~, ~, f)
     % Handle response
     if strcmp(choice, 'Yes')
         % Load gene list from a text file
-        uifigureOnTop(f, false)
-        [geneFile, genePath] = uigetfile('*.txt', 'Select the gene list file', lastUsedPath); % Start in the last used directory
+        uifigureOnTop(f, false);
+        [geneFile, genePath] = uigetfile('*.txt', 'Select the gene list file', lastUsedPath);
         if ~isequal(geneFile, 0)
             geneList = readlines(fullfile(genePath, geneFile));
             geneList = lower(geneList); % Convert gene list to lower case
@@ -306,7 +258,10 @@ function load_data_callback(~, ~, f)
 
     % Save the data table to the app data
     setappdata(f, 'data_table', data_table);
-    uifigureOnTop(f, true) 
+    uifigureOnTop(f, true);
+
+    % Update the figure title with the selected file name
+    f.Name = ['IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab) - ' fName fExt];
 
     % Close the waitbar
     delete(wb);
@@ -319,43 +274,39 @@ function calculate_correlations_callback(~, ~, f)
     tic
     global Tsv
     f.WindowStyle = 'normal';
-    uifigureOnTop (f, false)
+    uifigureOnTop(f, false);
 
     % Get the data table from the app data
     data_table = getappdata(f, 'data_table');
 
+      % Get the file name and extension from the app data
+    fName = getappdata(f, 'fileName');
+    fExt = getappdata(f, 'fileExt');
+
     % Ignore the first column
-     data_table(:, 1) = [];
+    data_table(:, 1) = [];
 
     % Initialize the waitbar
     wb = waitbar(0, 'Calculating correlations...', 'Name', 'Processing', 'CreateCancelBtn', 'setappdata(gcbf,''canceling'',1)');
     iconFilePath = fullfile('Corr_icon.png');
     setIcon(wb, iconFilePath);
-    setappdata(wb, 'canceling', 0)
-    
+    setappdata(wb, 'canceling', 0);
+
     % Calculate the pairwise correlations
     waitbar(0.2, wb, 'Calculating correlations...');
-%     if Tsv==1
-%     [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson'); % Pearson correlation
-%     else
     [correlations, p_values] = corr((table2array(data_table)).^1, 'Type', 'Pearson'); % Pearson correlation    
-%     [correlations, p_values] = corr((cell2mat(table2array(data_table))).^1, 'Type', 'Pearson');
-%     end
 
-    % Can be used with Spearman and Kendall
-%   correlations= corr(table2array(data_table), 'Type', 'Kendall'); %
-
-        % Check for Cancel button press
+    % Check for Cancel button press
     if getappdata(wb, 'canceling')
-        delete(wb)
-        return
+        delete(wb);
+        return;
     end
     
     waitbar(1, wb, 'Done calculating correlations');
-    pause(1) % For user to notice the message
-    delete(wb) % Close waitbar dialog box  
+    pause(1); % For user to notice the message
+    delete(wb); % Close waitbar dialog box  
 
-     % Find and print NaN values
+    % Find and print NaN values
     [nan_rows, nan_cols] = find(isnan(correlations));
     if ~isempty(nan_rows)
         disp('NaN correlations found at:');
@@ -365,30 +316,29 @@ function calculate_correlations_callback(~, ~, f)
     end
 
     % Set the results in the GUI
-    f.Name = ['IVCCA: Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
-    
+  f.Name = ['IVCCA: Correlation Matrix (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ') - ' fName fExt];
+
     % Update the data in the existing uitable instead of creating a new one
     data.Data = correlations;
     data.ColumnName = data_table.Properties.VariableNames;
     data.RowName = data_table.Properties.VariableNames;
-    
+
     % Keep the first column editable after updating the data
     columnEditable = false(1, size(correlations, 2));
     columnEditable(1) = true;
-    data.ColumnEditable = columnEditable;    
+    data.ColumnEditable = columnEditable;
 
     % Save the correlations to the app data
     setappdata(0, 'correlations', correlations);
     setappdata(0, 'p_values', p_values);
     setappdata(0, 'variable_names', data_table.Properties.VariableNames);
-    
+
     % Enable buttons
-     
     sort_button.Enable = 'on';
     sort_path_button.Enable = 'on';
     elbow_button.Enable = 'on';
     sort_mpath_button.Enable = 'on';
-    cluster_button.Enable = 'on'; 
+    cluster_button.Enable = 'on';
     pca_button.Enable = 'on';
     single_to_group_button.Enable = 'on';
     single_to_path_button.Enable = 'on';
@@ -400,19 +350,17 @@ function calculate_correlations_callback(~, ~, f)
 
     f.WindowStyle = 'normal';
 
-%% Show histogram and heatmap
-%  Create a figure for the histogram
-
-    fig_distr = figure ('Name', 'IVCCA: Correlation Histogram', 'NumberTitle', 'off','Position',[100 300 400 400]);
+    %% Show histogram and heatmap
+    % Create a figure for the histogram
+    fig_distr = figure('Name', 'IVCCA: Correlation Histogram', 'NumberTitle', 'off', 'Position', [100 300 400 400]);
     iconFilePath = fullfile('Corr_icon.png');
     setIcon(fig_distr, iconFilePath);
-    histogram (correlations)
+    histogram(correlations);
     title('Correlation Histogram');
     xlabel('Pairwise Correlation Coefficient, q');
     ylabel('Number of genes');
 
-%   Create a figure for the heatmap
-    
+    % Create a figure for the heatmap
     fig_heatmap = figure('Name', 'IVCCA: Correlation Heatmap', 'NumberTitle', 'off', 'Position', [100, 100, 400, 400]);
     iconFilePath = fullfile('Corr_icon.png');
     setIcon(fig_heatmap, iconFilePath);
@@ -424,8 +372,10 @@ function calculate_correlations_callback(~, ~, f)
     yticks(1:length(data_table.Properties.VariableNames));
     xticklabels(data_table.Properties.VariableNames);
     yticklabels(data_table.Properties.VariableNames);
-  toc  
+
+    toc;
 end
+
 
 %% Define the "Graph" callback function
 function graph_callback(~, ~, f)    

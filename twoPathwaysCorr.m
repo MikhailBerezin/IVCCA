@@ -31,7 +31,7 @@ function createCorrelationGUI()
 
     % Function to load Data A
     function loadDataA()
-        [file, path] = uigetfile('*.csv');
+        [file, path] = uigetfile('*.csv', '*.xlsx');
         if isequal(file, 0)
             disp('User selected Cancel');
         else

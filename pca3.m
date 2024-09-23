@@ -106,7 +106,7 @@ resultsTable = table(sigma, klValue, 'VariableNames', {'Sigma', 'KL_Divergence'}
 disp(resultsTable);
   
     % Use scatter3 for 3D scatter plot of the first three PCA components
-    scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 25);
+    scatterPlot = scatter3(score(:,nn), score(:,mm), score(:,ll), 10);
     % Adjust the scatter plot position
         set(gca, 'Position', [0.1, 0.1, 0.50, 0.8]);
     title('3D PCA visualization');
@@ -141,6 +141,8 @@ end
 btn = uicontrol('Style', 'pushbutton', 'String', 'Cluster',...
     'Position', [500,480,100,35],... % Adjust position and size as needed
     'Callback', {@clusterCallback, data, score, geneNames}); % Pass data, score, and geneNames to the callback
+% Store the button handle in the figure's application data
+setappdata(gcf, 'btnHandle', btn);
 
 % Create a push button for clearing clusters
 clearClusterBtn = uicontrol('Style', 'pushbutton', 'String', 'Clear Clusters',...
@@ -599,8 +601,24 @@ end
     function resizeFigure(src, ~)
         figPos = get(src, 'Position');
 
+
+ % Ensure figPos has the expected size
+        if numel(figPos) < 4
+            error('figPos does not have enough elements.');
+        end
+
+        % Retrieve the button handle from the figure's application data
+        btn = getappdata(src, 'btnHandle');
+        
+        if ishandle(btn)
+            set(btn, 'Position', [figPos(3)-300, figPos(4)-120, 100, 35]);
+        else
+            error('Button handle is not valid.');
+        end
+        
+
         % Adjust button positions based on figure size
-        set(btn, 'Position', [figPos(3)-300, figPos(4)-120, 100, 35]);
+%         set(btn, 'Position', [figPos(3)-300, figPos(4)-120, 100, 35]);
         set(clearClusterBtn, 'Position', [figPos(3)-300, figPos(4)-160, 100, 35]);
         set(selectFileBtn, 'Position', [figPos(3)-300, figPos(4)-200, 100, 35]);
         set(clearBtn, 'Position', [figPos(3)-300, figPos(4)-240, 100, 35]);
