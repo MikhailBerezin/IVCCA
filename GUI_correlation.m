@@ -316,7 +316,10 @@ function calculate_correlations_callback(~, ~, f)
     end
 
     % Set the results in the GUI
-  f.Name = ['IVCCA: Correlation Matrix (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ') - ' fName fExt];
+    % Get the file name and extension from the app data
+    fName = getappdata(f, 'fileName');
+    fExt = getappdata(f, 'fileExt');
+    f.Name = ['IVCCA: Correlation Matrix (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ') - ' fName fExt];
 
     % Update the data in the existing uitable instead of creating a new one
     data.Data = correlations;
@@ -502,7 +505,11 @@ correlations = fillmissing(correlations, 'constant', 0);
     close(hWaitBar);
 
     % Set the results in the GUI
-    f.Name = ['IVCCA: Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
+
+    fName = getappdata(f, 'fileName');
+    fExt = getappdata(f, 'fileExt');
+%     f.Name = ['IVCCA: Sorted Correlation Matrix: (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ')'];
+     f.Name = ['IVCCA: Correlation Matrix (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ') - ' fName fExt];
 
   % List of average correlations
     total_genes = sqrt(numel(correlations));
@@ -969,43 +976,43 @@ function single_to_group_correlation_callback(~, ~, f)
     % Get the data table from the app data
     data_table = getappdata(f, 'data_table');
 
-   % Ask the user for the name of the single gene
-single_gene_name = inputdlg_id('Enter the name of the single gene:');
-if isempty(single_gene_name)
-    c = errordlg('No gene name was provided.');
-    iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
-    return;
-end
-single_gene_name = single_gene_name{1};
+    % Ask the user for the name of the single gene
+    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    if isempty(single_gene_name)
+        c = errordlg('No gene name was provided.');
+        iconFilePath = fullfile('Corr_icon.png');
+        setIcon(c, iconFilePath);
+        return;
+    end
+    single_gene_name = single_gene_name{1};
 
-% Convert both input and variable names in the data table to lowercase for case-insensitive comparison
-single_gene_name_lower = single_gene_name;
-data_table_variable_names_lower = data_table.Properties.VariableNames;
+    % Convert both input and variable names in the data table to lowercase for case-insensitive comparison
+    single_gene_name_lower = single_gene_name;
+    data_table_variable_names_lower = data_table.Properties.VariableNames;
 
-% Validate if the single gene name exists in the data, ignoring case
-single_gene_index = find(strcmpi(data_table_variable_names_lower, single_gene_name_lower));
-if isempty(single_gene_index)
-    c = errordlg('The specified gene was not found in the data.');
-    iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
-    return;
-end
+    % Validate if the single gene name exists in the data, ignoring case
+    single_gene_index = find(strcmpi(data_table_variable_names_lower, single_gene_name_lower));
+    if isempty(single_gene_index)
+        c = errordlg('The specified gene was not found in the data.');
+        iconFilePath = fullfile('Corr_icon.png');
+        setIcon(c, iconFilePath);
+        return;
+    end
 
-    % Ask the user for the names of the group of genes (could be via a list box or another method)
+    % Ask the user for the names of the group of genes
     [group_gene_indices, group_gene_names] = listdlg('ListString',data_table.Properties.VariableNames, ...
                                                      'SelectionMode','multiple', ...
                                                      'PromptString',{'Select the group of genes:'});
-group_gene_names={};
-for i=1:length(group_gene_indices)
-    k=group_gene_indices(i);
-    group_gene_names{i}=data_table.Properties.VariableNames{k};
-end
+    group_gene_names = {};
+    for i = 1:length(group_gene_indices)
+        k = group_gene_indices(i);
+        group_gene_names{i} = data_table.Properties.VariableNames{k};
+    end
 
     if isempty(group_gene_indices)
-       c = errordlg('No genes were selected.');
+        c = errordlg('No genes were selected.');
         iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
+        setIcon(c, iconFilePath);
         return;
     end
 
@@ -1015,39 +1022,45 @@ end
 
     % Calculate the correlation between the single gene and the group of genes
     single_to_group_correlations = arrayfun(@(idx) corr(single_gene_data, group_genes_data(:, idx)), 1:size(group_genes_data, 2));
-    
-    % Calculate the average of the absolute values of the correlation coefficients
-    avg_abs_correlation = mean(abs(single_to_group_correlations));
-    
-    % Display or plot the results
-   fig_gene_to_gene =  figure ('Name', 'IVCCA: Single gene to other genes', 'NumberTitle', 'off');
+
+    % Create a table to store the correlations with gene names
+    correlation_table = table(group_gene_names', single_to_group_correlations', 'VariableNames', {'Gene', 'Correlation'});
+
+    % Sort the correlations in descending order
+    correlation_table = sortrows(correlation_table, 'Correlation', 'descend');
+
+    % Plot the sorted correlations
+    fig_gene_to_gene = figure('Name', 'IVCCA: Single gene to other genes', 'NumberTitle', 'off');
     iconFilePath = fullfile('Corr_icon.png');
     setIcon(fig_gene_to_gene, iconFilePath);
 
-hold on; % Hold on to the current figure
-for i = 1:length(single_to_group_correlations)
-    if single_to_group_correlations(i) < 0
-        bar(i, single_to_group_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
-    else
-        bar(i, single_to_group_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
-    end
-end
+    bar(correlation_table.Correlation, 'FaceColor', [0.2 0.2 0.8], 'EdgeColor', 'k'); % Use a single color for simplicity
+    hold on;
+    negative_indices = correlation_table.Correlation < 0;
+    bar(find(negative_indices), correlation_table.Correlation(negative_indices), 'FaceColor', 'r', 'EdgeColor', 'k'); % Highlight negative correlations
+
+    % Add labels and formatting
+    title(sprintf('Correlation of %s to Selected Genes', single_gene_name));
+    ylabel('Correlation Coefficient');
+    xticks(1:height(correlation_table));
+    xticklabels(correlation_table.Gene);
+    xtickangle(45);
+    set(gcf, 'Position', [200, 200, 800, 600]);
 
     % Include the average of the absolute correlations in the title
-    title_str = sprintf('Correlation of %s to selected group of genes (Avg. Abs. Corr. = %.2f)', single_gene_name, avg_abs_correlation);
-    title(title_str);
-    
-    ylabel('Correlation Coefficient');
-    xticks(1:length(group_gene_names));
-    xticklabels(group_gene_names);
-    xtickangle(45); % Angle the labels for readability
-    set(gcf, 'Position', [200, 200, 700, 500]); 
-   
-end   
+    avg_abs_correlation = mean(abs(correlation_table.Correlation));
+    annotation('textbox', [0.15, 0.85, 0.3, 0.1], 'String', ...
+               sprintf('Avg. Abs. Corr. = %.2f', avg_abs_correlation), ...
+               'EdgeColor', 'none', 'FontSize', 12, 'FontWeight', 'bold');
+end
+
+
+
+
     
 %% Define a callback function for calculating single gene-to-pathway correlations
 function single_to_pathway_correlation_callback(~, ~, f)
-   % Define a persistent variable to store the last used directory
+    % Define a persistent variable to store the last used directory
     persistent last_used_directory;
 
     % Get the data table from the app data
@@ -1058,7 +1071,7 @@ function single_to_pathway_correlation_callback(~, ~, f)
     if isempty(single_gene_name)
         c = errordlg('No gene name was provided.');
         iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
+        setIcon(c, iconFilePath);
         return;
     end
     single_gene_name = single_gene_name{1};
@@ -1072,7 +1085,7 @@ function single_to_pathway_correlation_callback(~, ~, f)
     if isempty(single_gene_index)
         c = errordlg('The specified gene was not found in the data.');
         iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
+        setIcon(c, iconFilePath);
         return;
     end
 
@@ -1088,13 +1101,12 @@ function single_to_pathway_correlation_callback(~, ~, f)
     else
         last_used_directory = path; % Update the last used directory
     end
-    
+
     % Read the list of genes from the file
     fileID = fopen(fullfile(path, file), 'r');
     genes_list = textscan(fileID, '%s');
     fclose(fileID);
     genes_list = genes_list{1}; % Convert from cell array to simple string array
-
 
     % Find the indices of the genes in the list that are present in the data
     [~, pathway_gene_indices] = ismember(genes_list, data_table.Properties.VariableNames);
@@ -1107,44 +1119,38 @@ function single_to_pathway_correlation_callback(~, ~, f)
     % Calculate the correlation between the single gene and each gene in the pathway
     single_to_pathway_correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
 
-    % Calculate the average of the absolute values of the correlation coefficients
-    avg_abs_correlation = mean(abs(single_to_pathway_correlations));
+    % Create a table to store the correlations with gene names
+    correlation_table = table(data_table.Properties.VariableNames(pathway_gene_indices)', ...
+                               single_to_pathway_correlations', ...
+                               'VariableNames', {'Gene', 'Correlation'});
 
-    % Display the results
-    fig_g_to_path =  figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
+    % Sort the correlations in descending order
+    correlation_table = sortrows(correlation_table, 'Correlation', 'descend');
+
+    % Plot the sorted correlations
+    fig_g_to_path = figure('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
     iconFilePath = fullfile('Corr_icon.png');
     setIcon(fig_g_to_path, iconFilePath);
 
-% Display the results with color coding
+    bar(correlation_table.Correlation, 'FaceColor', [0.2 0.2 0.8], 'EdgeColor', 'k'); % Use a single color for simplicity
+    hold on;
+    negative_indices = correlation_table.Correlation < 0;
+    bar(find(negative_indices), correlation_table.Correlation(negative_indices), 'FaceColor', 'r', 'EdgeColor', 'k'); % Highlight negative correlations
 
-hold on; 
-for i = 1:length(single_to_pathway_correlations)
-    if single_to_pathway_correlations(i) < 0
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
-    else
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
-    end
-    name{i}=data_table.Properties.VariableNames{pathway_gene_indices(i)};
+    % Add labels and formatting
+    escaped_single_gene_name = strrep(single_gene_name, '_', '\_');
+    escaped_file_name = strrep(file, '_', '\_');
+    title_str = sprintf('Correlation of %s to genes in %s (Avg. Abs. Corr. = %.2f)', ...
+                        escaped_single_gene_name, escaped_file_name, ...
+                        mean(abs(correlation_table.Correlation)));
+    title(title_str);
+    ylabel('Correlation Coefficient');
+    xticks(1:height(correlation_table));
+    xticklabels(correlation_table.Gene);
+    xtickangle(45);
+    set(gcf, 'Position', [200, 200, 700, 500]);
 end
 
-
-hold off; 
-
-% Include the file name and the average of the absolute correlations in the title
-
-% Escape underscores to avoid them being interpreted as subscripts
-escaped_single_gene_name = strrep(single_gene_name, '_', '\_');
-escaped_file_name = strrep(file, '_', '\_');
-title_str = sprintf('Correlation of %s to genes in %s (Avg. Abs. Corr. = %.2f)', escaped_single_gene_name, escaped_file_name, avg_abs_correlation);
-title(title_str);
-
-ylabel('Correlation Coefficient');
-xticks(1:length(pathway_genes_data));
-xticklabels(name);
-xtickangle(45); % Angle the labels for readability
-set(gcf, 'Position', [200, 200, 700, 500]); 
-
-end
 
     function sort_mpath_callback(~, ~, f)
     f.WindowStyle = 'normal';
