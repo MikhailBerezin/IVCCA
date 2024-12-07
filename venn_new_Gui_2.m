@@ -10,7 +10,7 @@ mainGuiHandle = fig;
 
 
     % Create a grid layout
-    gl = uigridlayout(fig, [4 3], 'ColumnWidth', {'1x', '1x', '1x'}, 'RowHeight', {'1x', '1x', '1x', '1x'});
+    gl = uigridlayout(fig, [4 4], 'ColumnWidth', {'1x', '1x', '1x', '1x'}, 'RowHeight', {'1x', '1x', '1x', '1x'});
     
     % Create properties for storing file paths
     filePaths = strings(2,1);
@@ -43,6 +43,15 @@ mainGuiHandle = fig;
     btn3.Layout.Column = 3;
     btn3.ButtonPushedFcn = @(btn,event) drawOverlap();
 
+    % Create a button for copying the image to clipboard
+btnCopyImage = uibutton(gl, 'Text', 'Copy Image');
+btnCopyImage.Layout.Row = 1;
+btnCopyImage.Layout.Column = 4;
+btnCopyImage.ButtonPushedFcn = @copyImageToClipboard;
+
+
+
+
    % Create a label for displaying the results
 fileNameLabels(3) = uilabel(gl, 'Text', '', 'FontSize',8, 'WordWrap','on');
 fileNameLabels(3).Layout.Row = 2;
@@ -61,7 +70,13 @@ ax.Color = fig.Color; % Match the color to the figure background
 ax.Box = 'off'; % Turn off the box surrounding the axes
 
 
-
+function copyImageToClipboard(~, ~)
+    % Capture the current axes as an image
+    frame = getframe(ax);
+    image = frame2im(frame);
+    imclipboard('copy', image);
+    uialert(fig, 'Image copied to clipboard.', 'Success');
+end
 
 
     % Create a table for displaying the overlapping genes
