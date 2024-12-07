@@ -314,6 +314,21 @@ function calculate_correlations_callback(~, ~, f)
             fprintf('Row: %d, Column: %d\n', nan_rows(i), nan_cols(i));
         end
     end
+    % Set the results in the GUI
+    % Get the file name and extension from the app data
+    fName = getappdata(f, 'fileName');
+    fExt = getappdata(f, 'fileExt');
+    f.Name = ['IVCCA: Correlation Matrix (' num2str(size(correlations, 1)) ' x ' num2str(size(correlations, 2)) ') - ' fName fExt];
+
+    % Update the data in the existing uitable instead of creating a new one
+    data.Data = correlations;
+    data.ColumnName = data_table.Properties.VariableNames;
+    data.RowName = data_table.Properties.VariableNames;
+
+    % Keep the first column editable after updating the data
+    columnEditable = false(1, size(correlations, 2));
+    columnEditable(1) = true;
+    data.ColumnEditable = columnEditable;
 
     % Save the correlations to the app data
     setappdata(0, 'correlations', correlations);
@@ -1051,107 +1066,103 @@ end
     
 %% Define a callback function for calculating single gene-to-pathway correlations
 function single_to_pathway_correlation_callback(~, ~, f)
-   % Define a persistent variable to store the last used directory
+    % Callback to compute correlations between a single gene and pathway genes.
     persistent last_used_directory;
 
-    % Get the data table from the app data
+    % Get the data table
     data_table = getappdata(f, 'data_table');
+    if isempty(data_table)
+        errordlg('Data table not found in app data.');
+        return;
+    end
 
-    % Ask the user for the name of the single gene
+    % Get the single gene name
     single_gene_name = inputdlg_id('Enter the name of the single gene:');
     if isempty(single_gene_name)
+         c = errordlg('No gene name was provided.');
+        iconFilePath = fullfile('Corr_icon.png');
+        setIcon(c, iconFilePath);
+        return;
+    end
+    single_gene_name = strtrim(single_gene_name{1});
+
+    % Validate the gene name
+    single_gene_index = find(strcmpi(data_table.Properties.VariableNames, single_gene_name));
+    if isempty(single_gene_index)
         c = errordlg('No gene name was provided.');
         iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
-        return;
-    end
-    single_gene_name = single_gene_name{1};
-
-    % Convert both the input and the data table gene names to lower case for comparison
-    single_gene_name_lower = single_gene_name;
-    data_table_gene_names_lower = data_table.Properties.VariableNames;
-
-    % Validate if the single gene name exists in the data, ignoring case
-    single_gene_index = find(strcmpi(data_table_gene_names_lower, single_gene_name_lower));
-    if isempty(single_gene_index)
-        c = errordlg('The specified gene was not found in the data.');
-        iconFilePath = fullfile('Corr_icon.png');
-    setIcon(c, iconFilePath);
+        setIcon(c, iconFilePath);
         return;
     end
 
-    % Check if the last used directory is still valid
+    % Choose a file
     if isempty(last_used_directory) || ~isfolder(last_used_directory)
-        last_used_directory = pwd; % Use the current working directory if no valid last directory
+        last_used_directory = pwd;
     end
-
-    % Ask the user for the txt file containing the list of genes
-    [file, path] = uigetfile([last_used_directory, '/*.txt'], 'Select the txt file with the list of genes');
+    [file, path] = uigetfile([last_used_directory, '/*.txt'], 'Select a gene list file');
     if isequal(file, 0)
         return;
-    else
-        last_used_directory = path; % Update the last used directory
     end
-    
-    % Read the list of genes from the file
-    fileID = fopen(fullfile(path, file), 'r');
-    genes_list = textscan(fileID, '%s');
-    fclose(fileID);
-    genes_list = genes_list{1}; % Convert from cell array to simple string array
+    last_used_directory = path;
 
+    % Read the gene list
+    try
+        fileID = fopen(fullfile(path, file), 'r');
+        genes_list = textscan(fileID, '%s');
+        fclose(fileID);
+        genes_list = genes_list{1};
+    catch
+        errordlg('Error reading the file. Ensure it is a valid .txt file.');
+        return;
+    end
 
-    % Find the indices of the genes in the list that are present in the data
+    % Find gene indices
     [~, pathway_gene_indices] = ismember(genes_list, data_table.Properties.VariableNames);
-    pathway_gene_indices(pathway_gene_indices == 0) = []; % Remove genes not found in the data
+    pathway_gene_indices(pathway_gene_indices == 0) = [];
+    if isempty(pathway_gene_indices)
+        errordlg('No genes from the list found in the data table.');
+        return;
+    end
 
-    % Extract the data for the single gene and the pathway genes
+    % Compute correlations
     single_gene_data = table2array(data_table(:, single_gene_index));
     pathway_genes_data = table2array(data_table(:, pathway_gene_indices));
+    correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
 
-    % Calculate the correlation between the single gene and each gene in the pathway
-    single_to_pathway_correlations = arrayfun(@(idx) corr(single_gene_data, pathway_genes_data(:, idx)), 1:size(pathway_genes_data, 2));
+    % Sort correlations and gene names
+    [sorted_correlations, sort_indices] = sort(correlations, 'descend');
+    sorted_gene_names = data_table.Properties.VariableNames(pathway_gene_indices(sort_indices));
 
-    % Create a table to store the correlations with gene names
-    correlation_table = table(data_table.Properties.VariableNames(pathway_gene_indices)', ...
-                               single_to_pathway_correlations', ...
-                               'VariableNames', {'Gene', 'Correlation'});
+    % Create a uifigure with grid layout
+    fig = uifigure('Name', 'Gene Correlation Analysis', 'Position', [300, 200, 800, 600], 'Icon', 'Corr_icon.png');
+    gl = uigridlayout(fig, [2, 1]);
+    gl.RowHeight = {'2x', '1x'}; % Allocate space: 2 parts for the graph, 1 part for the table
 
-    % Sort the correlations in descending order
-    correlation_table = sortrows(correlation_table, 'Correlation', 'descend');
-
-    % Plot the sorted correlations
-    fig_g_to_path =  figure ('Name', 'IVCCA: Single gene to a pathway', 'NumberTitle', 'off');
-    iconFilePath = fullfile('Corr_icon.png');
-    setIcon(fig_g_to_path, iconFilePath);
-
-% Display the results with color coding
-
-hold on; 
-for i = 1:length(single_to_pathway_correlations)
-    if single_to_pathway_correlations(i) < 0
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'r', 'EdgeColor', 'r'); % Negative correlations in red
-    else
-        bar(i, single_to_pathway_correlations(i), 'FaceColor', 'b', 'EdgeColor', 'b'); % Positive correlations in blue
+    % Add a bar chart to the first row
+    ax = uiaxes(gl);
+    hold(ax, 'on');
+    for i = 1:length(sorted_correlations)
+        if sorted_correlations(i) < 0
+            bar(ax, i, sorted_correlations(i), 'r'); % Negative correlations in red
+        else
+            bar(ax, i, sorted_correlations(i), 'b'); % Positive correlations in blue
+        end
     end
-    name{i}=data_table.Properties.VariableNames{pathway_gene_indices(i)};
-end
+    hold(ax, 'off');
+    ax.Title.String = sprintf('Correlation of %s to genes in %s', single_gene_name, file);
+    ax.YLabel.String = 'Correlation Coefficient';
+    ax.XTick = 1:length(sorted_correlations);
+    ax.XTickLabel = sorted_gene_names;
+    ax.XTickLabelRotation = 45;
 
-
-hold off; 
-
-% Include the file name and the average of the absolute correlations in the title
-
-% Escape underscores to avoid them being interpreted as subscripts
-escaped_single_gene_name = strrep(single_gene_name, '_', '\_');
-escaped_file_name = strrep(file, '_', '\_');
-title_str = sprintf('Correlation of %s to genes in %s (Avg. Abs. Corr. = %.2f)', escaped_single_gene_name, escaped_file_name, avg_abs_correlation);
-title(title_str);
-
-ylabel('Correlation Coefficient');
-xticks(1:length(pathway_genes_data));
-xticklabels(name);
-xtickangle(45); % Angle the labels for readability
-set(gcf, 'Position', [200, 200, 700, 500]); 
+    % Add a uitable to the second row
+    correlation_table_data = [sorted_gene_names(:), num2cell(sorted_correlations(:))]; % Combine gene names and correlations
+    uitable(gl, ...
+        'Data', correlation_table_data, ...
+        'ColumnName', {'Gene', 'Correlation'}, ...
+        'ColumnWidth', {'auto', 'auto'}, ...
+        'RowName', [],...
+        'ColumnSortable', true); % Enable sortable columns
 
 end
 
