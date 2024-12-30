@@ -281,7 +281,16 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, Y, uitableHandle
         tic
         %     global uitableTitle; % Make sure uitableTitle is declared as global
         %      global clusterIdx; % Use the global declaration
-        numClusters = str2double(inputdlg_id('Enter number of clusters:','Input', [1 50]));
+        % numClusters = str2double(inputdlg_id('Enter number of clusters:','Input', [1 50]));
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    numClusters = str2double(inputdlg_id2022('Enter number of clusters:','Input', [1 50]));
+else
+    % For MATLAB 2024 and later
+   numClusters = str2double(inputdlg_id2024('Enter number of clusters:','Input', [1 50]));
+end  
+
         if ~isempty(numClusters) && numClusters > 0
             % Update the table title with the number of clusters
             if ~isempty(uitableTitle) && isvalid(uitableTitle)
@@ -742,8 +751,18 @@ function GenesProximity(src, event)
     allDistances = sqrt(sum((Y - Y(geneIndex, :)).^2, 2));
     
   % Prompt the user for the number of closest genes
-numGenes = inputdlg_id('Enter the number of closest genes:', ...
-                    'Input', [1 50]);
+% numGenes = inputdlg_id('Enter the number of closest genes:', 'Input', [1 50]);
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    numGenes = inputdlg_id2022('Enter the number of closest genes:', 'Input', [1 50]);
+
+else
+    % For MATLAB 2024 and later
+    numGenes = inputdlg_id2024('Enter the number of closest genes:', 'Input', [1 50]);
+
+end  
+
 
 numGenes = str2double(numGenes{:});
 

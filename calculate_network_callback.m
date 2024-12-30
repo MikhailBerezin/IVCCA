@@ -53,7 +53,14 @@ function calculate_network_callback(~, ~, f)
     definput = {'0.75'}; % default value set to 0.75
 
     % Create the input dialog box
-    answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+    % answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   answer   = inputdlg_id2022(prompt, dlgtitle, dims, definput);
+else
+    % For MATLAB 2024 and later
+  answer   = inputdlg_id2024(prompt, dlgtitle, dims, definput);
+end
 
     % Validate and parse the input
     correlationThreshold = 0.75; % Default threshold

@@ -729,7 +729,17 @@ function dendro_cluster_callback(~, ~, f)
       iconFilePath = fullfile('Corr_icon.png');
     setIcon(f, iconFilePath);
 
-    answer = inputdlg_id(prompt, title, dims, definput);
+    % answer = inputdlg_id(prompt, title, dims, definput);
+
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    answer = inputdlg_id2022(prompt, title, dims, definput);
+else
+    % For MATLAB 2024 and later
+   answer = inputdlg_id2024(prompt, title, dims, definput);
+end
+
     colorThreshold = str2double(answer{1}); 
 
     % Create a dendrogram
@@ -758,7 +768,15 @@ btn = uicontrol('Style', 'pushbutton', 'String', 'Find Gene',...
 function findGeneCallback(~, ~)
     gene_prompt = {'Enter the gene name to find:'};
     gene_title = 'Find Gene';
-    gene_answer = inputdlg_id(gene_prompt, gene_title, dims);
+    % gene_answer = inputdlg_id(gene_prompt, gene_title, dims);
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    gene_answer = inputdlg_id2022(gene_prompt, gene_title, dims);
+else
+    % For MATLAB 2024 and later
+   gene_answer= inputdlg_id2024(gene_prompt, gene_title, dims);
+end
 
     % Process the gene name if provided
     if ~isempty(gene_answer) && ~isempty(gene_answer{1})
@@ -977,7 +995,16 @@ function single_to_group_correlation_callback(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    single_gene_name = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+   single_gene_name = inputdlg_id2024('Enter the name of the single gene:');
+end
+
     if isempty(single_gene_name)
         c = errordlg('No gene name was provided.');
         iconFilePath = fullfile('Corr_icon.png');
@@ -999,7 +1026,7 @@ function single_to_group_correlation_callback(~, ~, f)
         return;
     end
 
-    % Ask the user for the names of the group of genes
+    % Ask the user for the names of the group of genes (could be via a list box or another method)
     [group_gene_indices, group_gene_names] = listdlg('ListString',data_table.Properties.VariableNames, ...
                                                      'SelectionMode','multiple', ...
                                                      'PromptString',{'Select the group of genes:'});
@@ -1044,7 +1071,7 @@ function single_to_group_correlation_callback(~, ~, f)
     ylabel('Correlation Coefficient');
     xticks(1:height(correlation_table));
     xticklabels(correlation_table.Gene);
-    xtickangle(45);
+    xtickangle(45); % Angle the labels for readability
     set(gcf, 'Position', [200, 200, 800, 600]);
 
     % Include the average of the absolute correlations in the title
@@ -1060,18 +1087,27 @@ end
     
 %% Define a callback function for calculating single gene-to-pathway correlations
 function single_to_pathway_correlation_callback(~, ~, f)
-    % Define a persistent variable to store the last used directory
+   % Define a persistent variable to store the last used directory
     persistent last_used_directory;
 
     % Get the data table from the app data
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    single_gene_name = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+   single_gene_name = inputdlg_id2024('Enter the name of the single gene:');
+end
+
     if isempty(single_gene_name)
         c = errordlg('No gene name was provided.');
         iconFilePath = fullfile('Corr_icon.png');
-        setIcon(c, iconFilePath);
+    setIcon(c, iconFilePath);
         return;
     end
     single_gene_name = single_gene_name{1};
@@ -1085,7 +1121,7 @@ function single_to_pathway_correlation_callback(~, ~, f)
     if isempty(single_gene_index)
         c = errordlg('The specified gene was not found in the data.');
         iconFilePath = fullfile('Corr_icon.png');
-        setIcon(c, iconFilePath);
+    setIcon(c, iconFilePath);
         return;
     end
 
@@ -1101,12 +1137,13 @@ function single_to_pathway_correlation_callback(~, ~, f)
     else
         last_used_directory = path; % Update the last used directory
     end
-
+    
     % Read the list of genes from the file
     fileID = fopen(fullfile(path, file), 'r');
     genes_list = textscan(fileID, '%s');
     fclose(fileID);
     genes_list = genes_list{1}; % Convert from cell array to simple string array
+
 
     % Find the indices of the genes in the list that are present in the data
     [~, pathway_gene_indices] = ismember(genes_list, data_table.Properties.VariableNames);
@@ -1133,7 +1170,7 @@ function single_to_pathway_correlation_callback(~, ~, f)
     setIcon(fig_g_to_path, iconFilePath);
 
     bar(correlation_table.Correlation, 'FaceColor', [0.2 0.2 0.8], 'EdgeColor', 'k'); % Use a single color for simplicity
-    hold on;
+hold on; 
     negative_indices = correlation_table.Correlation < 0;
     bar(find(negative_indices), correlation_table.Correlation(negative_indices), 'FaceColor', 'r', 'EdgeColor', 'k'); % Highlight negative correlations
 
@@ -1143,14 +1180,15 @@ function single_to_pathway_correlation_callback(~, ~, f)
     title_str = sprintf('Correlation of %s to genes in %s (Avg. Abs. Corr. = %.2f)', ...
                         escaped_single_gene_name, escaped_file_name, ...
                         mean(abs(correlation_table.Correlation)));
-    title(title_str);
-    ylabel('Correlation Coefficient');
+title(title_str);
+ylabel('Correlation Coefficient');
     xticks(1:height(correlation_table));
     xticklabels(correlation_table.Gene);
-    xtickangle(45);
-    set(gcf, 'Position', [200, 200, 700, 500]);
+xtickangle(45); % Angle the labels for readability
+set(gcf, 'Position', [200, 200, 700, 500]); 
 end
 
+end
 
     function sort_mpath_callback(~, ~, f)
     f.WindowStyle = 'normal';
@@ -1488,7 +1526,15 @@ function single_to_pathway_correlation_callback2(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+   if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    single_gene_name = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+   single_gene_name = inputdlg_id2024('Enter the name of the single gene:');
+end 
     if isempty(single_gene_name)
        c = errordlg('No gene name was provided.');
        iconFilePath = fullfile('Corr_icon.png');
@@ -1583,7 +1629,18 @@ function single_to_pathway_correlation_callback_multi_table(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    single_gene_name = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+   single_gene_name = inputdlg_id2024('Enter the name of the single gene:');
+end
+
+
+
     if isempty(single_gene_name)
         errordlg('No gene name was provided.');
         return;
@@ -1653,7 +1710,7 @@ end
 
 
 
-end
+
 
 
 

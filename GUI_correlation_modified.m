@@ -1,4 +1,4 @@
-function GUI_correlation
+function GUI_correlation_modified
 % Mikhail Berezin 2023
 
 f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [150 150 750 500], 'Icon','Corr_icon.png');  % adjusted width
@@ -729,7 +729,15 @@ function dendro_cluster_callback(~, ~, f)
       iconFilePath = fullfile('Corr_icon.png');
     setIcon(f, iconFilePath);
 
-    answer = inputdlg_id(prompt, title, dims, definput);
+    % answer = inputdlg_id(prompt, title, dims, definput);
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    answer = inputdlg_id2022(prompt, title, dims, definput);
+else
+    % For MATLAB 2024 and later
+   answer= inputdlg_id2024(prompt, title, dims, definput);
+end
     colorThreshold = str2double(answer{1}); 
 
     % Create a dendrogram
@@ -758,7 +766,15 @@ btn = uicontrol('Style', 'pushbutton', 'String', 'Find Gene',...
 function findGeneCallback(~, ~)
     gene_prompt = {'Enter the gene name to find:'};
     gene_title = 'Find Gene';
-    gene_answer = inputdlg_id(gene_prompt, gene_title, dims);
+    % gene_answer = inputdlg_id(gene_prompt, gene_title, dims);
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    gene_answer = inputdlg_id2022(prompt, title, dims, definput);
+else
+    % For MATLAB 2024 and later
+   gene_answer= inputdlg_id2024(prompt, title, dims, definput);
+end
 
     % Process the gene name if provided
     if ~isempty(gene_answer) && ~isempty(gene_answer{1})
@@ -891,7 +907,14 @@ function elbow_curve_callback(~, ~, f)
     dlgtitle = 'Input';
     dims = [1 35];
     definput = {'3', '30'};  % default values for numRuns and maxK
-    answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+    % answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   answer = inputdlg_id2022(prompt, dlgtitle, dims, definput);
+else
+    % For MATLAB 2024 and later
+   answer= inputdlg_id2024(prompt, dlgtitle, dims, definput);
+end
     
     % Check if the user provided an answer
     if isempty(answer)
@@ -977,7 +1000,19 @@ function single_to_group_correlation_callback(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    single_gene_name = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+   single_gene_name = inputdlg_id2024('Enter the name of the single gene:');
+end
+
+
+
+
     if isempty(single_gene_name)
         c = errordlg('No gene name was provided.');
         iconFilePath = fullfile('Corr_icon.png');
@@ -1030,9 +1065,9 @@ function single_to_group_correlation_callback(~, ~, f)
     correlation_table = sortrows(correlation_table, 'Correlation', 'descend');
 
     % Create a uifigure to display the uitable and plot
-    fig_gene_to_gene = uifigure('Name', 'Correlation Results', 'Position', [200, 200, 730, 450]);
-    iconFilePath = fullfile('Corr_icon.png');
-    setIcon(fig_gene_to_gene, iconFilePath);
+    fig_gene_to_gene = uifigure('Name', 'Gene to Genes Correlation Results ', 'Position', [200, 200, 730, 450], 'icon','Corr_icon.png');
+%     iconFilePath = fullfile('Corr_icon.png');
+%     setIcon(fig_gene_to_gene, iconFilePath);
 
     % Create a uitable to display the sorted correlation results
     uitable(fig_gene_to_gene, ...
@@ -1077,7 +1112,17 @@ function single_to_pathway_correlation_callback(~, ~, f)
     end
 
     % Get the single gene name
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   single_gene_name = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+   single_gene_name= inputdlg_id2024('Enter the name of the single gene:');
+end
+
+
     if isempty(single_gene_name)
          c = errordlg('No gene name was provided.');
         iconFilePath = fullfile('Corr_icon.png');
@@ -1323,7 +1368,15 @@ dims = [1 45];
 definput = {'5'};  % default value set to 5
 
 % Create the input dialog box
-answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+% answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   answer = inputdlg_id2022(prompt, dlgtitle, dims, definput);
+else
+    % For MATLAB 2024 and later
+   answer= inputdlg_id2024(prompt, dlgtitle, dims, definput);
+end
 
 % Check if a value was entered and if so, use it; otherwise, use the default value
 if ~isempty(answer)
@@ -1385,7 +1438,15 @@ prompt = {'Enter the number of entries for plotting:'};
 dlgtitle = 'Input';
 dims = [1 45];
 definput = {'25'}; % default value
-answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+% answer = inputdlg_id(prompt, dlgtitle, dims, definput);
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   answer = inputdlg_id2022(prompt, dlgtitle, dims, definput);
+else
+    % For MATLAB 2024 and later
+   answer= inputdlg_id2024(prompt, dlgtitle, dims, definput);
+end
 
 numEntries = str2double(answer{1});
 totalRows = size(filteredTableData, 1);
@@ -1502,7 +1563,15 @@ function single_to_pathway_correlation_callback2(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   single_gene_name  = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+  single_gene_name  = inputdlg_id2024('Enter the name of the single gene:');
+end
+
     if isempty(single_gene_name)
        c = errordlg('No gene name was provided.');
        iconFilePath = fullfile('Corr_icon.png');
@@ -1597,7 +1666,15 @@ function single_to_pathway_correlation_callback_multi_table(~, ~, f)
     data_table = getappdata(f, 'data_table');
 
     % Ask the user for the name of the single gene
-    single_gene_name = inputdlg_id('Enter the name of the single gene:');
+    % single_gene_name = inputdlg_id('Enter the name of the single gene:');
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+   single_gene_name  = inputdlg_id2022('Enter the name of the single gene:');
+else
+    % For MATLAB 2024 and later
+  single_gene_name  = inputdlg_id2024('Enter the name of the single gene:');
+end    
     if isempty(single_gene_name)
         errordlg('No gene name was provided.');
         return;

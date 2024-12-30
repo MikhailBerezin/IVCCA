@@ -287,7 +287,18 @@ set(hBrush, 'ActionPostCallback', {@brushedCallback, geneNames, score, uitableHa
         tic
         %     global uitableTitle; % Make sure uitableTitle is declared as global
         %      global clusterIdx; % Use the global declaration
-        numClusters = str2double(inputdlg_id('Enter number of clusters:'));
+        % numClusters = str2double(inputdlg_id('Enter number of clusters:'));
+
+if verLessThan('matlab', '9.14') % MATLAB R2023a is version 9.14
+    % For MATLAB versions earlier than 2024
+    numClusters = str2double(inputdlg_id2022('Enter number of clusters:'));
+else
+    % For MATLAB 2024 and later
+   numClusters = str2double(inputdlg_id2024('Enter number of clusters:'));
+end    
+
+
+        
         if ~isempty(numClusters) && numClusters > 0
             % Update the table title with the number of clusters
             if ~isempty(uitableTitle) && isvalid(uitableTitle)
