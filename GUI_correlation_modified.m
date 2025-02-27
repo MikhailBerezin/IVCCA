@@ -2,7 +2,7 @@ function GUI_correlation_modified
 % Mikhail Berezin 2023
 
 f = uifigure('Name', 'IVCCA: Inter-Variability Cross Correlation Analysis (Berezin Lab)', 'Position', [150 150 750 500], 'Icon','Corr_icon.png');  % adjusted width
-close all
+% close all
  f.WindowStyle = 'normal';
 % uifigureOnTop (f, true) 
 

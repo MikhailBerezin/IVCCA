@@ -4,7 +4,7 @@
 % groups of genes are commonly regulated in response to oxaliplatin 
 % treatment.
 % 
-% The input requires a matrix samples by genes: drg_oxa_89_genes.xls 
+% The input requires a matrix samples by genes: DRG 91 genes FDR 0.05 FC more or equal 2 sorted.xls 
 %  
 % Clusters of Genes (Basis Matrix 𝑊):
 % 
